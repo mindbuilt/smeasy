@@ -473,12 +473,6 @@ export default function Home() {
         {/* ── REVIEW & EXCLUDE ───────────────────────────────────────── */}
         {step === "review" && sheet && (
           <div style={{ marginTop: 20 }}>
-            <div
-              onClick={() => setStep("upload")}
-              style={{ fontSize: 13, color: S.muted, cursor: "pointer", marginBottom: 18 }}
-            >
-              ← Back
-            </div>
             <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.01em", margin: "0 0 8px" }}>
               Quick check before we do the maths
             </h1>
@@ -779,27 +773,11 @@ export default function Home() {
               </div>
             )}
 
-            {/* Income breakdown */}
-            <div style={{ background: S.white, border: `1px solid ${S.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13.5, color: S.body }}>
-                <span>Income</span>
-                <span style={{ fontWeight: 600, color: S.green }}>{fmtAUD(totalIncome)}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13.5, color: S.body }}>
-                <span>Expenses</span>
-                <span style={{ fontWeight: 600 }}>\u2212{fmtAUD(totalExpenses)}</span>
-              </div>
-              <div style={{ borderTop: `1px solid ${S.border}`, paddingTop: 8, marginTop: 2, display: "flex", justifyContent: "space-between", fontSize: 13.5 }}>
-                <span style={{ fontWeight: 600 }}>Net income</span>
-                <span style={{ fontWeight: 700 }}>{fmtAUD(totalIncome - totalExpenses)}</span>
-              </div>
-            </div>
-
             {/* GST callout */}
             <div style={{ display: "flex", gap: 10, background: S.callout, borderRadius: 10, padding: "14px 16px", marginBottom: 24 }}>
               <span style={{ fontSize: 14, flexShrink: 0 }}>ⓘ</span>
               <div style={{ fontSize: 12.5, lineHeight: 1.55, color: S.body }}>
-                Heads up on GST: this is income tax only, and we&apos;ve assumed your figures don&apos;t include GST. If you&apos;re registered for GST (usually once you&apos;re over $75,000 annual turnover), your bank amounts include GST that isn&apos;t yours to keep — treat this number as on the high side, and remember your BAS is separate.
+                Heads up on GST: this is income tax only, and we&apos;ve assumed your figures don&apos;t include GST. If you&apos;re registered for GST (usually once you&apos;re over $75k), your bank amounts include GST that isn&apos;t yours to keep — treat this number as on the high side, and remember your BAS is separate.
               </div>
             </div>
 
@@ -844,7 +822,7 @@ export default function Home() {
             <div style={{ display: "flex", alignItems: "center", gap: 10, background: S.successBg, borderRadius: 10, padding: "14px 16px", marginBottom: 28 }}>
               <span style={{ fontSize: 16, color: S.green, flexShrink: 0 }}>✓</span>
               <div style={{ fontSize: 13, color: S.green, lineHeight: 1.5 }}>
-                Your file&apos;s been deleted — this session was all there was. We&apos;re not wired to the ATO.
+                Your file&apos;s been deleted — this session was all there was.
               </div>
             </div>
 
