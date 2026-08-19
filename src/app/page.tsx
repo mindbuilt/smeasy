@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef, DragEvent, ChangeEvent } from "react";
 import * as XLSX from "xlsx";
 import {
   parseFile,
@@ -10,988 +10,879 @@ import {
   ParsedRow,
   ParseResult,
   Flag,
-  ParsedSheet,
 } from "@/lib/parser";
 import { getFYFromDate, getBracketsForFY } from "@/lib/taxBrackets";
 import { computeSetAside, TaxEstimate } from "@/lib/taxCalculator";
 
 type Step = "landing" | "upload" | "review" | "income" | "processing" | "results";
-type OtherIncomeBand = "none" | "under45k" | "45k-135k" | "above135k";
+type IncomeBand = "under45k" | "45k-135k" | "above135k";
+type IncomeAnswer = "only" | "other";
 
-const fmtCurrency = (n: number) =>
-  new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(n);
+interface ExcludedRow {
+  rowIndex: number;
+  description: string;
+  amount: number;
+  reason: string;
+  excluded: boolean;
+}
 
-const fmtDate = (d: Date) =>
+const fmtAUD = (n: number) =>
+  new Intl.NumberFormat("en-AU", {
+    style: "currency",
+    currency: "AUD",
+    maximumFractionDigits: 0,
+  }).format(n);
+
+const fmtMonth = (d: Date) =>
   new Intl.DateTimeFormat("en-AU", { month: "short", year: "numeric" }).format(d);
 
-const fmtPercent = (rate: number) => `${Math.round(rate * 100)}%`;
-
-function toRatePercent(rate: number): number {
-  return Math.round(rate * 100);
+function periodLabel(start: Date, end: Date, months: number): string {
+  const s = fmtMonth(start);
+  const e = fmtMonth(end);
+  const periodStr = s === e ? s : `${s} \u2013 ${e}`;
+  const monthWord = months === 1 ? "month" : "months";
+  return `${periodStr} \u2014 about ${months} ${monthWord}`;
 }
 
-function fromRatePercent(pct: number): number {
-  return pct / 100;
+function spansTwoFY(start: Date, end: Date): boolean {
+  return getFYFromDate(start) !== getFYFromDate(end);
 }
 
-// Helper component for column row display
-function ColRow({
-  label,
-  value,
-  headers,
-}: {
-  label: string;
-  value: string | null;
-  headers: string[];
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-[#6B7280] w-28 shrink-0">{label}</span>
-      {value ? (
-        <span className="font-medium text-[#1C1C1C]">{value}</span>
-      ) : (
-        <span className="text-amber-600 text-xs">
-          Not detected
-          {headers.length > 0
-            ? ` — columns: ${headers.slice(0, 4).join(", ")}${headers.length > 4 ? "..." : ""}`
-            : ""}
-        </span>
-      )}
-    </div>
-  );
-}
+const bandLabels: Record<IncomeBand, string> = {
+  under45k: "Under $45,000",
+  "45k-135k": "$45,000 \u2013 $135,000",
+  above135k: "Over $135,000",
+};
+
+// ── Design tokens ─────────────────────────────────────────────────────────────
+
+const S = {
+  bg: "#f6f4ef",
+  dark: "#1f1d19",
+  body: "#4a463c",
+  secondary: "#6b6558",
+  muted: "#8a8474",
+  veryMuted: "#a89f8c",
+  border: "#e5e1d6",
+  callout: "#f0eee6",
+  selectedBg: "#f4f9e6",
+  successBg: "#eef8d3",
+  selectedBorder: "#8fae3f",
+  green: "#3a5518",
+  darkGreen: "#20321a",
+  accent: "#cdf564",
+  white: "#ffffff",
+  card: "#1f1d19",
+};
+
+const primaryBtn = (enabled: boolean): React.CSSProperties => ({
+  width: "100%",
+  padding: "16px",
+  borderRadius: 10,
+  border: "none",
+  background: enabled ? S.accent : S.border,
+  fontSize: 15.5,
+  fontWeight: 600,
+  color: enabled ? S.darkGreen : S.veryMuted,
+  cursor: enabled ? "pointer" : "not-allowed",
+  fontFamily: "inherit",
+});
+
+const optionCard = (selected: boolean): React.CSSProperties => ({
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  padding: "15px 16px",
+  borderRadius: 10,
+  border: `1.5px solid ${selected ? S.selectedBorder : S.border}`,
+  background: selected ? S.selectedBg : S.white,
+  cursor: "pointer",
+});
+
+const optionDot = (selected: boolean): React.CSSProperties => ({
+  width: 18,
+  height: 18,
+  borderRadius: "50%",
+  flexShrink: 0,
+  border: `1.5px solid ${selected ? S.green : S.border}`,
+  background: selected ? S.accent : "transparent",
+});
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export default function Home() {
   const [step, setStep] = useState<Step>("landing");
+
+  // Upload
+  const [dragOver, setDragOver] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
-  const [selectedSheetName, setSelectedSheetName] = useState<string>("");
-  const [workbookRef, setWorkbookRef] = useState<XLSX.WorkBook | null>(null);
-  const [currentSheet, setCurrentSheet] = useState<ParsedSheet | null>(null);
-  const [excludedRows, setExcludedRows] = useState<Set<number>>(new Set());
-  const [manuallyIncluded, setManuallyIncluded] = useState<Set<number>>(new Set());
-  const [hasOtherIncome, setHasOtherIncome] = useState<boolean | null>(null);
-  const [otherIncomeBand, setOtherIncomeBand] = useState<OtherIncomeBand>("none");
-  const [taxEstimate, setTaxEstimate] = useState<TaxEstimate | null>(null);
-  const [flags, setFlags] = useState<Flag[]>([]);
-  const [sliderPct, setSliderPct] = useState<number>(0);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [copyDone, setCopyDone] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Compute active rows based on current sheet and exclusion state
-  const getActiveRows = useCallback(
-    (sheet: ParsedSheet, excluded: Set<number>, included: Set<number>): ParsedRow[] => {
-      return sheet.rows.filter((row) => {
-        if (included.has(row.rowIndex)) return true;
-        if (excluded.has(row.rowIndex)) return false;
-        return true;
-      });
-    },
-    []
-  );
+  // Review
+  const [selectedSheetName, setSelectedSheetName] = useState<string>("");
+  const [incomeCol, setIncomeCol] = useState<string>("");
+  const [expenseCol, setExpenseCol] = useState<string>("");
+  const [amountCol, setAmountCol] = useState<string>("");
+  const [excludedRows, setExcludedRows] = useState<ExcludedRow[]>([]);
+  const workbookRef = useRef<XLSX.WorkBook | null>(null);
 
-  // Auto-advance from processing
-  useEffect(() => {
-    if (step === "processing") {
-      const timer = setTimeout(() => {
-        runCalculation();
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
+  // Income
+  const [incomeAnswer, setIncomeAnswer] = useState<IncomeAnswer | null>(null);
+  const [incomeBand, setIncomeBand] = useState<IncomeBand | null>(null);
 
-  function runCalculation() {
-    if (!currentSheet) return;
+  // Results
+  const [estimate, setEstimate] = useState<TaxEstimate | null>(null);
+  const [rate, setRate] = useState<number>(28);
+  const [flags, setFlags] = useState<Flag[]>([]);
+  const [copyDone, setCopyDone] = useState(false);
+  const [email, setEmail] = useState("");
+  const [emailDone, setEmailDone] = useState(false);
 
-    const active = getActiveRows(currentSheet, excludedRows, manuallyIncluded);
+  const processingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (processingTimer.current) clearTimeout(processingTimer.current); }, []);
 
-    const totalIncome = active
-      .filter((r) => r.amount !== null && r.amount > 0)
-      .reduce((sum, r) => sum + (r.amount ?? 0), 0);
+  // ── File handling ────────────────────────────────────────────────────────
 
-    const totalExpenses = active
-      .filter((r) => r.amount !== null && r.amount < 0)
-      .reduce((sum, r) => sum + Math.abs(r.amount ?? 0), 0);
-
-    const netIncome = totalIncome - totalExpenses;
-
-    // Determine FY
-    let fy = "2025-26";
-    if (currentSheet.dateRange) {
-      fy = getFYFromDate(currentSheet.dateRange.end);
-    }
-    const fyBrackets = getBracketsForFY(fy);
-
-    const estimate = computeSetAside({
-      netIncome,
-      periodMonths: currentSheet.periodMonths,
-      otherIncome: 0,
-      otherIncomeBand: hasOtherIncome ? otherIncomeBand : "none",
-      fyBrackets,
-    });
-
-    const detectedFlags = detectFlags(active);
-
-    setTaxEstimate(estimate);
-    setFlags(detectedFlags);
-    setSliderPct(toRatePercent(estimate.marginalRate));
-    setStep("results");
+  function getTransferReason(desc: string): string {
+    if (/transfer/i.test(desc)) return "Looks like a transfer";
+    if (/draw/i.test(desc) || /drawings/i.test(desc)) return "Looks like drawings";
+    if (/loan/i.test(desc)) return "Looks like a loan movement";
+    if (/credit card payment|cc payment/i.test(desc)) return "Looks like a CC payment";
+    if (/bpay/i.test(desc)) return "Looks like a BPay";
+    return "Looks like a transfer";
   }
 
-  const processFile = useCallback(
-    (buffer: ArrayBuffer) => {
+  const processFile = useCallback((f: File) => {
+    setFile(f);
+    setParseError(null);
+    const reader = new FileReader();
+    reader.onload = (e) => {
       try {
-        const result = parseFile(buffer);
-        const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
-        setWorkbookRef(workbook);
+        const buf = e.target?.result as ArrayBuffer;
+        const wb = XLSX.read(buf, { type: "array", cellDates: true });
+        workbookRef.current = wb;
+        const result = parseFile(buf);
         setParseResult(result);
-        setSelectedSheetName(result.selectedSheet.sheetName);
-        setCurrentSheet(result.selectedSheet);
-
-        const excluded = new Set<number>();
-        result.selectedSheet.rows.forEach((row) => {
-          if (isLikelyTransfer(row.description)) {
-            excluded.add(row.rowIndex);
-          }
-        });
-        setExcludedRows(excluded);
-        setManuallyIncluded(new Set());
-        setUploadError(null);
-        setStep("review");
+        const sheet = result.selectedSheet;
+        setSelectedSheetName(sheet.sheetName);
+        setIncomeCol(sheet.columnMapping.incomeCol ?? sheet.columnMapping.amountCol ?? "");
+        setExpenseCol(sheet.columnMapping.expenseCol ?? "");
+        setAmountCol(sheet.columnMapping.amountCol ?? "");
+        const transfers: ExcludedRow[] = sheet.rows
+          .filter((r) => r.description && isLikelyTransfer(r.description))
+          .map((r) => ({
+            rowIndex: r.rowIndex,
+            description: r.description,
+            amount: r.amount ?? 0,
+            reason: getTransferReason(r.description),
+            excluded: true,
+          }));
+        setExcludedRows(transfers);
+        setStep("upload");
       } catch {
-        setUploadError(
-          "We couldn't read that file. Make sure it's a .csv, .xlsx, or .xls file with transaction data."
+        setParseError(
+          "We couldn't read that file. Try saving it as .csv or .xlsx and uploading again."
         );
       }
-    },
-    []
-  );
+    };
+    reader.onerror = () =>
+      setParseError("Something went wrong reading the file. Try again.");
+    reader.readAsArrayBuffer(f);
+  }, []);
 
-  const handleFile = useCallback(
-    (file: File) => {
-      if (!file) return;
-      const ext = file.name.split(".").pop()?.toLowerCase();
-      if (!["csv", "xlsx", "xls"].includes(ext ?? "")) {
-        setUploadError("Please upload a .csv, .xlsx, or .xls file.");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const buffer = e.target?.result as ArrayBuffer;
-        processFile(buffer);
-      };
-      reader.onerror = () => {
-        setUploadError("Failed to read the file. Please try again.");
-      };
-      reader.readAsArrayBuffer(file);
-    },
-    [processFile]
-  );
+  function handleDrop(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragOver(false);
+    const f = e.dataTransfer.files[0];
+    if (f) processFile(f);
+  }
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-      const file = e.dataTransfer.files[0];
-      if (file) handleFile(file);
-    },
-    [handleFile]
-  );
+  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (f) processFile(f);
+  }
 
-  function handleSheetChange(sheetName: string) {
-    if (!workbookRef || !parseResult) return;
-    setSelectedSheetName(sheetName);
+  function handleSheetChange(name: string) {
+    if (!workbookRef.current) return;
+    setSelectedSheetName(name);
     const warnings: string[] = [];
-    const sheet = parseSheet(workbookRef, sheetName, warnings);
-    setCurrentSheet(sheet);
+    const sheet = parseSheet(workbookRef.current, name, warnings);
+    setIncomeCol(sheet.columnMapping.incomeCol ?? sheet.columnMapping.amountCol ?? "");
+    setExpenseCol(sheet.columnMapping.expenseCol ?? "");
+    setAmountCol(sheet.columnMapping.amountCol ?? "");
+  }
 
-    const excluded = new Set<number>();
-    sheet.rows.forEach((row) => {
-      if (isLikelyTransfer(row.description)) {
-        excluded.add(row.rowIndex);
-      }
+  // ── Compute & go to results ──────────────────────────────────────────────
+
+  function startProcessing() {
+    const sheet = parseResult?.selectedSheet;
+    if (!sheet) return;
+    const excludedSet = new Set(excludedRows.filter((r) => r.excluded).map((r) => r.rowIndex));
+    const includedRows = sheet.rows.filter((r) => !excludedSet.has(r.rowIndex));
+    const income = includedRows
+      .filter((r) => (r.amount ?? 0) > 0)
+      .reduce((s, r) => s + (r.amount ?? 0), 0);
+    const expenses = includedRows
+      .filter((r) => (r.amount ?? 0) < 0)
+      .reduce((s, r) => s + (r.amount ?? 0), 0);
+    const netIncome = income + expenses;
+    const { periodMonths, dateRange } = sheet;
+    const fy = dateRange ? getFYFromDate(dateRange.end) : "2025-26";
+    const fyBrackets = getBracketsForFY(fy);
+    const est = computeSetAside({
+      netIncome,
+      periodMonths,
+      otherIncome: 0,
+      otherIncomeBand:
+        incomeAnswer === "only" ? "none" : (incomeBand ?? "none"),
+      fyBrackets,
     });
-    setExcludedRows(excluded);
-    setManuallyIncluded(new Set());
+    setEstimate(est);
+    setRate(Math.round(est.marginalRate * 100));
+    setFlags(detectFlags(includedRows));
+    setStep("processing");
+    processingTimer.current = setTimeout(() => setStep("results"), 1600);
   }
 
-  function toggleRowExclusion(rowIndex: number, currentlyExcluded: boolean) {
-    if (currentlyExcluded) {
-      setExcludedRows((prev) => {
-        const next = new Set(prev);
-        next.delete(rowIndex);
-        return next;
-      });
-      setManuallyIncluded((prev) => new Set(prev).add(rowIndex));
-    } else {
-      setExcludedRows((prev) => new Set(prev).add(rowIndex));
-      setManuallyIncluded((prev) => {
-        const next = new Set(prev);
-        next.delete(rowIndex);
-        return next;
-      });
-    }
-  }
+  // ── Derived values ───────────────────────────────────────────────────────
 
-  function buildCopyText(): string {
-    if (!taxEstimate || !currentSheet) return "";
-    const lines: string[] = [
-      "SMEASY Tax Set-Aside Estimate",
-      "================================",
+  const sheet = parseResult?.selectedSheet;
+  const dateRange = sheet?.dateRange ?? null;
+  const twoFY = dateRange ? spansTwoFY(dateRange.start, dateRange.end) : false;
+  const fy = dateRange ? getFYFromDate(dateRange.end) : "2025-26";
+  const excludedSet = new Set(excludedRows.filter((r) => r.excluded).map((r) => r.rowIndex));
+  const includedRows = sheet?.rows.filter((r) => !excludedSet.has(r.rowIndex)) ?? [];
+  const totalIncome = includedRows
+    .filter((r) => (r.amount ?? 0) > 0)
+    .reduce((s, r) => s + (r.amount ?? 0), 0);
+  const totalExpenses = Math.abs(
+    includedRows
+      .filter((r) => (r.amount ?? 0) < 0)
+      .reduce((s, r) => s + (r.amount ?? 0), 0)
+  );
+  const balanceColName = sheet?.columnMapping.balanceCol ?? null;
+  const setAsideDollars =
+    estimate && !estimate.isZeroFloor
+      ? Math.max(0, Math.ceil(estimate.netIncome * (rate / 100)))
+      : 0;
+
+  // ── Copy summary ─────────────────────────────────────────────────────────
+
+  function copySummary() {
+    const excl = excludedRows
+      .filter((r) => r.excluded)
+      .map((r) => `- ${r.description} (${fmtAUD(Math.abs(r.amount))})`)
+      .join("\n");
+    const bandLabel = incomeBand ? bandLabels[incomeBand] : null;
+    const incomeLine =
+      incomeAnswer === "only"
+        ? "This business is their only income"
+        : `Also earns wage/salary elsewhere (${bandLabel ?? "band not given"})`;
+    const periodStr = dateRange
+      ? periodLabel(dateRange.start, dateRange.end, sheet?.periodMonths ?? 1)
+      : "period unknown";
+    const text = [
+      "smeasy summary \u2014 for your accountant",
       "",
-    ];
-    if (currentSheet.dateRange) {
-      lines.push(
-        `Period: ${fmtDate(currentSheet.dateRange.start)} – ${fmtDate(currentSheet.dateRange.end)} (${currentSheet.periodMonths} months)`
-      );
-    }
-    lines.push(`FY Rates Used: ${taxEstimate.fyUsed}`);
-    lines.push("");
-    lines.push(`Net Business Income (period): ${fmtCurrency(taxEstimate.netIncome)}`);
-    lines.push(`Annualised Income: ${fmtCurrency(taxEstimate.annualisedIncome)}`);
-    if (hasOtherIncome) {
-      lines.push(`Other Income Band: ${otherIncomeBand}`);
-      lines.push(`Total Income (annualised): ${fmtCurrency(taxEstimate.totalIncome)}`);
-    }
-    lines.push(`Marginal Rate Applied: ${fmtPercent(fromRatePercent(sliderPct))}`);
-    lines.push("");
-    lines.push(
-      `Recommended Set-Aside: ${fmtCurrency(Math.ceil(taxEstimate.netIncome * fromRatePercent(sliderPct)))}`
-    );
-    lines.push("");
-    lines.push("Notes:");
-    lines.push("- This is a rough estimate only, not formal tax advice.");
-    lines.push(
-      "- Figures assumed GST-exclusive. If GST-registered, actual tax may be lower."
-    );
-    lines.push("- Medicare Levy (2%) included in rate.");
-    lines.push("- Verify with your accountant.");
-    lines.push("");
-    lines.push("Generated by SMEASY — not connected to the ATO.");
-    return lines.join("\n");
+      `Period covered: ${periodStr}${twoFY ? " (spans two tax years)" : ""}`,
+      `FY rates used: ${fy}`,
+      estimate?.isZeroFloor
+        ? "Estimated tax to set aside: $0 (expenses equal or exceed income)"
+        : `Estimated tax to set aside: ${fmtAUD(setAsideDollars)} (using ${rate}% rough rate, incl. 2% Medicare Levy)`,
+      incomeLine,
+      "",
+      `Income: ${fmtAUD(totalIncome)}`,
+      `Expenses: ${fmtAUD(totalExpenses)}`,
+      `Net income: ${fmtAUD(totalIncome - totalExpenses)}`,
+      "",
+      excl ? `Excluded as non-income/expense:\n${excl}` : "No rows excluded.",
+      "",
+      "Note: income tax estimate only. Assumes figures exclude GST. Not a full-year estimate. Not tax advice. Confirm with your accountant.",
+    ].join("\n");
+    navigator.clipboard.writeText(text).catch(() => {});
+    setCopyDone(true);
+    setTimeout(() => setCopyDone(false), 1800);
   }
 
-  async function handleCopy() {
-    const text = buildCopyText();
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopyDone(true);
-      setTimeout(() => setCopyDone(false), 2500);
-    } catch {
-      // fallback — silently fail
-    }
+  function reset() {
+    setStep("landing");
+    setFile(null);
+    setParseResult(null);
+    setParseError(null);
+    setExcludedRows([]);
+    setIncomeAnswer(null);
+    setIncomeBand(null);
+    setEstimate(null);
+    setEmail("");
+    setEmailDone(false);
+    workbookRef.current = null;
   }
 
-  // Check for FY crossing
-  const fySpan = (() => {
-    if (!currentSheet?.dateRange) return null;
-    const startFY = getFYFromDate(currentSheet.dateRange.start);
-    const endFY = getFYFromDate(currentSheet.dateRange.end);
-    if (startFY !== endFY) return { startFY, endFY };
-    return null;
-  })();
+  // ── Render ────────────────────────────────────────────────────────────────
 
-  // Pre-excluded transfer rows for display in review step
-  const transferRows =
-    currentSheet?.rows.filter(
-      (r) => isLikelyTransfer(r.description) && !manuallyIncluded.has(r.rowIndex)
-    ) ?? [];
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: S.bg,
+        fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
+        color: S.dark,
+        display: "flex",
+        justifyContent: "center",
+        padding: "0 0 40px",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 480,
+          padding: "28px 20px 0",
+          boxSizing: "border-box",
+        }}
+      >
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+          <span style={{ fontWeight: 700, fontSize: 17, letterSpacing: "-0.01em" }}>smeasy</span>
+          <span
+            style={{ display: "inline-block", width: 6, height: 6, borderRadius: 2, background: S.accent }}
+          />
+        </div>
 
-  // Active rows (for preview income/expense totals in review step)
-  const activeRowsPreview = currentSheet
-    ? getActiveRows(currentSheet, excludedRows, manuallyIncluded)
-    : [];
-
-  const previewIncome = activeRowsPreview
-    .filter((r) => (r.amount ?? 0) > 0)
-    .reduce((s, r) => s + (r.amount ?? 0), 0);
-
-  const previewExpenses = activeRowsPreview
-    .filter((r) => (r.amount ?? 0) < 0)
-    .reduce((s, r) => s + Math.abs(r.amount ?? 0), 0);
-
-  const previewNet = previewIncome - previewExpenses;
-
-  // Slider-adjusted set-aside
-  const sliderSetAside = taxEstimate
-    ? Math.ceil(taxEstimate.netIncome * fromRatePercent(sliderPct))
-    : 0;
-
-  // Active rows used in results (for breakdown display)
-  const resultActiveRows = currentSheet
-    ? getActiveRows(currentSheet, excludedRows, manuallyIncluded)
-    : [];
-  const resultIncome = resultActiveRows
-    .filter((r) => (r.amount ?? 0) > 0)
-    .reduce((s, r) => s + (r.amount ?? 0), 0);
-  const resultExpenses = resultActiveRows
-    .filter((r) => (r.amount ?? 0) < 0)
-    .reduce((s, r) => s + Math.abs(r.amount ?? 0), 0);
-
-  // ---- RENDER ----
-
-  if (step === "landing") {
-    return (
-      <main className="min-h-screen bg-[#FAF9F6] flex flex-col items-center px-5 py-16">
-        <div className="w-full max-w-2xl">
-          {/* Logo / wordmark */}
-          <div className="mb-12">
-            <span className="text-2xl font-bold tracking-tight text-[#1C1C1C]">
-              sm<span className="text-[#84CC16]">easy</span>
-            </span>
+        {/* ── LANDING ────────────────────────────────────────────────── */}
+        {step === "landing" && (
+          <div style={{ marginTop: 28 }}>
+            <h1 style={{ fontSize: 30, lineHeight: 1.2, fontWeight: 700, letterSpacing: "-0.015em", margin: "0 0 16px" }}>
+              Know what you owe, before it&apos;s due.
+            </h1>
+            <p style={{ fontSize: 16, lineHeight: 1.6, color: S.body, margin: "0 0 20px" }}>
+              Upload the spreadsheet you already keep, and we&apos;ll tell you roughly what to put
+              aside for tax — and flag anything that looks off. No account, no setup, and
+              we&apos;re not connected to the ATO.
+            </p>
+            <div style={{ borderLeft: "2px solid #d6d1c3", paddingLeft: 14, marginBottom: 28 }}>
+              <div style={{ fontSize: 13.5, lineHeight: 1.6, color: S.secondary }}>
+                We&apos;re an independent tool — we don&apos;t report to anyone, and we don&apos;t
+                keep your file. Your spreadsheet is read once, then it&apos;s gone.
+              </div>
+              <div style={{ fontSize: 12, lineHeight: 1.55, color: S.veryMuted, marginTop: 8 }}>
+                Built for sole traders. This is for sole traders and side hustles taxed at personal
+                rates. If you run a company (Pty Ltd) or a trust, your tax works differently and
+                this won&apos;t be accurate for you.
+              </div>
+            </div>
+            <button onClick={() => setStep("upload")} style={primaryBtn(true)}>
+              Upload your spreadsheet
+            </button>
+            <div style={{ textAlign: "center", fontSize: 12.5, color: S.muted, marginTop: 12 }}>
+              Excel or CSV · takes about 30 seconds
+            </div>
           </div>
+        )}
 
-          {/* Hero */}
-          <h1 className="text-4xl sm:text-5xl font-bold text-[#1C1C1C] leading-tight mb-5">
-            Know what to set aside.{" "}
-            <span className="text-[#6B7280] font-normal">No accountant required right now.</span>
-          </h1>
-          <p className="text-lg text-[#6B7280] mb-3 leading-relaxed">
-            Upload your bank export or spreadsheet. Get a rough tax set-aside estimate.
-            Independent and private — not connected to the tax office, reports to no one.
-          </p>
-          <p className="text-sm text-[#6B7280] border-l-2 border-[#84CC16] pl-3 mb-10 leading-relaxed">
-            Built for sole traders taxed at personal rates — if you run a company or trust,
-            your tax works differently and this won&apos;t fit.
-          </p>
+        {/* ── UPLOAD ─────────────────────────────────────────────────── */}
+        {step === "upload" && (
+          <div style={{ marginTop: 20 }}>
+            <div
+              onClick={() => { setStep("landing"); setFile(null); setParseError(null); }}
+              style={{ fontSize: 13, color: S.muted, cursor: "pointer", marginBottom: 18 }}
+            >
+              ← Back
+            </div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.01em", margin: "0 0 8px" }}>
+              Upload your spreadsheet
+            </h1>
+            <p style={{ fontSize: 14.5, lineHeight: 1.6, color: S.secondary, margin: "0 0 20px" }}>
+              Export it from your bank, your accounting app, or wherever you keep your books —
+              Excel or CSV both work.
+            </p>
 
-          {/* CTA */}
-          <button
-            onClick={() => setStep("upload")}
-            className="bg-[#84CC16] text-white font-semibold text-lg px-8 py-4 rounded-xl hover:bg-[#65a30d] transition-colors mb-10 w-full sm:w-auto"
-          >
-            Upload my spreadsheet
-          </button>
+            {/* Dropzone */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              style={{
+                border: `1.5px dashed ${file || dragOver ? S.selectedBorder : "#d6d1c3"}`,
+                background: file || dragOver ? S.selectedBg : S.white,
+                borderRadius: 14,
+                padding: "36px 20px",
+                textAlign: "center",
+                cursor: "pointer",
+              }}
+            >
+              {!file ? (
+                <>
+                  <div style={{ fontSize: 14.5, fontWeight: 600, color: S.dark, marginBottom: 4 }}>
+                    Drag your file here, or tap to choose
+                  </div>
+                  <div style={{ fontSize: 12.5, color: S.muted }}>.xlsx, .xls or .csv</div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 14.5, fontWeight: 600, color: S.dark, marginBottom: 4 }}>
+                    {file.name}
+                  </div>
+                  <div style={{ fontSize: 12.5, color: S.muted }}>Ready</div>
+                </>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              style={{ display: "none" }}
+              onChange={handleFileChange}
+            />
 
-          {/* How it works */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-8">
-            <h2 className="text-sm font-semibold text-[#6B7280] uppercase tracking-wide mb-4">
-              How it works
-            </h2>
-            <div className="flex flex-col sm:flex-row gap-6">
-              {[
-                {
-                  n: "1",
-                  title: "Upload",
-                  desc: "Drop in your bank export or accounting CSV/spreadsheet.",
-                },
-                {
-                  n: "2",
-                  title: "Review",
-                  desc: "Check what we found — columns, period, any transfers we excluded.",
-                },
-                {
-                  n: "3",
-                  title: "Get your number",
-                  desc: "See a set-aside estimate at your marginal tax rate.",
-                },
-              ].map((item) => (
-                <div key={item.n} className="flex-1">
-                  <div className="text-[#84CC16] font-bold text-xl mb-1">{item.n}</div>
-                  <div className="font-semibold text-[#1C1C1C] mb-1">{item.title}</div>
-                  <div className="text-sm text-[#6B7280]">{item.desc}</div>
+            {parseError && (
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: "12px 14px",
+                  borderRadius: 10,
+                  background: "#fff0f0",
+                  border: "1px solid #ffd0d0",
+                  fontSize: 13,
+                  color: "#8b2020",
+                  lineHeight: 1.5,
+                }}
+              >
+                {parseError}
+              </div>
+            )}
+
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, margin: "20px 0 26px" }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: S.accent, flexShrink: 0, marginTop: 6 }} />
+              <div style={{ fontSize: 13, lineHeight: 1.55, color: S.secondary }}>
+                This gets read once to pull out the numbers — we don&apos;t save it anywhere.
+              </div>
+            </div>
+
+            <button
+              onClick={() => { if (file && !parseError) setStep("review"); }}
+              style={primaryBtn(!!file && !parseError)}
+            >
+              Read my spreadsheet
+            </button>
+          </div>
+        )}
+
+        {/* ── REVIEW & EXCLUDE ───────────────────────────────────────── */}
+        {step === "review" && sheet && (
+          <div style={{ marginTop: 20 }}>
+            <div
+              onClick={() => setStep("upload")}
+              style={{ fontSize: 13, color: S.muted, cursor: "pointer", marginBottom: 18 }}
+            >
+              ← Back
+            </div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.01em", margin: "0 0 8px" }}>
+              Quick check before we do the maths
+            </h1>
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: S.secondary, margin: "0 0 20px" }}>
+              We&apos;ve had a look at your file. Before we work out your tax, have a quick squiz
+              and fix anything we&apos;ve got wrong.
+            </p>
+
+            {/* Sheet picker */}
+            {parseResult && parseResult.sheets.length > 1 && (
+              <>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: S.muted, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 10 }}>
+                  Which tab has your transactions
+                </div>
+                <div style={{ background: S.white, border: `1px solid ${S.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
+                  <div style={{ fontSize: 13, color: S.body, marginBottom: 10 }}>
+                    Your file has a few tabs. Which one has your transactions?
+                  </div>
+                  <select
+                    value={selectedSheetName}
+                    onChange={(e) => handleSheetChange(e.target.value)}
+                    style={{ width: "100%", padding: "9px 10px", borderRadius: 7, border: `1px solid ${S.border}`, fontSize: 13.5, background: S.bg, color: S.dark, fontFamily: "inherit" }}
+                  >
+                    {parseResult.sheets.map((s) => (
+                      <option key={s.name} value={s.name}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
+
+            {/* Column mapping */}
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: S.muted, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 10 }}>
+              How we read your columns
+            </div>
+            <div style={{ background: S.white, border: `1px solid ${S.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 14, display: "flex", flexDirection: "column", gap: 12 }}>
+              {sheet.columnMapping.incomeCol && sheet.columnMapping.expenseCol ? (
+                <>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                    <span style={{ fontSize: 13.5, color: S.body }}>Money in</span>
+                    <select value={incomeCol} onChange={(e) => setIncomeCol(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${S.border}`, fontSize: 13, background: S.bg, color: S.dark, fontFamily: "inherit" }}>
+                      {sheet.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                    <span style={{ fontSize: 13.5, color: S.body }}>Money out</span>
+                    <select value={expenseCol} onChange={(e) => setExpenseCol(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${S.border}`, fontSize: 13, background: S.bg, color: S.dark, fontFamily: "inherit" }}>
+                      {sheet.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                  <span style={{ fontSize: 13.5, color: S.body }}>Amount column</span>
+                  <select value={amountCol} onChange={(e) => setAmountCol(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${S.border}`, fontSize: 13, background: S.bg, color: S.dark, fontFamily: "inherit" }}>
+                    {sheet.headers.map((h) => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Balance column notice */}
+            {balanceColName && (
+              <div style={{ display: "flex", alignItems: "center", gap: 10, background: S.callout, borderRadius: 10, padding: "12px 14px", marginBottom: 20 }}>
+                <span style={{ fontSize: 13, color: S.green, flexShrink: 0 }}>✓</span>
+                <div style={{ fontSize: 12.5, lineHeight: 1.5, color: S.body }}>
+                  We spotted a running balance column ({balanceColName}) — we&apos;re leaving that out (it&apos;s not income). Ignored.
+                </div>
+              </div>
+            )}
+
+            {/* Period */}
+            {dateRange && (
+              <div style={{ background: S.white, border: `1px solid ${S.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 22 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: S.dark, marginBottom: 4 }}>
+                  This file covers {periodLabel(dateRange.start, dateRange.end, sheet.periodMonths)}.
+                </div>
+                <div style={{ fontSize: 12.5, color: S.muted, lineHeight: 1.5 }}>
+                  Heads up: your set-aside below is for this period only, not a full year.
+                </div>
+              </div>
+            )}
+
+            {/* Two-FY warning */}
+            {twoFY && (
+              <div style={{ background: S.callout, borderRadius: 10, padding: "12px 14px", marginBottom: 22 }}>
+                <div style={{ fontSize: 12.5, lineHeight: 1.5, color: S.body }}>
+                  This data spans two tax years. We&apos;re treating it as one continuous period for this estimate.
+                </div>
+              </div>
+            )}
+
+            {/* Excluded rows */}
+            {excludedRows.length > 0 && (
+              <>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: S.muted, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                    Not income or expenses
+                  </div>
+                  <div style={{ fontSize: 12, color: S.muted }}>
+                    {excludedRows.filter((r) => r.excluded).length} excluded
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 1, background: S.border, borderRadius: 12, overflow: "hidden", marginBottom: 18 }}>
+                  {excludedRows.map((row) => (
+                    <div
+                      key={row.rowIndex}
+                      onClick={() =>
+                        setExcludedRows((prev) =>
+                          prev.map((r) => r.rowIndex === row.rowIndex ? { ...r, excluded: !r.excluded } : r)
+                        )
+                      }
+                      style={{ background: S.white, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}
+                    >
+                      <span
+                        style={{
+                          width: 20, height: 20, borderRadius: 5, flexShrink: 0,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 12, color: S.darkGreen,
+                          border: `1.5px solid ${row.excluded ? "#d6d1c3" : S.selectedBorder}`,
+                          background: row.excluded ? S.bg : S.accent,
+                        }}
+                      >
+                        {!row.excluded ? "✓" : ""}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 500, color: S.dark, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {row.description}
+                        </div>
+                        {row.excluded && (
+                          <div style={{ fontSize: 11.5, color: S.muted, marginTop: 2 }}>{row.reason}</div>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: row.excluded ? S.veryMuted : S.dark, whiteSpace: "nowrap" }}>
+                        {row.amount >= 0 ? "+" : "\u2212"}{fmtAUD(Math.abs(row.amount))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <div style={{ background: S.callout, borderRadius: 10, padding: "14px 16px", marginBottom: 26 }}>
+              <div style={{ fontSize: 13, lineHeight: 1.55, color: S.body }}>
+                <strong>Why this matters:</strong> if you move $2,000 from your business account to your personal one, that&apos;s not income — but a spreadsheet can&apos;t tell. Taking these out keeps your estimate from being overblown.
+              </div>
+            </div>
+
+            <button onClick={() => setStep("income")} style={primaryBtn(true)}>
+              Looks right — work out my tax
+            </button>
+          </div>
+        )}
+
+        {/* ── ABOUT YOUR INCOME ──────────────────────────────────────── */}
+        {step === "income" && (
+          <div style={{ marginTop: 60 }}>
+            <div onClick={() => setStep("review")} style={{ fontSize: 13, color: S.muted, cursor: "pointer", marginBottom: 18 }}>
+              ← Back
+            </div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.01em", margin: "0 0 6px" }}>
+              One last thing
+            </h1>
+            <div style={{ fontSize: 12, color: S.veryMuted, marginBottom: 14 }}>
+              Built for sole traders and side hustles taxed at personal rates.
+            </div>
+            <p style={{ fontSize: 15, lineHeight: 1.6, color: S.body, margin: "0 0 22px" }}>
+              Is this business your only income this year — or do you also earn a wage or salary somewhere else?
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+              {(["only", "other"] as IncomeAnswer[]).map((key) => (
+                <div
+                  key={key}
+                  onClick={() => { setIncomeAnswer(key); if (key === "only") setIncomeBand(null); }}
+                  style={optionCard(incomeAnswer === key)}
+                >
+                  <span style={optionDot(incomeAnswer === key)} />
+                  <span style={{ fontSize: 14.5, fontWeight: 500, color: S.dark }}>
+                    {key === "only" ? "This is my only income" : "I also earn a wage/salary elsewhere"}
+                  </span>
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Privacy note */}
-          <p className="text-xs text-[#6B7280] text-center">
-            Your file isn&apos;t kept. We&apos;re not connected to the ATO.
-            Everything runs in your browser — nothing leaves your device.
-          </p>
-        </div>
-      </main>
-    );
-  }
-
-  if (step === "upload") {
-    return (
-      <main className="min-h-screen bg-[#FAF9F6] flex flex-col items-center px-5 py-16">
-        <div className="w-full max-w-xl">
-          <button
-            onClick={() => setStep("landing")}
-            className="text-sm text-[#6B7280] hover:text-[#1C1C1C] mb-8 flex items-center gap-1"
-          >
-            ← Back
-          </button>
-
-          <div className="mb-10">
-            <span className="text-xl font-bold tracking-tight text-[#1C1C1C]">
-              sm<span className="text-[#84CC16]">easy</span>
-            </span>
-          </div>
-
-          <h2 className="text-2xl font-bold text-[#1C1C1C] mb-2">Upload your file</h2>
-          <p className="text-[#6B7280] mb-8">
-            A bank CSV, MYOB export, Xero report, or any spreadsheet with dates and amounts.
-          </p>
-
-          {/* Drop zone */}
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-2xl p-12 text-center transition-colors cursor-pointer ${
-              isDragging
-                ? "border-[#84CC16] bg-[#f0fdf4]"
-                : "border-gray-200 bg-white hover:border-[#84CC16]"
-            }`}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <div className="text-4xl mb-3">📂</div>
-            <p className="font-semibold text-[#1C1C1C] mb-1">Drop your file here</p>
-            <p className="text-sm text-[#6B7280]">.csv, .xlsx, or .xls — or click to browse</p>
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,.xlsx,.xls"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFile(file);
-            }}
-          />
-
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="mt-4 w-full bg-[#84CC16] text-white font-semibold py-3 rounded-xl hover:bg-[#65a30d] transition-colors"
-          >
-            Choose file
-          </button>
-
-          {uploadError && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-700">
-              {uploadError}
-            </div>
-          )}
-
-          <p className="text-xs text-[#6B7280] text-center mt-8">
-            Your file stays in your browser. Nothing is uploaded to a server.
-          </p>
-        </div>
-      </main>
-    );
-  }
-
-  if (step === "review") {
-    if (!currentSheet || !parseResult) return null;
-    const { columnMapping, dateRange, periodMonths, headers } = currentSheet;
-
-    return (
-      <main className="min-h-screen bg-[#FAF9F6] px-5 py-12">
-        <div className="max-w-2xl mx-auto">
-          <button
-            onClick={() => setStep("upload")}
-            className="text-sm text-[#6B7280] hover:text-[#1C1C1C] mb-8 flex items-center gap-1"
-          >
-            ← Back
-          </button>
-
-          <div className="mb-8">
-            <span className="text-xl font-bold tracking-tight text-[#1C1C1C]">
-              sm<span className="text-[#84CC16]">easy</span>
-            </span>
-          </div>
-
-          <h2 className="text-2xl font-bold text-[#1C1C1C] mb-1">Review what we found</h2>
-          <p className="text-[#6B7280] mb-8">
-            Check the details below before we calculate your estimate.
-          </p>
-
-          {/* Sheet picker */}
-          {parseResult.sheets.length > 1 && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-5">
-              <label className="block text-sm font-semibold text-[#1C1C1C] mb-2">Sheet</label>
-              <select
-                value={selectedSheetName}
-                onChange={(e) => handleSheetChange(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#1C1C1C] bg-white"
-              >
-                {parseResult.sheets.map((s) => (
-                  <option key={s.name} value={s.name}>
-                    {s.name} ({s.rowCount} rows)
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Column mapping */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-5">
-            <h3 className="text-sm font-semibold text-[#1C1C1C] mb-3">Detected columns</h3>
-            <div className="space-y-2 text-sm">
-              <ColRow label="Date" value={columnMapping.dateCol} headers={headers} />
-              <ColRow
-                label="Description"
-                value={columnMapping.descriptionCol}
-                headers={headers}
-              />
-              {columnMapping.incomeCol && columnMapping.expenseCol ? (
-                <>
-                  <ColRow
-                    label="Income"
-                    value={columnMapping.incomeCol}
-                    headers={headers}
-                  />
-                  <ColRow
-                    label="Expenses"
-                    value={columnMapping.expenseCol}
-                    headers={headers}
-                  />
-                </>
-              ) : (
-                <ColRow label="Amount" value={columnMapping.amountCol} headers={headers} />
-              )}
-              {columnMapping.balanceCol && (
-                <div className="flex items-center gap-2">
-                  <span className="text-[#6B7280] w-28 shrink-0">Balance</span>
-                  <span className="font-medium text-[#1C1C1C] line-through opacity-50">
-                    {columnMapping.balanceCol}
-                  </span>
-                  <span className="text-xs text-[#6B7280] bg-gray-50 px-2 py-0.5 rounded">
-                    excluded — running balance
-                  </span>
+            {incomeAnswer === "other" && (
+              <>
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: S.dark, marginBottom: 10 }}>
+                  Roughly what do you earn from that job, before tax?
                 </div>
-              )}
-            </div>
-
-            {parseResult.warnings.length > 0 && (
-              <div className="mt-3 text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 space-y-1">
-                {parseResult.warnings.map((w, i) => (
-                  <p key={i}>{w}</p>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Period */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-5">
-            <h3 className="text-sm font-semibold text-[#1C1C1C] mb-2">Period covered</h3>
-            {dateRange ? (
-              <p className="text-sm text-[#1C1C1C]">
-                <span className="font-medium">{fmtDate(dateRange.start)}</span>
-                {" "}&ndash;{" "}
-                <span className="font-medium">{fmtDate(dateRange.end)}</span>
-                <span className="text-[#6B7280] ml-2">
-                  ({periodMonths} month{periodMonths !== 1 ? "s" : ""})
-                </span>
-              </p>
-            ) : (
-              <p className="text-sm text-[#6B7280]">
-                Could not detect dates — using 12-month period.
-              </p>
-            )}
-
-            {fySpan && (
-              <div className="mt-3 text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
-                This data spans two tax years (FY{fySpan.startFY} and FY{fySpan.endFY}). We&apos;re
-                treating it as one continuous period for this estimate.
-              </div>
-            )}
-          </div>
-
-          {/* Income/expense preview */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-5">
-            <h3 className="text-sm font-semibold text-[#1C1C1C] mb-3">Transaction summary</h3>
-            <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span className="text-[#6B7280]">Total income</span>
-                <span className="font-medium text-[#1C1C1C]">{fmtCurrency(previewIncome)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#6B7280]">Total expenses</span>
-                <span className="font-medium text-[#1C1C1C]">{fmtCurrency(previewExpenses)}</span>
-              </div>
-              <div className="flex justify-between border-t border-gray-100 pt-2 mt-2">
-                <span className="font-semibold text-[#1C1C1C]">Net income</span>
-                <span
-                  className={`font-semibold ${previewNet >= 0 ? "text-[#1C1C1C]" : "text-red-600"}`}
-                >
-                  {fmtCurrency(previewNet)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Transfer exclusions */}
-          {transferRows.length > 0 && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-5">
-              <h3 className="text-sm font-semibold text-[#1C1C1C] mb-1">
-                Auto-excluded transfers
-              </h3>
-              <p className="text-xs text-[#6B7280] mb-3">
-                These look like transfers, owner drawings, or internal movements — not real income
-                or expenses. We&apos;ve excluded them. Tick any you want to include.
-              </p>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {transferRows.slice(0, 30).map((row) => {
-                  const isIncluded = manuallyIncluded.has(row.rowIndex);
-                  return (
-                    <label
-                      key={row.rowIndex}
-                      className="flex items-start gap-2 cursor-pointer group"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isIncluded}
-                        onChange={() => toggleRowExclusion(row.rowIndex, !isIncluded)}
-                        className="mt-0.5 shrink-0 accent-[#84CC16]"
-                      />
-                      <div className="text-xs">
-                        <span className="text-[#1C1C1C]">
-                          {row.description || "(no description)"}
-                        </span>
-                        {row.amount !== null && (
-                          <span
-                            className={`ml-2 ${row.amount >= 0 ? "text-green-600" : "text-red-600"}`}
-                          >
-                            {fmtCurrency(row.amount)}
-                          </span>
-                        )}
-                        {row.date && (
-                          <span className="ml-2 text-[#6B7280]">{fmtDate(row.date)}</span>
-                        )}
-                      </div>
-                    </label>
-                  );
-                })}
-                {transferRows.length > 30 && (
-                  <p className="text-xs text-[#6B7280]">
-                    ... and {transferRows.length - 30} more excluded items
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          <button
-            onClick={() => setStep("income")}
-            className="w-full bg-[#84CC16] text-white font-semibold py-4 rounded-xl hover:bg-[#65a30d] transition-colors text-lg"
-          >
-            Looks right — continue
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  if (step === "income") {
-    return (
-      <main className="min-h-screen bg-[#FAF9F6] px-5 py-12">
-        <div className="max-w-xl mx-auto">
-          <button
-            onClick={() => setStep("review")}
-            className="text-sm text-[#6B7280] hover:text-[#1C1C1C] mb-8 flex items-center gap-1"
-          >
-            ← Back
-          </button>
-
-          <div className="mb-8">
-            <span className="text-xl font-bold tracking-tight text-[#1C1C1C]">
-              sm<span className="text-[#84CC16]">easy</span>
-            </span>
-          </div>
-
-          <h2 className="text-2xl font-bold text-[#1C1C1C] mb-2">One more question</h2>
-          <p className="text-[#6B7280] mb-8">
-            Your tax bracket depends on your total income — business plus anything else.
-          </p>
-
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 mb-6">
-            <h3 className="text-base font-semibold text-[#1C1C1C] mb-4">
-              Is this your only income, or do you also earn a wage or salary?
-            </h3>
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="otherIncome"
-                  checked={hasOtherIncome === false}
-                  onChange={() => {
-                    setHasOtherIncome(false);
-                    setOtherIncomeBand("none");
-                  }}
-                  className="accent-[#84CC16]"
-                />
-                <span className="text-sm text-[#1C1C1C]">This is my only income</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="otherIncome"
-                  checked={hasOtherIncome === true}
-                  onChange={() => setHasOtherIncome(true)}
-                  className="accent-[#84CC16]"
-                />
-                <span className="text-sm text-[#1C1C1C]">
-                  I also earn a wage or salary elsewhere
-                </span>
-              </label>
-            </div>
-
-            {hasOtherIncome === true && (
-              <div className="mt-5 pt-5 border-t border-gray-100">
-                <p className="text-sm font-medium text-[#1C1C1C] mb-3">
-                  Roughly, what band is that other income in?
-                </p>
-                <div className="space-y-2">
-                  {[
-                    { value: "under45k" as OtherIncomeBand, label: "Under $45,000" },
-                    { value: "45k-135k" as OtherIncomeBand, label: "$45,000 – $135,000" },
-                    { value: "above135k" as OtherIncomeBand, label: "Above $135,000" },
-                  ].map((opt) => (
-                    <label key={opt.value} className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="incomeBand"
-                        checked={otherIncomeBand === opt.value}
-                        onChange={() => setOtherIncomeBand(opt.value)}
-                        className="accent-[#84CC16]"
-                      />
-                      <span className="text-sm text-[#1C1C1C]">{opt.label}</span>
-                    </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+                  {(["under45k", "45k-135k", "above135k"] as IncomeBand[]).map((band) => (
+                    <div key={band} onClick={() => setIncomeBand(band)} style={optionCard(incomeBand === band)}>
+                      <span style={optionDot(incomeBand === band)} />
+                      <span style={{ fontSize: 14.5, fontWeight: 500, color: S.dark }}>{bandLabels[band]}</span>
+                    </div>
                   ))}
                 </div>
-              </div>
+              </>
             )}
-          </div>
 
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 text-xs text-blue-700">
-            <strong>Why this matters:</strong> Your business income stacks on top of other income
-            for tax purposes. If you already earn a salary, even a modest side income might be
-            taxed at a higher bracket. We use your answer to pick the right marginal rate.
-          </div>
+            <div style={{ background: S.callout, borderRadius: 10, padding: "14px 16px", marginBottom: 28 }}>
+              <div style={{ fontSize: 13, lineHeight: 1.55, color: S.body }}>
+                This matters a lot. If you&apos;ve already got a job, your business profit stacks on top of it and gets taxed higher — so knowing roughly what you earn there lets us set aside the right amount, not just a guess.
+              </div>
+            </div>
 
-          <button
-            disabled={
-              hasOtherIncome === null ||
-              (hasOtherIncome === true && otherIncomeBand === "none")
-            }
-            onClick={() => setStep("processing")}
-            className="w-full bg-[#84CC16] text-white font-semibold py-4 rounded-xl hover:bg-[#65a30d] transition-colors text-lg disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Calculate my set-aside
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  if (step === "processing") {
-    return (
-      <main className="min-h-screen bg-[#FAF9F6] flex items-center justify-center px-5">
-        <div className="text-center">
-          <div className="text-5xl mb-6 animate-pulse">🧮</div>
-          <h2 className="text-2xl font-bold text-[#1C1C1C] mb-2">
-            Crunching your numbers&hellip;
-          </h2>
-          <p className="text-[#6B7280]">Applying ATO rates to your period income.</p>
-        </div>
-      </main>
-    );
-  }
-
-  if (step === "results") {
-    if (!taxEstimate || !currentSheet) return null;
-
-    const rateDisplay = fmtPercent(fromRatePercent(sliderPct));
-
-    return (
-      <main className="min-h-screen bg-[#FAF9F6] px-5 py-12">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <span className="text-xl font-bold tracking-tight text-[#1C1C1C]">
-              sm<span className="text-[#84CC16]">easy</span>
-            </span>
             <button
               onClick={() => {
-                setStep("landing");
-                setParseResult(null);
-                setTaxEstimate(null);
-                setCurrentSheet(null);
-                setHasOtherIncome(null);
-                setOtherIncomeBand("none");
+                if (incomeAnswer === "only" || (incomeAnswer === "other" && !!incomeBand)) {
+                  startProcessing();
+                }
               }}
-              className="text-sm text-[#6B7280] hover:text-[#1C1C1C]"
+              style={primaryBtn(incomeAnswer === "only" || (incomeAnswer === "other" && !!incomeBand))}
             >
-              Start over
+              Show me where I stand
             </button>
           </div>
+        )}
 
-          {/* Hero result */}
-          <div className="bg-white border border-gray-100 rounded-3xl p-8 mb-5 text-center">
-            <p className="text-sm text-[#6B7280] mb-1">Recommended set-aside</p>
-            {taxEstimate.isZeroFloor ? (
-              <div>
-                <p className="text-5xl font-bold text-[#84CC16] mb-2">$0</p>
-                <p className="text-sm text-[#6B7280]">
-                  Net income is zero or negative — no tax set-aside needed for this period.
-                </p>
-              </div>
-            ) : (
-              <div>
-                <p className="text-6xl font-bold text-[#84CC16] mb-2">
-                  {fmtCurrency(sliderSetAside)}
-                </p>
-                <p className="text-sm text-[#6B7280]">at {rateDisplay} marginal rate</p>
-              </div>
-            )}
-
-            {currentSheet.dateRange && (
-              <p className="text-sm text-[#6B7280] mt-3">
-                Covers {fmtDate(currentSheet.dateRange.start)} –{" "}
-                {fmtDate(currentSheet.dateRange.end)}, about {currentSheet.periodMonths} month
-                {currentSheet.periodMonths !== 1 ? "s" : ""}
-              </p>
-            )}
-            <p className="text-xs text-[#6B7280] mt-1">
-              Estimated using FY{taxEstimate.fyUsed} rates
-            </p>
+        {/* ── PROCESSING ─────────────────────────────────────────────── */}
+        {step === "processing" && (
+          <div style={{ marginTop: 100, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+            <div
+              style={{
+                width: 44, height: 44, borderRadius: "50%",
+                border: `3px solid ${S.border}`, borderTopColor: S.accent,
+                animation: "smspin 0.9s linear infinite",
+                marginBottom: 26,
+              }}
+            />
+            <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>
+              Working out where you stand…
+            </div>
+            <div style={{ fontSize: 13.5, color: S.muted }}>
+              Nothing&apos;s being saved while we do this.
+            </div>
           </div>
+        )}
 
-          {/* Income breakdown */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 mb-5">
-            <h3 className="text-sm font-semibold text-[#1C1C1C] mb-3">Income breakdown</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-[#6B7280]">Income (period)</span>
-                <span className="font-medium text-[#1C1C1C]">{fmtCurrency(resultIncome)}</span>
+        {/* ── RESULTS ────────────────────────────────────────────────── */}
+        {step === "results" && estimate && (
+          <div style={{ marginTop: 20 }}>
+            <h1 style={{ fontSize: 19, fontWeight: 700, letterSpacing: "-0.01em", margin: "0 0 18px" }}>
+              Here&apos;s where you stand
+            </h1>
+
+            {/* Hero card */}
+            <div style={{ background: S.card, borderRadius: 16, padding: "26px 24px", marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: S.accent, letterSpacing: "0.02em", marginBottom: 8 }}>
+                Put aside for tax
               </div>
-              <div className="flex justify-between">
-                <span className="text-[#6B7280]">Expenses (period)</span>
-                <span className="font-medium text-[#1C1C1C]">{fmtCurrency(resultExpenses)}</span>
-              </div>
-              <div className="flex justify-between border-t border-gray-100 pt-2 mt-1">
-                <span className="font-semibold text-[#1C1C1C]">Net income (period)</span>
-                <span
-                  className={`font-semibold ${taxEstimate.netIncome >= 0 ? "text-[#1C1C1C]" : "text-red-600"}`}
-                >
-                  {fmtCurrency(taxEstimate.netIncome)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#6B7280]">Annualised income</span>
-                <span className="font-medium text-[#1C1C1C]">
-                  {fmtCurrency(taxEstimate.annualisedIncome)}
-                </span>
-              </div>
-              {hasOtherIncome && taxEstimate.totalIncome > taxEstimate.annualisedIncome && (
-                <div className="flex justify-between">
-                  <span className="text-[#6B7280]">Other income (floor estimate)</span>
-                  <span className="font-medium text-[#1C1C1C]">
-                    {fmtCurrency(taxEstimate.totalIncome - taxEstimate.annualisedIncome)}
-                  </span>
-                </div>
+              {estimate.isZeroFloor ? (
+                <>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: S.white, letterSpacing: "-0.01em", lineHeight: 1.3, marginBottom: 8 }}>
+                    Nothing to set aside right now
+                  </div>
+                  <div style={{ fontSize: 13, color: "#c9c2ae", lineHeight: 1.55 }}>
+                    Your recorded business expenses equal or exceed your income for this period, so there&apos;s no income tax to put aside. Still worth keeping an eye on as things change.
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 42, fontWeight: 700, color: S.white, letterSpacing: "-0.02em", lineHeight: 1 }}>
+                    {fmtAUD(setAsideDollars)}
+                  </div>
+                  <div style={{ fontSize: 13, color: "#c9c2ae", marginTop: 10, lineHeight: 1.55 }}>
+                    {dateRange
+                      ? `For ${periodLabel(dateRange.start, dateRange.end, sheet?.periodMonths ?? 1)}, based on your income and expenses minus the bits we took out.`
+                      : "Based on your income and expenses minus the bits we took out."}{" "}
+                    It&apos;s a rough guide to keep you safe — not exact, and not tax advice. Worth confirming with your accountant.
+                  </div>
+                  <div style={{ fontSize: 11.5, color: "#8a8474", marginTop: 10 }}>
+                    Estimated using FY{fy} tax rates. Includes the standard 2% Medicare Levy.
+                  </div>
+                </>
               )}
-              <div className="flex justify-between">
-                <span className="text-[#6B7280]">Total income (annualised, for bracket)</span>
-                <span className="font-medium text-[#1C1C1C]">
-                  {fmtCurrency(taxEstimate.totalIncome)}
-                </span>
+            </div>
+
+            {/* Rate slider */}
+            {!estimate.isZeroFloor && (
+              <div style={{ background: S.white, border: `1px solid ${S.border}`, borderRadius: 12, padding: "16px 18px", marginBottom: 14 }}>
+                <div style={{ fontSize: 13, color: S.body, marginBottom: 10 }}>
+                  We&apos;ve used <strong>{rate}%</strong> based on what you told us. Slide it if your situation&apos;s different.
+                </div>
+                <input
+                  type="range"
+                  min={15}
+                  max={47}
+                  step={1}
+                  value={rate}
+                  onChange={(e) => setRate(parseInt(e.target.value, 10))}
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: S.veryMuted, marginTop: 4 }}>
+                  <span>15%</span>
+                  <span>47%</span>
+                </div>
               </div>
+            )}
+
+            {/* Income breakdown */}
+            <div style={{ background: S.white, border: `1px solid ${S.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13.5, color: S.body }}>
+                <span>Income</span>
+                <span style={{ fontWeight: 600, color: S.green }}>{fmtAUD(totalIncome)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13.5, color: S.body }}>
+                <span>Expenses</span>
+                <span style={{ fontWeight: 600 }}>\u2212{fmtAUD(totalExpenses)}</span>
+              </div>
+              <div style={{ borderTop: `1px solid ${S.border}`, paddingTop: 8, marginTop: 2, display: "flex", justifyContent: "space-between", fontSize: 13.5 }}>
+                <span style={{ fontWeight: 600 }}>Net income</span>
+                <span style={{ fontWeight: 700 }}>{fmtAUD(totalIncome - totalExpenses)}</span>
+              </div>
+            </div>
+
+            {/* GST callout */}
+            <div style={{ display: "flex", gap: 10, background: S.callout, borderRadius: 10, padding: "14px 16px", marginBottom: 24 }}>
+              <span style={{ fontSize: 14, flexShrink: 0 }}>ⓘ</span>
+              <div style={{ fontSize: 12.5, lineHeight: 1.55, color: S.body }}>
+                Heads up on GST: this is income tax only, and we&apos;ve assumed your figures don&apos;t include GST. If you&apos;re registered for GST (usually once you&apos;re over $75,000 annual turnover), your bank amounts include GST that isn&apos;t yours to keep — treat this number as on the high side, and remember your BAS is separate.
+              </div>
+            </div>
+
+            {/* Flags */}
+            {flags.length > 0 && (
+              <>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: S.muted, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 10 }}>
+                  Worth a look
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
+                  {flags.map((flag, i) => (
+                    <div key={i} style={{ background: S.white, border: `1px solid ${S.border}`, borderRadius: 12, padding: "16px 18px" }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: S.dark, marginBottom: 4 }}>
+                        Worth a look:{" "}
+                        {flag.type === "duplicate" ? "possible double-up"
+                          : flag.type === "outlier" ? "unusual spike"
+                          : "notably large expense"}
+                      </div>
+                      <div style={{ fontSize: 13.5, lineHeight: 1.55, color: S.secondary }}>
+                        {flag.message}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            {flags.length === 0 && (
+              <div style={{ fontSize: 13.5, color: S.muted, marginBottom: 22, padding: "14px 16px", background: S.white, border: `1px solid ${S.border}`, borderRadius: 12 }}>
+                Nothing flagged — your data looks clean.
+              </div>
+            )}
+
+            {/* Copy for accountant */}
+            <button
+              onClick={copySummary}
+              style={{ width: "100%", padding: 14, borderRadius: 10, border: `1px solid ${S.border}`, background: S.white, fontSize: 14, fontWeight: 600, color: S.dark, cursor: "pointer", marginBottom: 20, fontFamily: "inherit" }}
+            >
+              {copyDone ? "Copied ✓" : "Copy a summary for my accountant"}
+            </button>
+
+            {/* File deleted notice */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, background: S.successBg, borderRadius: 10, padding: "14px 16px", marginBottom: 28 }}>
+              <span style={{ fontSize: 16, color: S.green, flexShrink: 0 }}>✓</span>
+              <div style={{ fontSize: 13, color: S.green, lineHeight: 1.5 }}>
+                Your file&apos;s been deleted — this session was all there was. We&apos;re not wired to the ATO.
+              </div>
+            </div>
+
+            {/* Email capture */}
+            <div style={{ borderTop: `1px solid ${S.border}`, paddingTop: 22 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
+                Want to check this each month?
+              </div>
+              <div style={{ fontSize: 13, color: S.muted, marginBottom: 12, lineHeight: 1.5 }}>
+                Leave your email and we&apos;ll let you know if we build a monthly version. No spam, no account.
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@business.com.au"
+                  style={{ flex: 1, minWidth: 0, padding: "11px 12px", borderRadius: 8, border: `1px solid ${S.border}`, fontSize: 13.5, background: S.white, color: S.dark, fontFamily: "inherit" }}
+                />
+                <button
+                  onClick={() => { if (email) setEmailDone(true); }}
+                  style={{ padding: "11px 16px", borderRadius: 8, border: `1px solid ${S.border}`, background: S.white, fontSize: 13.5, fontWeight: 600, color: S.dark, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit" }}
+                >
+                  {emailDone ? "Saved ✓" : "Notify me"}
+                </button>
+              </div>
+            </div>
+
+            <div
+              onClick={reset}
+              style={{ textAlign: "center", fontSize: 13, color: S.muted, marginTop: 30, cursor: "pointer", textDecoration: "underline" }}
+            >
+              Check another spreadsheet
             </div>
           </div>
+        )}
 
-          {/* Rate slider */}
-          {!taxEstimate.isZeroFloor && (
-            <div className="bg-white border border-gray-100 rounded-2xl p-6 mb-5">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="text-sm font-semibold text-[#1C1C1C]">Adjust the rate</h3>
-                <span className="text-lg font-bold text-[#84CC16]">{rateDisplay}</span>
-              </div>
-              <p className="text-xs text-[#6B7280] mb-4">
-                We pre-filled your marginal rate. Slide to explore different scenarios.
-              </p>
-              <input
-                type="range"
-                min={15}
-                max={47}
-                step={1}
-                value={sliderPct}
-                onChange={(e) => setSliderPct(Number(e.target.value))}
-                className="w-full accent-[#84CC16]"
-              />
-              <div className="flex justify-between text-xs text-[#6B7280] mt-1">
-                <span>15%</span>
-                <span>47%</span>
-              </div>
-              <div className="mt-4 flex justify-between items-center bg-[#FAF9F6] rounded-xl px-4 py-3">
-                <span className="text-sm text-[#6B7280]">Set aside at {rateDisplay}</span>
-                <span className="text-xl font-bold text-[#84CC16]">
-                  {fmtCurrency(sliderSetAside)}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Flags */}
-          {flags.length > 0 && (
-            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5 mb-5">
-              <h3 className="text-sm font-semibold text-amber-900 mb-2">Worth a check</h3>
-              <div className="space-y-2">
-                {flags.map((flag, i) => (
-                  <p key={i} className="text-xs text-amber-800">
-                    {flag.type === "duplicate" && "⚠️ "}
-                    {flag.type === "outlier" && "📊 "}
-                    {flag.type === "large-expense" && "💸 "}
-                    {flag.message}
-                  </p>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* GST + Medicare + disclaimer caveats */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-5 space-y-3 text-xs text-[#6B7280]">
-            <div>
-              <span className="font-semibold text-[#1C1C1C]">GST: </span>
-              Figures assumed GST-exclusive. If you&apos;re registered for GST (generally required
-              over $75k annual turnover), bank amounts include GST that isn&apos;t yours — treat
-              this number as high. Your BAS is separate.
-            </div>
-            <div>
-              <span className="font-semibold text-[#1C1C1C]">Medicare Levy: </span>
-              Includes the standard 2% Medicare Levy.
-            </div>
-            <div>
-              <span className="font-semibold text-[#1C1C1C]">Rough estimate only: </span>
-              This is not formal tax advice. Deductible expenses, offsets, and your exact income
-              may differ. Verify with your accountant.
-            </div>
-          </div>
-
-          {/* Copy for accountant */}
-          <button
-            onClick={handleCopy}
-            className="w-full border-2 border-[#84CC16] text-[#1C1C1C] font-semibold py-3 rounded-xl hover:bg-[#f0fdf4] transition-colors mb-3 text-sm"
-          >
-            {copyDone ? "Copied to clipboard!" : "Copy summary for my accountant"}
-          </button>
-
-          <button
-            onClick={() => setStep("income")}
-            className="w-full text-sm text-[#6B7280] hover:text-[#1C1C1C] py-2"
-          >
-            ← Adjust income question
-          </button>
-
-          {/* Privacy footer */}
-          <p className="text-xs text-[#6B7280] text-center mt-8">
-            Your file wasn&apos;t kept. We&apos;re not wired to the ATO.
-            All calculations ran in your browser.
-          </p>
-        </div>
-      </main>
-    );
-  }
-
-  return null;
+      </div>
+    </div>
+  );
 }
