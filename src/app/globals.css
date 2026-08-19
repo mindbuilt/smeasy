@@ -19,6 +19,7 @@ body {
 }
 
 @keyframes smspin { to { transform: rotate(360deg); } }
+@keyframes smtoast { 0% { opacity:0; transform:translateX(-50%) translateY(6px); } 12% { opacity:1; transform:translateX(-50%) translateY(0); } 80% { opacity:1; } 100% { opacity:0; } }
 
 input[type=range] {
   -webkit-appearance: none;
