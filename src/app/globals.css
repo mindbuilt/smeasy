@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --color-accent: #84CC16;
+  --color-surface: #FAF9F6;
+}
+
+:root {
+  --background: #FAF9F6;
+  --foreground: #1C1C1C;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
