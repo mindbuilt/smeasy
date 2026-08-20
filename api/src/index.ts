@@ -12,6 +12,7 @@ import staffPortalRouter from "./routes/staffPortal";
 import publishRouter from "./routes/publish";
 import exportRouter from "./routes/export";
 import rostersRouter from "./routes/rosters";
+import publicRosterRouter from "./routes/publicRoster";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -32,6 +33,7 @@ app.use("/staff", staffPortalRouter);   // GET /staff/roster, GET /staff/colleag
 app.use("/publish", publishRouter);
 app.use("/export", exportRouter);
 app.use("/rosters", rostersRouter);
+app.use("/public/roster", publicRosterRouter);
 
 app.listen(PORT, () => {
   console.log(`Smeasy API running on port ${PORT}`);
