@@ -52,11 +52,6 @@ function thisWeekStart(): string {
   return `${mon.getFullYear()}-${String(mon.getMonth() + 1).padStart(2, "0")}-${String(mon.getDate()).padStart(2, "0")}`;
 }
 
-function weekOffsetFromStart(weekStart: string, baseMonday: Date): number {
-  const [y, m, d] = weekStart.split("-").map(Number);
-  const date = new Date(y, m - 1, d);
-  return Math.round((date.getTime() - baseMonday.getTime()) / (7 * 24 * 60 * 60 * 1000));
-}
 
 async function apiFetch(path: string, token: string, options?: RequestInit) {
   const res = await fetch(`${API}${path}`, {
@@ -76,7 +71,6 @@ export default function DashboardPage() {
   const [publishing, setPublishing] = useState<number | null>(null);
 
   const currentWeek = thisWeekStart();
-  const baseMonday = getMonday(new Date());
 
   // Auth check
   useEffect(() => {
@@ -148,11 +142,8 @@ export default function DashboardPage() {
       });
   }
 
-  function openRosterWeek(weekStart: string) {
-    // Store the target week offset in sessionStorage so the rostering page can pick it up
-    const offset = weekOffsetFromStart(weekStart, baseMonday);
-    sessionStorage.setItem("smeasy_roster_week_offset", String(offset));
-    router.push("/rostering");
+  function openRosterWeek(rosterId: number) {
+    router.push(`/roster/${rosterId}/edit`);
   }
 
   function handleLogout() {
@@ -212,7 +203,7 @@ export default function DashboardPage() {
               </button>
             ) : thisWeekRoster.status === "draft" ? (
               <>
-                <button onClick={() => openRosterWeek(currentWeek)}
+                <button onClick={() => openRosterWeek(thisWeekRoster.id)}
                   style={{ padding: "9px 18px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                   Edit shifts
                 </button>
@@ -223,7 +214,7 @@ export default function DashboardPage() {
               </>
             ) : (
               <>
-                <button onClick={() => openRosterWeek(currentWeek)}
+                <button onClick={() => openRosterWeek(thisWeekRoster.id)}
                   style={{ padding: "9px 18px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                   View shifts
                 </button>
@@ -270,7 +261,7 @@ export default function DashboardPage() {
                 </div>
                 <div><span style={statusBadge(r.status)}>{r.status}</span></div>
                 <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
-                  <button onClick={() => openRosterWeek(r.weekStart.slice(0, 10))}
+                  <button onClick={() => openRosterWeek(r.id)}
                     style={{ padding: "5px 12px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
                     View
                   </button>
