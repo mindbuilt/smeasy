@@ -18,6 +18,23 @@ function mondayOf(dateStr: string): Date {
   return d;
 }
 
+// GET /rosters/:id — fetch single roster with its shifts
+router.get("/:id", async (req: AuthRequest, res: Response) => {
+  const businessId = await getBusinessId(req.userId!);
+  if (!businessId) { res.status(404).json({ error: "Business not found" }); return; }
+  const id = parseInt(req.params.id);
+  const roster = await prisma.roster.findFirst({ where: { id, businessId } });
+  if (!roster) { res.status(404).json({ error: "Not found" }); return; }
+
+  const shifts = await prisma.shift.findMany({
+    where: { businessId, date: { gte: roster.weekStart, lte: roster.weekEnd } },
+    include: { staff: { select: { name: true } } },
+    orderBy: [{ date: "asc" }, { startTime: "asc" }],
+  });
+
+  res.json({ ...roster, shifts });
+});
+
 // GET /rosters — list all rosters for business, newest first
 router.get("/", async (req: AuthRequest, res: Response) => {
   const businessId = await getBusinessId(req.userId!);
