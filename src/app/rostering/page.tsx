@@ -1,7 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+
+// ─── API ─────────────────────────────────────────────────────────────────────
+
+const API = "https://smeasy-production.up.railway.app";
+
+async function apiFetch(path: string, token: string, options?: RequestInit) {
+  const res = await fetch(`${API}${path}`, {
+    ...options,
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+  return res.json();
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -37,6 +53,10 @@ interface TimeOff {
   status: "Pending" | "Approved";
 }
 
+interface ApiStaff { id: number; name: string; email: string | null; canManage: boolean; canBeRostered: boolean; }
+interface ApiShift { id: number; staffId: number; date: string; startHour: number; endHour: number; role: string; }
+interface ApiTimeOff { id: number; staffId: number; date: string; reason: string; status: string; }
+
 type ShiftsByWeek = Record<number, Shift[]>;
 type TimeOffByWeek = Record<number, TimeOff[]>;
 
@@ -67,52 +87,6 @@ const C = {
   offColor: "#8a5a10",
   danger: "#b3261e",
 };
-
-// ─── Seed Data ────────────────────────────────────────────────────────────────
-
-const seedStaff: StaffMember[] = [
-  { id: 1, name: "Priya Nair", canManage: true, canBeRostered: true, invited: true, inviteEmail: "priya@acmecafe.com.au" },
-  { id: 2, name: "Jack O'Sullivan", canManage: false, canBeRostered: true, invited: false, inviteEmail: null },
-  { id: 3, name: "Mia Tran", canManage: false, canBeRostered: true, invited: false, inviteEmail: null },
-  { id: 4, name: "Tom Reyes", canManage: false, canBeRostered: true, invited: false, inviteEmail: null },
-  { id: 5, name: "Sarah Kim", canManage: false, canBeRostered: true, invited: false, inviteEmail: null },
-  { id: 6, name: "Liam Ngata", canManage: true, canBeRostered: false, invited: false, inviteEmail: null },
-];
-
-const seedWeek0: Shift[] = [
-  { id: "s1", staffId: 1, day: 0, start: 7, end: 15, role: "Floor" },
-  { id: "s2", staffId: 1, day: 1, start: 7, end: 15, role: "Floor" },
-  { id: "s3", staffId: 1, day: 3, start: 7, end: 15, role: "Floor" },
-  { id: "s4", staffId: 1, day: 4, start: 7, end: 15, role: "Floor" },
-  { id: "s5", staffId: 2, day: 1, start: 9, end: 17, role: "Kitchen" },
-  { id: "s6", staffId: 2, day: 2, start: 9, end: 17, role: "Kitchen" },
-  { id: "s7", staffId: 2, day: 3, start: 9, end: 17, role: "Kitchen" },
-  { id: "s8", staffId: 2, day: 5, start: 10, end: 18, role: "Kitchen" },
-  { id: "s9", staffId: 2, day: 6, start: 10, end: 18, role: "Kitchen" },
-  { id: "s10", staffId: 3, day: 0, start: 12, end: 20, role: "Barista" },
-  { id: "s11", staffId: 3, day: 3, start: 12, end: 20, role: "Barista" },
-  { id: "s12", staffId: 3, day: 4, start: 12, end: 20, role: "Barista" },
-  { id: "s13", staffId: 4, day: 0, start: 7, end: 15, role: "Floor" },
-  { id: "s14", staffId: 4, day: 1, start: 7, end: 15, role: "Floor" },
-  { id: "s15", staffId: 4, day: 2, start: 7, end: 15, role: "Floor" },
-  { id: "s16", staffId: 4, day: 5, start: 8, end: 16, role: "Floor" },
-  { id: "s17", staffId: 4, day: 6, start: 8, end: 16, role: "Floor" },
-  { id: "s18", staffId: 5, day: 2, start: 9, end: 17, role: "Barista" },
-  { id: "s19", staffId: 5, day: 3, start: 9, end: 17, role: "Barista" },
-  { id: "s20", staffId: 5, day: 4, start: 9, end: 17, role: "Barista" },
-  { id: "s21", staffId: 5, day: 5, start: 9, end: 17, role: "Barista" },
-];
-
-const seedWeek1: Shift[] = [
-  { id: "t1", staffId: 1, day: 0, start: 7, end: 15, role: "Floor" },
-  { id: "t2", staffId: 2, day: 1, start: 9, end: 17, role: "Kitchen" },
-  { id: "t3", staffId: 4, day: 2, start: 7, end: 15, role: "Floor" },
-];
-
-const seedTimeOff0: TimeOff[] = [
-  { id: "o1", staffId: 3, day: 1, reason: "Dr appointment", status: "Approved" },
-  { id: "o2", staffId: 5, day: 5, reason: "Family event", status: "Pending" },
-];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -160,9 +134,7 @@ function fmtWeekLabel(monday: Date): string {
   const dMon = monday.getDate();
   const dSun = sunday.getDate();
   const yr = sunday.getFullYear();
-  if (monday.getMonth() === sunday.getMonth()) {
-    return `${dMon}–${dSun} ${mMon} ${yr}`;
-  }
+  if (monday.getMonth() === sunday.getMonth()) return `${dMon}–${dSun} ${mMon} ${yr}`;
   return `${dMon} ${mMon} – ${dSun} ${mSun} ${yr}`;
 }
 
@@ -175,30 +147,49 @@ function generateId(): string {
   return Math.random().toString(36).slice(2, 9);
 }
 
+function dateFromOffset(monday: Date, offset: number): string {
+  const d = new Date(monday);
+  d.setDate(d.getDate() + offset);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function dayOffset(dateStr: string, monday: Date): number {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return Math.round((date.getTime() - monday.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function RosteringPage() {
-  const businessName = "Acme Café";
-
   // Auth state
-  const [appView, setAppView] = useState<AppView>("login");
+  const [token, setToken] = useState<string | null>(() =>
+    typeof window !== "undefined" ? localStorage.getItem("smeasy_token") : null
+  );
+  const [businessName, setBusinessName] = useState("Smeasy");
+  const [appView, setAppView] = useState<AppView>(() =>
+    typeof window !== "undefined" && localStorage.getItem("smeasy_token") ? "manager" : "login"
+  );
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [authMethod, setAuthMethod] = useState<AuthMethod>("password");
   const [loginEmail, setLoginEmail] = useState("owner@acmecafe.com.au");
   const [loginPassword, setLoginPassword] = useState("");
-  const [accountEmail, setAccountEmail] = useState("owner@acmecafe.com.au");
+  const [accountEmail, setAccountEmail] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
   // Manager state
   const [activeTab, setActiveTab] = useState<ActiveTab>("roster");
   const [weekOffset, setWeekOffset] = useState(0);
-  const [staff, setStaff] = useState<StaffMember[]>(seedStaff);
-  const [shiftsByWeek, setShiftsByWeek] = useState<ShiftsByWeek>({ 0: seedWeek0, 1: seedWeek1 });
-  const [timeOffByWeek, setTimeOffByWeek] = useState<TimeOffByWeek>({ 0: seedTimeOff0, 1: [] });
+  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [shiftsByWeek, setShiftsByWeek] = useState<ShiftsByWeek>({});
+  const [timeOffByWeek, setTimeOffByWeek] = useState<TimeOffByWeek>({});
   const [modal, setModal] = useState<ModalState>(null);
   const [inviteModal, setInviteModal] = useState<InviteModalState>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [newStaffName, setNewStaffName] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+  const [publishLoading, setPublishLoading] = useState(false);
 
   // Staff portal state
   const [portalStaffId, setPortalStaffId] = useState<number | null>(null);
@@ -232,6 +223,65 @@ export default function RosteringPage() {
     setTimeOffByWeek((prev) => ({ ...prev, [weekOffset]: fn(prev[weekOffset] ?? []) }));
   }
 
+  // ─── Load staff from API ────────────────────────────────────────────────────
+  const loadStaff = useCallback(async (tk: string) => {
+    const data = await apiFetch("/staff", tk);
+    if (Array.isArray(data)) {
+      setStaff(data.map((m: ApiStaff) => ({
+        id: m.id,
+        name: m.name,
+        canManage: m.canManage,
+        canBeRostered: m.canBeRostered,
+        invited: !!m.email,
+        inviteEmail: m.email || null,
+      })));
+    }
+  }, []);
+
+  // ─── Load shifts & timeoff for current week ─────────────────────────────────
+  const loadWeek = useCallback(async (tk: string, mon: Date, offset: number) => {
+    const weekStr = dateFromOffset(mon, 0);
+    const [shifts, timeoffs] = await Promise.all([
+      apiFetch(`/shifts?week=${weekStr}`, tk),
+      apiFetch(`/timeoff?week=${weekStr}`, tk),
+    ]);
+    if (Array.isArray(shifts)) {
+      setShiftsByWeek((prev) => ({
+        ...prev,
+        [offset]: shifts.map((s: ApiShift) => ({
+          id: String(s.id),
+          staffId: s.staffId,
+          day: dayOffset(s.date, mon),
+          start: s.startHour,
+          end: s.endHour,
+          role: s.role,
+        })),
+      }));
+    }
+    if (Array.isArray(timeoffs)) {
+      setTimeOffByWeek((prev) => ({
+        ...prev,
+        [offset]: timeoffs.map((o: ApiTimeOff) => ({
+          id: String(o.id),
+          staffId: o.staffId,
+          day: dayOffset(o.date, mon),
+          reason: o.reason,
+          status: o.status as "Pending" | "Approved",
+        })),
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    loadStaff(token);
+  }, [token, loadStaff]);
+
+  useEffect(() => {
+    if (!token) return;
+    loadWeek(token, monday, weekOffset);
+  }, [token, monday, weekOffset, loadWeek]);
+
   const rosteredStaff = useMemo(() => {
     const ids = new Set(currentShifts.map((s) => s.staffId));
     return staff.filter((m) => m.canBeRostered && ids.has(m.id));
@@ -240,7 +290,7 @@ export default function RosteringPage() {
   const billCount = rosteredStaff.length;
   const billTotal = (billCount * 0.96).toFixed(2);
 
-  // Open cell handler
+  // ─── Open cell handler ──────────────────────────────────────────────────────
   function openCell(staffId: number, day: number) {
     const shift = currentShifts.find((s) => s.staffId === staffId && s.day === day);
     const off = currentTimeOff.find((o) => o.staffId === staffId && o.day === day);
@@ -253,31 +303,59 @@ export default function RosteringPage() {
     }
   }
 
-  function saveModal() {
+  async function saveModal() {
     if (!modal || modal.kind !== "shift") return;
     if (modal.mode === "shift") {
-      if (modal.isNew) {
-        const newShift: Shift = { id: generateId(), staffId: modal.staffId, day: modal.day, start: modal.start, end: modal.end, role: modal.role };
-        setCurrentShifts((prev) => [...prev, newShift]);
+      if (token) {
+        const date = dateFromOffset(monday, modal.day);
+        const res = await apiFetch("/shifts", token, {
+          method: "POST",
+          body: JSON.stringify({ staffId: modal.staffId, date, startHour: modal.start, endHour: modal.end, role: modal.role }),
+        });
+        if (res.id) {
+          const s: Shift = { id: String(res.id), staffId: modal.staffId, day: modal.day, start: modal.start, end: modal.end, role: modal.role };
+          setCurrentShifts((prev) => [...prev.filter((x) => !(x.staffId === modal.staffId && x.day === modal.day)), s]);
+          setCurrentTimeOff((prev) => prev.filter((o) => !(o.staffId === modal.staffId && o.day === modal.day)));
+        }
       } else {
-        setCurrentShifts((prev) => prev.map((s) => s.id === modal.id ? { ...s, start: modal.start, end: modal.end, role: modal.role } : s));
-        setCurrentTimeOff((prev) => prev.filter((o) => !(o.staffId === modal.staffId && o.day === modal.day)));
+        if (modal.isNew) {
+          setCurrentShifts((prev) => [...prev, { id: generateId(), staffId: modal.staffId, day: modal.day, start: modal.start, end: modal.end, role: modal.role }]);
+        } else {
+          setCurrentShifts((prev) => prev.map((s) => s.id === modal.id ? { ...s, start: modal.start, end: modal.end, role: modal.role } : s));
+          setCurrentTimeOff((prev) => prev.filter((o) => !(o.staffId === modal.staffId && o.day === modal.day)));
+        }
       }
     } else {
-      setCurrentShifts((prev) => prev.filter((s) => !(s.staffId === modal.staffId && s.day === modal.day)));
-      if (modal.isNew) {
-        const newOff: TimeOff = { id: generateId(), staffId: modal.staffId, day: modal.day, reason: modal.reason, status: "Pending" };
-        setCurrentTimeOff((prev) => [...prev, newOff]);
+      if (token) {
+        const date = dateFromOffset(monday, modal.day);
+        const res = await apiFetch("/timeoff", token, {
+          method: "POST",
+          body: JSON.stringify({ staffId: modal.staffId, date, reason: modal.reason }),
+        });
+        if (res.id) {
+          const o: TimeOff = { id: String(res.id), staffId: modal.staffId, day: modal.day, reason: modal.reason, status: "Pending" };
+          setCurrentShifts((prev) => prev.filter((s) => !(s.staffId === modal.staffId && s.day === modal.day)));
+          setCurrentTimeOff((prev) => [...prev.filter((x) => !(x.staffId === modal.staffId && x.day === modal.day)), o]);
+        }
       } else {
-        setCurrentTimeOff((prev) => prev.map((o) => o.id === modal.id ? { ...o, reason: modal.reason } : o));
+        setCurrentShifts((prev) => prev.filter((s) => !(s.staffId === modal.staffId && s.day === modal.day)));
+        if (modal.isNew) {
+          setCurrentTimeOff((prev) => [...prev, { id: generateId(), staffId: modal.staffId, day: modal.day, reason: modal.reason, status: "Pending" }]);
+        } else {
+          setCurrentTimeOff((prev) => prev.map((o) => o.id === modal.id ? { ...o, reason: modal.reason } : o));
+        }
       }
     }
     setModal(null);
     showToast("Saved");
   }
 
-  function deleteModal() {
+  async function deleteModal() {
     if (!modal || modal.kind !== "shift" || modal.isNew) return;
+    if (token) {
+      const endpoint = modal.mode === "shift" ? `/shifts/${modal.id}` : `/timeoff/${modal.id}`;
+      await apiFetch(endpoint, token, { method: "DELETE" });
+    }
     if (modal.mode === "shift") {
       setCurrentShifts((prev) => prev.filter((s) => s.id !== modal.id));
     } else {
@@ -287,7 +365,7 @@ export default function RosteringPage() {
     showToast("Deleted");
   }
 
-  // CSV export
+  // ─── CSV export ─────────────────────────────────────────────────────────────
   function exportCSV() {
     const rows = [["Staff", "Day", "Start", "End", "Role"]];
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -304,24 +382,50 @@ export default function RosteringPage() {
     a.click();
   }
 
-  function handleLogin(e: React.FormEvent) {
+  // ─── Auth ────────────────────────────────────────────────────────────────────
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setAccountEmail(loginEmail);
-    setAppView("manager");
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      const endpoint = authMode === "signup" ? "/auth/signup" : "/auth/login";
+      const res = await fetch(`${API}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword, businessName: "My Business" }),
+      });
+      const data = await res.json();
+      if (data.token) {
+        localStorage.setItem("smeasy_token", data.token);
+        setToken(data.token);
+        setAccountEmail(data.email);
+        setBusinessName(data.businessName || "Smeasy");
+        setAppView("manager");
+      } else {
+        setAuthError(data.error || "Login failed");
+      }
+    } catch {
+      setAuthError("Could not reach server");
+    } finally {
+      setAuthLoading(false);
+    }
   }
 
-  function addStaff(e: React.FormEvent) {
+  // ─── Staff management ────────────────────────────────────────────────────────
+  async function addStaff(e: React.FormEvent) {
     e.preventDefault();
     if (!newStaffName.trim()) return;
-    const newMember: StaffMember = {
-      id: Math.max(...staff.map((m) => m.id)) + 1,
-      name: newStaffName.trim(),
-      canManage: false,
-      canBeRostered: true,
-      invited: false,
-      inviteEmail: null,
-    };
-    setStaff((prev) => [...prev, newMember]);
+    if (token) {
+      const res = await apiFetch("/staff", token, {
+        method: "POST",
+        body: JSON.stringify({ name: newStaffName.trim() }),
+      });
+      if (res.id) {
+        setStaff((prev) => [...prev, { id: res.id, name: res.name, canManage: res.canManage, canBeRostered: res.canBeRostered, invited: !!res.email, inviteEmail: res.email || null }]);
+      }
+    } else {
+      setStaff((prev) => [...prev, { id: Math.max(...prev.map((m) => m.id), 0) + 1, name: newStaffName.trim(), canManage: false, canBeRostered: true, invited: false, inviteEmail: null }]);
+    }
     setNewStaffName("");
   }
 
@@ -337,9 +441,37 @@ export default function RosteringPage() {
     showToast(`Invite sent to ${inviteEmail}`);
   }
 
-  function approveTimeOff(id: string) {
+  async function approveTimeOff(id: string) {
+    if (token) {
+      await apiFetch(`/timeoff/${id}`, token, { method: "PUT", body: JSON.stringify({ status: "Approved" }) });
+    }
     setCurrentTimeOff((prev) => prev.map((o) => o.id === id ? { ...o, status: "Approved" } : o));
     showToast("Time-off approved");
+  }
+
+  // ─── Publish ─────────────────────────────────────────────────────────────────
+  async function publishRoster() {
+    setPublishLoading(true);
+    if (token) {
+      const weekStart = dateFromOffset(monday, 0);
+      const res = await apiFetch("/publish", token, { method: "POST", body: JSON.stringify({ weekStart }) });
+      const sent = (res.results as { sent: boolean }[] | undefined)?.filter((r) => r.sent).length ?? 0;
+      setModal(null);
+      showToast(`Roster published — ${sent} email${sent !== 1 ? "s" : ""} sent`);
+    } else {
+      setModal(null);
+      showToast("Roster published and staff notified!");
+    }
+    setPublishLoading(false);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("smeasy_token");
+    setToken(null);
+    setStaff([]);
+    setShiftsByWeek({});
+    setTimeOffByWeek({});
+    setAppView("login");
   }
 
   // ─── Login View ─────────────────────────────────────────────────────────────
@@ -348,7 +480,6 @@ export default function RosteringPage() {
     return (
       <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 16, padding: "32px 28px", width: "100%", maxWidth: 360 }}>
-          {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
             <div style={{ width: 28, height: 28, background: C.accent, borderRadius: 5 }} />
             <span style={{ fontWeight: 700, fontSize: 17, color: C.dark }}>Smeasy</span>
@@ -356,7 +487,6 @@ export default function RosteringPage() {
           <h1 style={{ fontSize: 20, fontWeight: 700, color: C.dark, marginBottom: 20, marginTop: 0 }}>
             {authMode === "login" ? "Log in to Smeasy" : "Create your Smeasy account"}
           </h1>
-          {/* Method toggle */}
           <div style={{ display: "flex", gap: 6, marginBottom: 18, background: C.bg, borderRadius: 8, padding: 4 }}>
             {(["password", "magic"] as AuthMethod[]).map((m) => (
               <button
@@ -397,17 +527,21 @@ export default function RosteringPage() {
             {authMethod === "magic" && (
               <p style={{ fontSize: 13, color: C.muted, marginBottom: 14 }}>We&apos;ll email you a one-click link</p>
             )}
+            {authError && (
+              <p style={{ fontSize: 13, color: C.danger, marginBottom: 12 }}>{authError}</p>
+            )}
             <button
               type="submit"
-              style={{ width: "100%", padding: "11px 0", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+              disabled={authLoading}
+              style={{ width: "100%", padding: "11px 0", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: authLoading ? "default" : "pointer", opacity: authLoading ? 0.7 : 1 }}
             >
-              {authMode === "login" ? (authMethod === "magic" ? "Send magic link" : "Log in") : (authMethod === "magic" ? "Send magic link" : "Create account")}
+              {authLoading ? "…" : authMode === "login" ? (authMethod === "magic" ? "Send magic link" : "Log in") : (authMethod === "magic" ? "Send magic link" : "Create account")}
             </button>
           </form>
           <p style={{ textAlign: "center", fontSize: 13, color: C.muted, marginTop: 16, marginBottom: 0 }}>
             {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
             <button
-              onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
+              onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(null); }}
               style={{ background: "none", border: "none", color: C.dark, fontWeight: 600, cursor: "pointer", padding: 0, fontSize: 13 }}
             >
               {authMode === "login" ? "Sign up" : "Log in"}
@@ -438,7 +572,6 @@ export default function RosteringPage() {
 
     return (
       <div style={{ minHeight: "100vh", background: C.bg, paddingBottom: 40 }}>
-        {/* Header */}
         <div style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "0 16px", height: 58, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: C.dark }}>{businessName}</div>
@@ -452,7 +585,6 @@ export default function RosteringPage() {
           </button>
         </div>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "24px 16px" }}>
-          {/* Tabs */}
           <div style={{ display: "flex", gap: 6, marginBottom: 0, borderBottom: `1px solid ${C.border}` }}>
             {(["shifts", "timeoff"] as StaffPortalTab[]).map((t) => (
               <button
@@ -587,7 +719,6 @@ export default function RosteringPage() {
                 fontSize: 13, fontWeight: 600, cursor: "pointer",
                 color: activeTab === t ? C.dark : C.secondary,
                 marginBottom: activeTab === t ? -1 : 0,
-                position: "relative",
               }}
             >
               {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -607,7 +738,6 @@ export default function RosteringPage() {
                 fontSize: 13, fontWeight: 600, cursor: "pointer",
                 color: activeTab === t ? C.dark : C.secondary,
                 marginBottom: activeTab === t ? -1 : 0,
-                position: "relative",
               }}
             >
               {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -622,7 +752,6 @@ export default function RosteringPage() {
         {/* ── Roster Tab ── */}
         {activeTab === "roster" && (
           <div>
-            {/* Billing summary */}
             <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
               <div style={{ fontSize: 14, color: C.dark }}>
                 This week: <strong>{billCount} staff rostered</strong> × 96c = <strong>${billTotal}</strong>
@@ -643,11 +772,9 @@ export default function RosteringPage() {
               </div>
             </div>
 
-            {/* Roster grid */}
             <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
               <div style={{ overflowX: "auto" }}>
                 <div style={{ minWidth: 820 }}>
-                  {/* Header row */}
                   <div style={{ display: "grid", gridTemplateColumns: "150px repeat(7, 1fr) 64px", background: C.bg, borderBottom: `1px solid ${C.border}` }}>
                     <div style={{ padding: "8px 12px", fontSize: 12, fontWeight: 700, color: C.muted }}>Staff</div>
                     {weekDates.map((d, i) => {
@@ -661,7 +788,6 @@ export default function RosteringPage() {
                     })}
                     <div style={{ padding: "8px 6px", fontSize: 11, fontWeight: 700, color: C.muted, textAlign: "center", borderLeft: `1px solid ${C.divider}` }}>Hrs</div>
                   </div>
-                  {/* Staff rows */}
                   {rosterable.map((member) => {
                     const memberShifts = currentShifts.filter((s) => s.staffId === member.id);
                     const totalHrs = memberShifts.reduce((sum, s) => sum + (s.end - s.start), 0);
@@ -704,7 +830,6 @@ export default function RosteringPage() {
               </div>
             </div>
 
-            {/* Legend */}
             <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 12, fontSize: 12, color: C.muted }}>
               <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <div style={{ width: 14, height: 14, background: C.shiftBg, border: `1px solid ${C.shiftBorder}`, borderRadius: 3 }} />
@@ -720,7 +845,6 @@ export default function RosteringPage() {
               </div>
             </div>
 
-            {/* Time-off requests */}
             <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: "16px 20px", marginTop: 24 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: C.dark, marginBottom: 12 }}>Time-off requests</div>
               {currentTimeOff.length === 0 ? (
@@ -811,7 +935,6 @@ export default function RosteringPage() {
                 </div>
               ))}
             </div>
-            {/* Add staff form */}
             <form onSubmit={addStaff} style={{ marginTop: 20, display: "flex", gap: 10 }}>
               <input
                 type="text"
@@ -905,7 +1028,7 @@ export default function RosteringPage() {
                 />
               </div>
               <button
-                onClick={() => setAppView("login")}
+                onClick={handleLogout}
                 style={{ padding: "9px 18px", background: C.white, color: C.danger, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
               >
                 Log out
@@ -926,7 +1049,6 @@ export default function RosteringPage() {
                 <div style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>{member?.name}</div>
                 <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{dayNames[modal.day]} · {weekLabel}</div>
               </div>
-              {/* Mode toggle */}
               <div style={{ display: "flex", gap: 6, marginBottom: 18, background: C.bg, borderRadius: 8, padding: 4 }}>
                 <button
                   onClick={() => setModal({ ...modal, mode: "shift" })}
@@ -948,11 +1070,7 @@ export default function RosteringPage() {
                     <div style={{ flex: 1 }}>
                       <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: C.secondary, marginBottom: 4 }}>Start (24h)</label>
                       <input
-                        type="number"
-                        step={0.5}
-                        min={0}
-                        max={24}
-                        value={modal.start}
+                        type="number" step={0.5} min={0} max={24} value={modal.start}
                         onChange={(e) => setModal({ ...modal, start: Number(e.target.value) })}
                         style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, boxSizing: "border-box" }}
                       />
@@ -960,11 +1078,7 @@ export default function RosteringPage() {
                     <div style={{ flex: 1 }}>
                       <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: C.secondary, marginBottom: 4 }}>End (24h)</label>
                       <input
-                        type="number"
-                        step={0.5}
-                        min={0}
-                        max={24}
-                        value={modal.end}
+                        type="number" step={0.5} min={0} max={24} value={modal.end}
                         onChange={(e) => setModal({ ...modal, end: Number(e.target.value) })}
                         style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, boxSizing: "border-box" }}
                       />
@@ -993,8 +1107,7 @@ export default function RosteringPage() {
                 <div style={{ marginBottom: 14 }}>
                   <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: C.secondary, marginBottom: 4 }}>Reason</label>
                   <input
-                    type="text"
-                    value={modal.reason}
+                    type="text" value={modal.reason}
                     onChange={(e) => setModal({ ...modal, reason: e.target.value })}
                     placeholder="e.g. Doctor appointment"
                     style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, boxSizing: "border-box" }}
@@ -1059,10 +1172,11 @@ export default function RosteringPage() {
                 Cancel
               </button>
               <button
-                onClick={() => { setModal(null); showToast("Roster published and staff notified!"); }}
-                style={{ padding: "8px 16px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                onClick={publishRoster}
+                disabled={publishLoading}
+                style={{ padding: "8px 16px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: publishLoading ? "default" : "pointer", opacity: publishLoading ? 0.7 : 1 }}
               >
-                Send
+                {publishLoading ? "Sending…" : "Send"}
               </button>
             </div>
           </div>
@@ -1080,8 +1194,7 @@ export default function RosteringPage() {
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Staff email</label>
               <input
-                type="email"
-                value={inviteEmail}
+                type="email" value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="staff@example.com"
                 style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box" }}
