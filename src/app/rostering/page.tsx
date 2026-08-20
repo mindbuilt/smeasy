@@ -22,8 +22,9 @@ async function apiFetch(path: string, token: string, options?: RequestInit) {
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type AppView = "login" | "manager" | "staffPortal";
-type ActiveTab = "roster" | "staff" | "billing" | "business" | "account";
+type ActiveTab = "roster" | "staff" | "requests" | "history" | "billing" | "business" | "account";
 type AuthMode = "login" | "signup";
+type AuthMethod = "password" | "magic";
 type LoginType = "manager" | "staff";
 type StaffPortalTab = "shifts" | "timeoff";
 
@@ -56,6 +57,19 @@ interface TimeOff {
 interface ApiStaff { id: number; name: string; email: string | null; canManage: boolean; canBeRostered: boolean; }
 interface ApiShift { id: number; staffId: number; date: string; startTime: string; endTime: string; role: string; }
 interface ApiTimeOff { id: number; staffId: number; date: string; reason: string; status: string; }
+
+interface ApiTimeOffRequest {
+  id: number; date: string; type: string; reason: string; status: string;
+  staff: { name: string; email: string | null };
+}
+interface ApiSwapRequest {
+  id: number; status: string;
+  fromStaff: { name: string }; toStaff: { name: string };
+  fromShift: { date: string; startTime: string; endTime: string };
+  toShift: { date: string; startTime: string; endTime: string } | null;
+}
+interface ApiRequests { timeOff: ApiTimeOffRequest[]; swaps: ApiSwapRequest[]; }
+interface PastWeek { weekStart: string; shiftCount: number; staffCount: number; }
 
 type ShiftsByWeek = Record<number, Shift[]>;
 type TimeOffByWeek = Record<number, TimeOff[]>;
@@ -143,6 +157,11 @@ function fmtWeekLabel(monday: Date): string {
   return `${dMon} ${mMon} – ${dSun} ${mSun} ${yr}`;
 }
 
+function fmtWeekLabelFromStr(weekStart: string): string {
+  const [y, m, d] = weekStart.split("-").map(Number);
+  return fmtWeekLabel(new Date(y, m - 1, d));
+}
+
 function fmtDayHeader(d: Date): string {
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   return `${days[d.getDay()]} ${d.getDate()}`;
@@ -172,6 +191,9 @@ export default function RosteringPage() {
     typeof window !== "undefined" ? localStorage.getItem("smeasy_token") : null
   );
   const [loginType, setLoginType] = useState<LoginType>("manager");
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [authMethod, setAuthMethod] = useState<AuthMethod>("password");
+  const [magicSent, setMagicSent] = useState(false);
   const [businessName, setBusinessName] = useState("Smeasy");
   const [staffDisplayName, setStaffDisplayName] = useState(() =>
     typeof window !== "undefined" ? (localStorage.getItem("smeasy_staff_name") ?? "") : ""
@@ -182,7 +204,6 @@ export default function RosteringPage() {
     if (!tk) return "login";
     return localStorage.getItem("smeasy_role") === "staff" ? "staffPortal" : "manager";
   });
-  const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [accountEmail, setAccountEmail] = useState("");
@@ -201,6 +222,14 @@ export default function RosteringPage() {
   const [newStaffName, setNewStaffName] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [publishLoading, setPublishLoading] = useState(false);
+
+  // Requests state
+  const [requests, setRequests] = useState<ApiRequests>({ timeOff: [], swaps: [] });
+  const [requestsLoaded, setRequestsLoaded] = useState(false);
+
+  // History state
+  const [pastWeeks, setPastWeeks] = useState<PastWeek[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   // Staff portal state
   const [portalWeekOffset, setPortalWeekOffset] = useState(0);
@@ -242,22 +271,42 @@ export default function RosteringPage() {
     setTimeOffByWeek((prev) => ({ ...prev, [weekOffset]: fn(prev[weekOffset] ?? []) }));
   }
 
-  // ─── Load staff from API ────────────────────────────────────────────────────
+  // ─── Magic link detection on page load ──────────────────────────────────────
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const magic = params.get("magic");
+    if (!magic) return;
+    window.history.replaceState({}, "", window.location.pathname);
+    fetch(`${API}/auth/magic/verify?token=${encodeURIComponent(magic)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.token) {
+          localStorage.setItem("smeasy_token", data.token);
+          localStorage.setItem("smeasy_role", "manager");
+          setToken(data.token);
+          setAccountEmail(data.email ?? "");
+          setBusinessName(data.businessName || "Smeasy");
+          setAppView("manager");
+        } else {
+          setAuthError(data.error || "Magic link invalid or expired");
+        }
+      })
+      .catch(() => setAuthError("Could not verify magic link"));
+  }, []);
+
+  // ─── Load staff ─────────────────────────────────────────────────────────────
   const loadStaff = useCallback(async (tk: string) => {
     const data = await apiFetch("/staff", tk);
     if (Array.isArray(data)) {
       setStaff(data.map((m: ApiStaff) => ({
-        id: m.id,
-        name: m.name,
-        canManage: m.canManage,
-        canBeRostered: m.canBeRostered,
-        invited: !!m.email,
-        inviteEmail: m.email || null,
+        id: m.id, name: m.name, canManage: m.canManage, canBeRostered: m.canBeRostered,
+        invited: !!m.email, inviteEmail: m.email || null,
       })));
     }
   }, []);
 
-  // ─── Load shifts & timeoff for current week (manager) ───────────────────────
+  // ─── Load shifts & timeoff for current week ──────────────────────────────────
   const loadWeek = useCallback(async (tk: string, mon: Date, offset: number) => {
     const weekStr = dateFromOffset(mon, 0);
     const [shifts, timeoffs] = await Promise.all([
@@ -268,12 +317,8 @@ export default function RosteringPage() {
       setShiftsByWeek((prev) => ({
         ...prev,
         [offset]: shifts.map((s: ApiShift) => ({
-          id: String(s.id),
-          staffId: s.staffId,
-          day: dayOffset(s.date, mon),
-          start: parseTime(s.startTime),
-          end: parseTime(s.endTime),
-          role: s.role,
+          id: String(s.id), staffId: s.staffId, day: dayOffset(s.date, mon),
+          start: parseTime(s.startTime), end: parseTime(s.endTime), role: s.role,
         })),
       }));
     }
@@ -281,17 +326,14 @@ export default function RosteringPage() {
       setTimeOffByWeek((prev) => ({
         ...prev,
         [offset]: timeoffs.map((o: ApiTimeOff) => ({
-          id: String(o.id),
-          staffId: o.staffId,
-          day: dayOffset(o.date, mon),
-          reason: o.reason,
-          status: o.status as "Pending" | "Approved",
+          id: String(o.id), staffId: o.staffId, day: dayOffset(o.date, mon),
+          reason: o.reason, status: o.status as "Pending" | "Approved",
         })),
       }));
     }
   }, []);
 
-  // ─── Load shifts & timeoff for staff portal ─────────────────────────────────
+  // ─── Load staff portal data ─────────────────────────────────────────────────
   const loadPortal = useCallback(async (tk: string, mon: Date) => {
     const weekStr = dateFromOffset(mon, 0);
     const [shifts, timeoffs] = await Promise.all([
@@ -300,21 +342,14 @@ export default function RosteringPage() {
     ]);
     if (Array.isArray(shifts)) {
       setPortalShifts(shifts.map((s: ApiShift) => ({
-        id: String(s.id),
-        staffId: s.staffId,
-        day: dayOffset(s.date, mon),
-        start: parseTime(s.startTime),
-        end: parseTime(s.endTime),
-        role: s.role,
+        id: String(s.id), staffId: s.staffId, day: dayOffset(s.date, mon),
+        start: parseTime(s.startTime), end: parseTime(s.endTime), role: s.role,
       })));
     }
     if (Array.isArray(timeoffs)) {
       setPortalTimeOff(timeoffs.map((o: ApiTimeOff) => ({
-        id: String(o.id),
-        staffId: o.staffId,
-        day: dayOffset(o.date, mon),
-        reason: o.reason,
-        status: o.status as "Pending" | "Approved",
+        id: String(o.id), staffId: o.staffId, day: dayOffset(o.date, mon),
+        reason: o.reason, status: o.status as "Pending" | "Approved",
       })));
     }
   }, []);
@@ -333,6 +368,22 @@ export default function RosteringPage() {
     if (!token || appView !== "staffPortal") return;
     loadPortal(token, portalMonday);
   }, [token, portalMonday, appView, loadPortal]);
+
+  // ─── Load requests on tab switch ────────────────────────────────────────────
+  useEffect(() => {
+    if (!token || activeTab !== "requests" || requestsLoaded) return;
+    apiFetch("/manager/requests", token).then((data) => {
+      if (data.timeOff) { setRequests(data); setRequestsLoaded(true); }
+    });
+  }, [token, activeTab, requestsLoaded]);
+
+  // ─── Load history on tab switch ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!token || activeTab !== "history" || historyLoaded) return;
+    apiFetch("/shifts/weeks", token).then((data) => {
+      if (Array.isArray(data)) { setPastWeeks(data); setHistoryLoaded(true); }
+    });
+  }, [token, activeTab, historyLoaded]);
 
   const rosteredStaff = useMemo(() => {
     const ids = new Set(currentShifts.map((s) => s.staffId));
@@ -374,7 +425,6 @@ export default function RosteringPage() {
           setCurrentShifts((prev) => [...prev, { id: generateId(), staffId: modal.staffId, day: modal.day, start: modal.start, end: modal.end, role: modal.role }]);
         } else {
           setCurrentShifts((prev) => prev.map((s) => s.id === modal.id ? { ...s, start: modal.start, end: modal.end, role: modal.role } : s));
-          setCurrentTimeOff((prev) => prev.filter((o) => !(o.staffId === modal.staffId && o.day === modal.day)));
         }
       }
     } else {
@@ -457,6 +507,18 @@ export default function RosteringPage() {
         } else {
           setAuthError(data.error || "Login failed");
         }
+      } else if (authMethod === "magic") {
+        const res = await fetch(`${API}/auth/magic`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: loginEmail }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          setMagicSent(true);
+        } else {
+          setAuthError(data.error || "Failed to send link");
+        }
       } else {
         const endpoint = authMode === "signup" ? "/auth/signup" : "/auth/login";
         const res = await fetch(`${API}${endpoint}`, {
@@ -486,17 +548,13 @@ export default function RosteringPage() {
   // ─── Staff management ────────────────────────────────────────────────────────
   async function addStaff(e: React.FormEvent) {
     e.preventDefault();
-    if (!newStaffName.trim()) return;
-    if (token) {
-      const res = await apiFetch("/staff", token, {
-        method: "POST",
-        body: JSON.stringify({ name: newStaffName.trim() }),
-      });
-      if (res.id) {
-        setStaff((prev) => [...prev, { id: res.id, name: res.name, canManage: res.canManage, canBeRostered: res.canBeRostered, invited: !!res.email, inviteEmail: res.email || null }]);
-      }
-    } else {
-      setStaff((prev) => [...prev, { id: Math.max(...prev.map((m) => m.id), 0) + 1, name: newStaffName.trim(), canManage: false, canBeRostered: true, invited: false, inviteEmail: null }]);
+    if (!newStaffName.trim() || !token) return;
+    const res = await apiFetch("/staff", token, {
+      method: "POST",
+      body: JSON.stringify({ name: newStaffName.trim() }),
+    });
+    if (res.id) {
+      setStaff((prev) => [...prev, { id: res.id, name: res.name, canManage: res.canManage, canBeRostered: res.canBeRostered, invited: !!res.email, inviteEmail: res.email || null }]);
     }
     setNewStaffName("");
   }
@@ -519,11 +577,24 @@ export default function RosteringPage() {
   }
 
   async function approveTimeOff(id: string) {
-    if (token) {
-      await apiFetch(`/timeoff/${id}`, token, { method: "PUT", body: JSON.stringify({ status: "Approved" }) });
-    }
+    if (token) await apiFetch(`/timeoff/${id}`, token, { method: "PUT", body: JSON.stringify({ status: "Approved" }) });
     setCurrentTimeOff((prev) => prev.map((o) => o.id === id ? { ...o, status: "Approved" } : o));
     showToast("Time-off approved");
+  }
+
+  // ─── Request actions ─────────────────────────────────────────────────────────
+  async function handleTimeOffRequest(id: number, action: "approve" | "deny") {
+    if (!token) return;
+    await apiFetch(`/manager/requests/timeoff/${id}/${action}`, token, { method: "POST" });
+    setRequests((prev) => ({ ...prev, timeOff: prev.timeOff.filter((r) => r.id !== id) }));
+    showToast(`Time-off ${action === "approve" ? "approved" : "denied"}`);
+  }
+
+  async function handleSwapRequest(id: number, action: "approve" | "deny") {
+    if (!token) return;
+    await apiFetch(`/manager/requests/swap/${id}/${action}`, token, { method: "POST" });
+    setRequests((prev) => ({ ...prev, swaps: prev.swaps.filter((r) => r.id !== id) }));
+    showToast(`Swap ${action === "approve" ? "approved" : "denied"}`);
   }
 
   // ─── Publish ─────────────────────────────────────────────────────────────────
@@ -535,9 +606,6 @@ export default function RosteringPage() {
       const sent = (res.results as { sent: boolean }[] | undefined)?.filter((r) => r.sent).length ?? 0;
       setModal(null);
       showToast(`Roster published — ${sent} email${sent !== 1 ? "s" : ""} sent`);
-    } else {
-      setModal(null);
-      showToast("Roster published and staff notified!");
     }
     setPublishLoading(false);
   }
@@ -552,6 +620,10 @@ export default function RosteringPage() {
     setTimeOffByWeek({});
     setPortalShifts([]);
     setPortalTimeOff([]);
+    setRequests({ timeOff: [], swaps: [] });
+    setRequestsLoaded(false);
+    setPastWeeks([]);
+    setHistoryLoaded(false);
     setAppView("login");
   }
 
@@ -569,65 +641,63 @@ export default function RosteringPage() {
           {/* Manager / Staff toggle */}
           <div style={{ display: "flex", gap: 6, marginBottom: 20, background: C.bg, borderRadius: 8, padding: 4 }}>
             {(["manager", "staff"] as LoginType[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => { setLoginType(t); setAuthError(null); }}
-                style={{
-                  flex: 1, padding: "7px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600,
-                  background: loginType === t ? C.dark : "transparent",
-                  color: loginType === t ? C.white : C.secondary,
-                  transition: "all 0.15s",
-                }}
-              >
+              <button key={t} onClick={() => { setLoginType(t); setAuthError(null); setMagicSent(false); }}
+                style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, background: loginType === t ? C.dark : "transparent", color: loginType === t ? C.white : C.secondary, transition: "all 0.15s" }}>
                 {t === "manager" ? "Manager" : "Staff"}
               </button>
             ))}
           </div>
 
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: C.dark, marginBottom: 20, marginTop: 0 }}>
-            {loginType === "manager"
-              ? (authMode === "login" ? "Manager login" : "Create manager account")
-              : "Staff login"}
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: C.dark, marginBottom: 16, marginTop: 0 }}>
+            {loginType === "manager" ? (authMode === "login" ? "Manager login" : "Create manager account") : "Staff login"}
           </h1>
 
-          <form onSubmit={handleLogin}>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Email</label>
-              <input
-                type="email"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box", outline: "none" }}
-              />
-            </div>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Password</label>
-              <input
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box", outline: "none" }}
-              />
-            </div>
-            {authError && (
-              <p style={{ fontSize: 13, color: C.danger, marginBottom: 12 }}>{authError}</p>
-            )}
-            <button
-              type="submit"
-              disabled={authLoading}
-              style={{ width: "100%", padding: "11px 0", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: authLoading ? "default" : "pointer", opacity: authLoading ? 0.7 : 1 }}
-            >
-              {authLoading ? "…" : loginType === "staff" ? "Log in as staff" : (authMode === "login" ? "Log in" : "Create account")}
-            </button>
-          </form>
-
           {loginType === "manager" && (
+            <div style={{ display: "flex", gap: 6, marginBottom: 16, background: C.bg, borderRadius: 8, padding: 4 }}>
+              {(["password", "magic"] as AuthMethod[]).map((m) => (
+                <button key={m} onClick={() => { setAuthMethod(m); setAuthError(null); setMagicSent(false); }}
+                  style={{ flex: 1, padding: "6px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: authMethod === m ? C.white : "transparent", color: authMethod === m ? C.dark : C.muted, boxShadow: authMethod === m ? `0 0 0 1px ${C.border}` : "none" }}>
+                  {m === "password" ? "Password" : "Magic link"}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {magicSent ? (
+            <div style={{ background: "#f0f9e8", border: "1px solid #b7e021", borderRadius: 10, padding: "16px 18px" }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: C.shiftColor, marginBottom: 4 }}>Check your email</div>
+              <div style={{ fontSize: 13, color: C.secondary }}>We sent a login link to <strong>{loginEmail}</strong>. It expires in 15 minutes.</div>
+              <button onClick={() => { setMagicSent(false); setAuthError(null); }} style={{ marginTop: 12, fontSize: 12, color: C.muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}>
+                Try a different email
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleLogin}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Email</label>
+                <input type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)}
+                  style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box", outline: "none" }} />
+              </div>
+              {(loginType === "staff" || authMethod === "password") && (
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Password</label>
+                  <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)}
+                    style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box", outline: "none" }} />
+                </div>
+              )}
+              {authError && <p style={{ fontSize: 13, color: C.danger, marginBottom: 12 }}>{authError}</p>}
+              <button type="submit" disabled={authLoading}
+                style={{ width: "100%", padding: "11px 0", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: authLoading ? "default" : "pointer", opacity: authLoading ? 0.7 : 1 }}>
+                {authLoading ? "…" : loginType === "staff" ? "Log in as staff" : authMethod === "magic" ? "Send magic link" : authMode === "login" ? "Log in" : "Create account"}
+              </button>
+            </form>
+          )}
+
+          {loginType === "manager" && !magicSent && authMethod === "password" && (
             <p style={{ textAlign: "center", fontSize: 13, color: C.muted, marginTop: 16, marginBottom: 0 }}>
               {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
-              <button
-                onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(null); }}
-                style={{ background: "none", border: "none", color: C.dark, fontWeight: 600, cursor: "pointer", padding: 0, fontSize: 13 }}
-              >
+              <button onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(null); }}
+                style={{ background: "none", border: "none", color: C.dark, fontWeight: 600, cursor: "pointer", padding: 0, fontSize: 13 }}>
                 {authMode === "login" ? "Sign up" : "Log in"}
               </button>
             </p>
@@ -681,30 +751,14 @@ export default function RosteringPage() {
               <span style={{ fontSize: 12, fontWeight: 600, color: C.dark, minWidth: 130, textAlign: "center" }}>{portalWeekLabel}</span>
               <button onClick={() => setPortalWeekOffset((w) => w + 1)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: C.dark, padding: "2px 6px", lineHeight: 1 }}>›</button>
             </div>
-            <button
-              onClick={handleLogout}
-              style={{ fontSize: 12, color: C.muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
-            >
-              Log out
-            </button>
+            <button onClick={handleLogout} style={{ fontSize: 12, color: C.muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>Log out</button>
           </div>
         </div>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "24px 16px" }}>
           <div style={{ display: "flex", gap: 6, marginBottom: 0, borderBottom: `1px solid ${C.border}` }}>
             {(["shifts", "timeoff"] as StaffPortalTab[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => setStaffPortalTab(t)}
-                style={{
-                  padding: "8px 16px", borderRadius: "8px 8px 0 0",
-                  border: `1px solid ${staffPortalTab === t ? C.border : "transparent"}`,
-                  borderBottom: staffPortalTab === t ? `1px solid ${C.white}` : "1px solid transparent",
-                  background: staffPortalTab === t ? C.white : "transparent",
-                  fontSize: 13, fontWeight: 600, cursor: "pointer",
-                  color: staffPortalTab === t ? C.dark : C.secondary,
-                  marginBottom: staffPortalTab === t ? -1 : 0,
-                }}
-              >
+              <button key={t} onClick={() => setStaffPortalTab(t)}
+                style={{ padding: "8px 16px", borderRadius: "8px 8px 0 0", border: `1px solid ${staffPortalTab === t ? C.border : "transparent"}`, borderBottom: staffPortalTab === t ? `1px solid ${C.white}` : "1px solid transparent", background: staffPortalTab === t ? C.white : "transparent", fontSize: 13, fontWeight: 600, cursor: "pointer", color: staffPortalTab === t ? C.dark : C.secondary, marginBottom: staffPortalTab === t ? -1 : 0 }}>
                 {t === "shifts" ? "My shifts" : "Request time off"}
               </button>
             ))}
@@ -728,29 +782,15 @@ export default function RosteringPage() {
                 <form onSubmit={submitPortalTimeOff} style={{ marginBottom: 20 }}>
                   <div style={{ marginBottom: 12 }}>
                     <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Date</label>
-                    <input
-                      type="date"
-                      value={portalTimeOffDate}
-                      onChange={(e) => setPortalTimeOffDate(e.target.value)}
-                      style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box" }}
-                    />
+                    <input type="date" value={portalTimeOffDate} onChange={(e) => setPortalTimeOffDate(e.target.value)}
+                      style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box" }} />
                   </div>
                   <div style={{ marginBottom: 12 }}>
                     <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Reason</label>
-                    <input
-                      type="text"
-                      value={portalTimeOffReason}
-                      onChange={(e) => setPortalTimeOffReason(e.target.value)}
-                      placeholder="e.g. Doctor appointment"
-                      style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box" }}
-                    />
+                    <input type="text" value={portalTimeOffReason} onChange={(e) => setPortalTimeOffReason(e.target.value)} placeholder="e.g. Doctor appointment"
+                      style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box" }} />
                   </div>
-                  <button
-                    type="submit"
-                    style={{ padding: "9px 18px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-                  >
-                    Submit
-                  </button>
+                  <button type="submit" style={{ padding: "9px 18px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Submit</button>
                 </form>
                 <div style={{ borderTop: `1px solid ${C.divider}`, paddingTop: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: C.dark, marginBottom: 10 }}>Your requests this week</div>
@@ -760,11 +800,7 @@ export default function RosteringPage() {
                     portalTimeOff.map((o) => (
                       <div key={o.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${C.divider}` }}>
                         <span style={{ fontSize: 13, color: C.dark }}>{dayNames[o.day]} — {o.reason}</span>
-                        <span style={{
-                          fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 10,
-                          background: o.status === "Approved" ? "#e6f4ea" : "#fff3e0",
-                          color: o.status === "Approved" ? "#1a6b2f" : C.offColor,
-                        }}>{o.status}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 10, background: o.status === "Approved" ? "#e6f4ea" : "#fff3e0", color: o.status === "Approved" ? "#1a6b2f" : C.offColor }}>{o.status}</span>
                       </div>
                     ))
                   )}
@@ -773,11 +809,7 @@ export default function RosteringPage() {
             )}
           </div>
         </div>
-        {toast && (
-          <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: C.dark, color: C.white, padding: "10px 20px", borderRadius: 8, fontSize: 13, fontWeight: 600, zIndex: 9999 }}>
-            {toast}
-          </div>
-        )}
+        {toast && <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: C.dark, color: C.white, padding: "10px 20px", borderRadius: 8, fontSize: 13, fontWeight: 600, zIndex: 9999 }}>{toast}</div>}
       </div>
     );
   }
@@ -785,10 +817,10 @@ export default function RosteringPage() {
   // ─── Manager View ───────────────────────────────────────────────────────────
 
   const rosterable = staff.filter((m) => m.canBeRostered);
-
   const warnings = modal && modal.kind === "shift" && modal.mode === "shift"
     ? computeWarnings(currentShifts, modal.staffId, modal.day, modal.start, modal.end, modal.id)
     : [];
+  const pendingCount = requests.timeOff.length + requests.swaps.length;
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg }}>
@@ -810,40 +842,22 @@ export default function RosteringPage() {
       {/* Tabs bar */}
       <div style={{ background: C.bg, padding: "0 24px", borderBottom: `1px solid ${C.border}` }}>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 2 }}>
-          {(["roster", "staff", "billing"] as ActiveTab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t)}
-              style={{
-                padding: "10px 14px",
-                border: activeTab === t ? `1px solid ${C.border}` : "1px solid transparent",
-                borderBottom: activeTab === t ? `1px solid ${C.white}` : "1px solid transparent",
-                borderRadius: "8px 8px 0 0",
-                background: activeTab === t ? C.white : "transparent",
-                fontSize: 13, fontWeight: 600, cursor: "pointer",
-                color: activeTab === t ? C.dark : C.secondary,
-                marginBottom: activeTab === t ? -1 : 0,
-              }}
-            >
+          {(["roster", "staff", "requests", "history", "billing"] as ActiveTab[]).map((t) => (
+            <button key={t} onClick={() => setActiveTab(t)}
+              style={{ padding: "10px 14px", border: activeTab === t ? `1px solid ${C.border}` : "1px solid transparent", borderBottom: activeTab === t ? `1px solid ${C.white}` : "1px solid transparent", borderRadius: "8px 8px 0 0", background: activeTab === t ? C.white : "transparent", fontSize: 13, fontWeight: 600, cursor: "pointer", color: activeTab === t ? C.dark : C.secondary, marginBottom: activeTab === t ? -1 : 0, position: "relative" }}>
               {t.charAt(0).toUpperCase() + t.slice(1)}
+              {t === "requests" && pendingCount > 0 && !requestsLoaded && (
+                <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, background: C.danger, color: C.white, borderRadius: 10, padding: "1px 6px" }}>{pendingCount}</span>
+              )}
+              {t === "requests" && requestsLoaded && (requests.timeOff.length + requests.swaps.length) > 0 && (
+                <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, background: C.danger, color: C.white, borderRadius: 10, padding: "1px 6px" }}>{requests.timeOff.length + requests.swaps.length}</span>
+              )}
             </button>
           ))}
           <div style={{ width: 1, height: 22, background: C.border, margin: "0 6px 4px" }} />
           {(["business", "account"] as ActiveTab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t)}
-              style={{
-                padding: "10px 14px",
-                border: activeTab === t ? `1px solid ${C.border}` : "1px solid transparent",
-                borderBottom: activeTab === t ? `1px solid ${C.white}` : "1px solid transparent",
-                borderRadius: "8px 8px 0 0",
-                background: activeTab === t ? C.white : "transparent",
-                fontSize: 13, fontWeight: 600, cursor: "pointer",
-                color: activeTab === t ? C.dark : C.secondary,
-                marginBottom: activeTab === t ? -1 : 0,
-              }}
-            >
+            <button key={t} onClick={() => setActiveTab(t)}
+              style={{ padding: "10px 14px", border: activeTab === t ? `1px solid ${C.border}` : "1px solid transparent", borderBottom: activeTab === t ? `1px solid ${C.white}` : "1px solid transparent", borderRadius: "8px 8px 0 0", background: activeTab === t ? C.white : "transparent", fontSize: 13, fontWeight: 600, cursor: "pointer", color: activeTab === t ? C.dark : C.secondary, marginBottom: activeTab === t ? -1 : 0 }}>
               {t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
           ))}
@@ -861,16 +875,10 @@ export default function RosteringPage() {
                 This week: <strong>{billCount} staff rostered</strong> × 96c = <strong>${billTotal}</strong>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  onClick={() => setModal({ kind: "publish" })}
-                  style={{ padding: "8px 16px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-                >
+                <button onClick={() => setModal({ kind: "publish" })} style={{ padding: "8px 16px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                   Publish &amp; Notify
                 </button>
-                <button
-                  onClick={exportCSV}
-                  style={{ padding: "8px 16px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-                >
+                <button onClick={exportCSV} style={{ padding: "8px 16px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                   Export CSV
                 </button>
               </div>
@@ -901,26 +909,12 @@ export default function RosteringPage() {
                         {Array.from({ length: 7 }, (_, day) => {
                           const shift = memberShifts.find((s) => s.day === day);
                           const off = currentTimeOff.find((o) => o.staffId === member.id && o.day === day);
-                          let bg = "transparent";
-                          let border = "1px dashed #d8d3c4";
-                          let color = "#c2bcaa";
-                          let label = "+";
-                          if (shift) {
-                            bg = C.shiftBg; border = `1px solid ${C.shiftBorder}`; color = C.shiftColor;
-                            label = `${fmtTime(shift.start)}–${fmtTime(shift.end)}`;
-                          } else if (off) {
-                            bg = C.offBg; border = `1px solid ${C.offBorderStrong}`; color = C.offColor;
-                            label = off.status === "Approved" ? "Off" : "Off (req)";
-                          }
+                          let bg = "transparent", border = "1px dashed #d8d3c4", color = "#c2bcaa", label = "+";
+                          if (shift) { bg = C.shiftBg; border = `1px solid ${C.shiftBorder}`; color = C.shiftColor; label = `${fmtTime(shift.start)}–${fmtTime(shift.end)}`; }
+                          else if (off) { bg = C.offBg; border = `1px solid ${C.offBorderStrong}`; color = C.offColor; label = off.status === "Approved" ? "Off" : "Off (req)"; }
                           return (
-                            <div
-                              key={day}
-                              onClick={() => openCell(member.id, day)}
-                              style={{ padding: "8px 6px", minHeight: 44, borderLeft: `1px solid ${C.divider}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-                            >
-                              <div style={{ fontSize: 11, fontWeight: 700, textAlign: "center", padding: "5px 4px", borderRadius: 6, width: "100%", background: bg, border, color }}>
-                                {label}
-                              </div>
+                            <div key={day} onClick={() => openCell(member.id, day)} style={{ padding: "8px 6px", minHeight: 44, borderLeft: `1px solid ${C.divider}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, textAlign: "center", padding: "5px 4px", borderRadius: 6, width: "100%", background: bg, border, color }}>{label}</div>
                             </div>
                           );
                         })}
@@ -935,18 +929,9 @@ export default function RosteringPage() {
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 12, fontSize: 12, color: C.muted }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <div style={{ width: 14, height: 14, background: C.shiftBg, border: `1px solid ${C.shiftBorder}`, borderRadius: 3 }} />
-                Shift
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <div style={{ width: 14, height: 14, background: C.offBg, border: `1px solid ${C.offBorderStrong}`, borderRadius: 3 }} />
-                Time-off
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <div style={{ width: 14, height: 14, background: "transparent", border: "1px dashed #d8d3c4", borderRadius: 3 }} />
-                Click to add shift
-              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 14, height: 14, background: C.shiftBg, border: `1px solid ${C.shiftBorder}`, borderRadius: 3 }} />Shift</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 14, height: 14, background: C.offBg, border: `1px solid ${C.offBorderStrong}`, borderRadius: 3 }} />Time-off</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}><div style={{ width: 14, height: 14, background: "transparent", border: "1px dashed #d8d3c4", borderRadius: 3 }} />Click to add shift</div>
             </div>
 
             <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: "16px 20px", marginTop: 24 }}>
@@ -964,18 +949,9 @@ export default function RosteringPage() {
                         <span style={{ fontSize: 13, color: C.secondary }}> · {dayNames[o.day]} · {o.reason}</span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{
-                          fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 10,
-                          background: o.status === "Approved" ? "#e6f4ea" : "#fff3e0",
-                          color: o.status === "Approved" ? "#1a6b2f" : C.offColor,
-                        }}>{o.status}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 10, background: o.status === "Approved" ? "#e6f4ea" : "#fff3e0", color: o.status === "Approved" ? "#1a6b2f" : C.offColor }}>{o.status}</span>
                         {o.status === "Pending" && (
-                          <button
-                            onClick={() => approveTimeOff(o.id)}
-                            style={{ padding: "4px 10px", background: C.dark, color: C.white, border: "none", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-                          >
-                            Approve
-                          </button>
+                          <button onClick={() => approveTimeOff(o.id)} style={{ padding: "4px 10px", background: C.dark, color: C.white, border: "none", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Approve</button>
                         )}
                       </div>
                     </div>
@@ -990,7 +966,7 @@ export default function RosteringPage() {
         {activeTab === "staff" && (
           <div style={{ maxWidth: 680 }}>
             <p style={{ fontSize: 14, color: C.secondary, marginBottom: 20, lineHeight: 1.6, marginTop: 0 }}>
-              Two independent flags per person — someone can manage the roster, be rostered for shifts, both, or neither yet. Invite anyone to a view-only login for their own shifts.
+              Two independent flags per person — someone can manage the roster, be rostered, both, or neither. Invite anyone to a view-only login for their own shifts.
             </p>
             <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
               {staff.map((member, idx) => (
@@ -998,32 +974,19 @@ export default function RosteringPage() {
                   <div style={{ fontWeight: 700, fontSize: 14, color: C.dark, minWidth: 140 }}>{member.name}</div>
                   <div style={{ display: "flex", gap: 16, flex: 1 }}>
                     <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.secondary, cursor: "pointer" }}>
-                      <input
-                        type="checkbox"
-                        checked={member.canManage}
-                        onChange={(e) => setStaff((prev) => prev.map((m) => m.id === member.id ? { ...m, canManage: e.target.checked } : m))}
-                        style={{ accentColor: C.dark, width: 15, height: 15 }}
-                      />
+                      <input type="checkbox" checked={member.canManage} onChange={(e) => setStaff((prev) => prev.map((m) => m.id === member.id ? { ...m, canManage: e.target.checked } : m))} style={{ accentColor: C.dark, width: 15, height: 15 }} />
                       Can manage
                     </label>
                     <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.secondary, cursor: "pointer" }}>
-                      <input
-                        type="checkbox"
-                        checked={member.canBeRostered}
-                        onChange={(e) => setStaff((prev) => prev.map((m) => m.id === member.id ? { ...m, canBeRostered: e.target.checked } : m))}
-                        style={{ accentColor: C.dark, width: 15, height: 15 }}
-                      />
+                      <input type="checkbox" checked={member.canBeRostered} onChange={(e) => setStaff((prev) => prev.map((m) => m.id === member.id ? { ...m, canBeRostered: e.target.checked } : m))} style={{ accentColor: C.dark, width: 15, height: 15 }} />
                       Can be rostered
                     </label>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div>
                     {member.invited ? (
                       <span style={{ fontSize: 12, fontWeight: 700, color: "#1a6b2f", background: "#e6f4ea", padding: "2px 8px", borderRadius: 10 }}>Invited ✓</span>
                     ) : (
-                      <button
-                        onClick={() => openInviteModal(member.id, member.name)}
-                        style={{ fontSize: 12, padding: "5px 12px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 7, cursor: "pointer", fontWeight: 600 }}
-                      >
+                      <button onClick={() => openInviteModal(member.id, member.name)} style={{ fontSize: 12, padding: "5px 12px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 7, cursor: "pointer", fontWeight: 600 }}>
                         Invite to view their roster
                       </button>
                     )}
@@ -1032,20 +995,116 @@ export default function RosteringPage() {
               ))}
             </div>
             <form onSubmit={addStaff} style={{ marginTop: 20, display: "flex", gap: 10 }}>
-              <input
-                type="text"
-                value={newStaffName}
-                onChange={(e) => setNewStaffName(e.target.value)}
-                placeholder="New staff name"
-                style={{ flex: 1, padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white }}
-              />
-              <button
-                type="submit"
-                style={{ padding: "9px 18px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-              >
-                Add
-              </button>
+              <input type="text" value={newStaffName} onChange={(e) => setNewStaffName(e.target.value)} placeholder="New staff name"
+                style={{ flex: 1, padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white }} />
+              <button type="submit" style={{ padding: "9px 18px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Add</button>
             </form>
+          </div>
+        )}
+
+        {/* ── Requests Tab ── */}
+        {activeTab === "requests" && (
+          <div style={{ maxWidth: 680 }}>
+            {!requestsLoaded ? (
+              <p style={{ color: C.muted, fontSize: 14 }}>Loading…</p>
+            ) : requests.timeOff.length === 0 && requests.swaps.length === 0 ? (
+              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: "32px 24px", textAlign: "center" }}>
+                <p style={{ color: C.muted, fontSize: 14, margin: 0 }}>No pending requests.</p>
+              </div>
+            ) : (
+              <>
+                {requests.timeOff.length > 0 && (
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Time-off requests</div>
+                    <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
+                      {requests.timeOff.map((r, idx) => {
+                        const dateStr = new Date(r.date).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
+                        return (
+                          <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: idx < requests.timeOff.length - 1 ? `1px solid ${C.divider}` : "none", flexWrap: "wrap", gap: 10 }}>
+                            <div>
+                              <div style={{ fontWeight: 700, fontSize: 14, color: C.dark }}>{r.staff.name}</div>
+                              <div style={{ fontSize: 13, color: C.secondary, marginTop: 2 }}>{dateStr} · {r.type}{r.reason ? ` — ${r.reason}` : ""}</div>
+                            </div>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <button onClick={() => handleTimeOffRequest(r.id, "deny")} style={{ padding: "6px 14px", background: C.white, color: C.danger, border: `1px solid ${C.border}`, borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Deny</button>
+                              <button onClick={() => handleTimeOffRequest(r.id, "approve")} style={{ padding: "6px 14px", background: C.dark, color: C.white, border: "none", borderRadius: 7, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Approve</button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {requests.swaps.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Swap requests</div>
+                    <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
+                      {requests.swaps.map((r, idx) => {
+                        const fromDate = new Date(r.fromShift.date).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
+                        const toDate = r.toShift ? new Date(r.toShift.date).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" }) : null;
+                        return (
+                          <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: idx < requests.swaps.length - 1 ? `1px solid ${C.divider}` : "none", flexWrap: "wrap", gap: 10 }}>
+                            <div>
+                              <div style={{ fontWeight: 700, fontSize: 14, color: C.dark }}>{r.fromStaff.name} → {r.toStaff.name}</div>
+                              <div style={{ fontSize: 13, color: C.secondary, marginTop: 2 }}>
+                                {fromDate} {r.fromShift.startTime}–{r.fromShift.endTime}
+                                {toDate ? ` ↔ ${toDate} ${r.toShift!.startTime}–${r.toShift!.endTime}` : ""}
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <button onClick={() => handleSwapRequest(r.id, "deny")} style={{ padding: "6px 14px", background: C.white, color: C.danger, border: `1px solid ${C.border}`, borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Deny</button>
+                              <button onClick={() => handleSwapRequest(r.id, "approve")} style={{ padding: "6px 14px", background: C.dark, color: C.white, border: "none", borderRadius: 7, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Approve</button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── History Tab ── */}
+        {activeTab === "history" && (
+          <div style={{ maxWidth: 680 }}>
+            {!historyLoaded ? (
+              <p style={{ color: C.muted, fontSize: 14 }}>Loading…</p>
+            ) : pastWeeks.length === 0 ? (
+              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: "32px 24px", textAlign: "center" }}>
+                <p style={{ color: C.muted, fontSize: 14, margin: 0 }}>No past rosters yet.</p>
+              </div>
+            ) : (
+              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 80px auto", background: C.bg, borderBottom: `1px solid ${C.border}`, padding: "8px 20px", gap: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted }}>WEEK</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textAlign: "center" }}>STAFF</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textAlign: "center" }}>SHIFTS</div>
+                  <div />
+                </div>
+                {pastWeeks.map((w, idx) => {
+                  const [y, m, d] = w.weekStart.split("-").map(Number);
+                  const offset = Math.round((new Date(y, m - 1, d).getTime() - baseMonday.getTime()) / (7 * 24 * 60 * 60 * 1000));
+                  const isPast = offset < 0;
+                  return (
+                    <div key={w.weekStart} style={{ display: "grid", gridTemplateColumns: "1fr 80px 80px auto", alignItems: "center", padding: "12px 20px", borderBottom: idx < pastWeeks.length - 1 ? `1px solid ${C.divider}` : "none", gap: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: C.dark }}>{fmtWeekLabelFromStr(w.weekStart)}</div>
+                        {!isPast && <div style={{ fontSize: 11, color: C.accent, fontWeight: 700, marginTop: 2 }}>Current / future</div>}
+                      </div>
+                      <div style={{ fontSize: 13, color: C.secondary, textAlign: "center" }}>{w.staffCount}</div>
+                      <div style={{ fontSize: 13, color: C.secondary, textAlign: "center" }}>{w.shiftCount}</div>
+                      <button
+                        onClick={() => { setWeekOffset(offset); setActiveTab("roster"); }}
+                        style={{ padding: "5px 12px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
+                        View
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -1064,14 +1123,7 @@ export default function RosteringPage() {
                   <div key={member.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: `1px solid ${C.divider}` }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <span style={{ fontWeight: 600, fontSize: 14, color: C.dark }}>{member.name}</span>
-                      <span style={{
-                        fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 10,
-                        background: tag === "rostered" ? C.shiftBg : tag === "manager" ? "#f0edff" : C.bg,
-                        color: tag === "rostered" ? C.shiftColor : tag === "manager" ? "#5b21b6" : C.muted,
-                        border: `1px solid ${tag === "rostered" ? C.shiftBorder : tag === "manager" ? "#c4b5fd" : C.border}`,
-                      }}>
-                        {tag}
-                      </span>
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 10, background: tag === "rostered" ? C.shiftBg : tag === "manager" ? "#f0edff" : C.bg, color: tag === "rostered" ? C.shiftColor : tag === "manager" ? "#5b21b6" : C.muted, border: `1px solid ${tag === "rostered" ? C.shiftBorder : tag === "manager" ? "#c4b5fd" : C.border}` }}>{tag}</span>
                     </div>
                     <span style={{ fontSize: 14, fontWeight: 600, color: C.dark }}>{amount}</span>
                   </div>
@@ -1116,19 +1168,9 @@ export default function RosteringPage() {
               </p>
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Email</label>
-                <input
-                  type="email"
-                  value={accountEmail}
-                  readOnly
-                  style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.bg, boxSizing: "border-box" }}
-                />
+                <input type="email" value={accountEmail} readOnly style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.bg, boxSizing: "border-box" }} />
               </div>
-              <button
-                onClick={handleLogout}
-                style={{ padding: "9px 18px", background: C.white, color: C.danger, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-              >
-                Log out
-              </button>
+              <button onClick={handleLogout} style={{ padding: "9px 18px", background: C.white, color: C.danger, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Log out</button>
             </div>
           </div>
         )}
@@ -1146,55 +1188,33 @@ export default function RosteringPage() {
                 <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{dayNames[modal.day]} · {weekLabel}</div>
               </div>
               <div style={{ display: "flex", gap: 6, marginBottom: 18, background: C.bg, borderRadius: 8, padding: 4 }}>
-                <button
-                  onClick={() => setModal({ ...modal, mode: "shift" })}
-                  style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, background: modal.mode === "shift" ? C.dark : "transparent", color: modal.mode === "shift" ? C.white : C.secondary }}
-                >
-                  Shift
-                </button>
-                <button
-                  onClick={() => setModal({ ...modal, mode: "off" })}
-                  style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, background: modal.mode === "off" ? C.dark : "transparent", color: modal.mode === "off" ? C.white : C.secondary }}
-                >
-                  Time-off
-                </button>
+                <button onClick={() => setModal({ ...modal, mode: "shift" })} style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, background: modal.mode === "shift" ? C.dark : "transparent", color: modal.mode === "shift" ? C.white : C.secondary }}>Shift</button>
+                <button onClick={() => setModal({ ...modal, mode: "off" })} style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, background: modal.mode === "off" ? C.dark : "transparent", color: modal.mode === "off" ? C.white : C.secondary }}>Time-off</button>
               </div>
-
               {modal.mode === "shift" ? (
                 <div>
                   <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
                     <div style={{ flex: 1 }}>
                       <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: C.secondary, marginBottom: 4 }}>Start (24h)</label>
-                      <input
-                        type="number" step={0.5} min={0} max={24} value={modal.start}
-                        onChange={(e) => setModal({ ...modal, start: Number(e.target.value) })}
-                        style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, boxSizing: "border-box" }}
-                      />
+                      <input type="number" step={0.5} min={0} max={24} value={modal.start} onChange={(e) => setModal({ ...modal, start: Number(e.target.value) })}
+                        style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, boxSizing: "border-box" }} />
                     </div>
                     <div style={{ flex: 1 }}>
                       <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: C.secondary, marginBottom: 4 }}>End (24h)</label>
-                      <input
-                        type="number" step={0.5} min={0} max={24} value={modal.end}
-                        onChange={(e) => setModal({ ...modal, end: Number(e.target.value) })}
-                        style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, boxSizing: "border-box" }}
-                      />
+                      <input type="number" step={0.5} min={0} max={24} value={modal.end} onChange={(e) => setModal({ ...modal, end: Number(e.target.value) })}
+                        style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, boxSizing: "border-box" }} />
                     </div>
                   </div>
                   <div style={{ marginBottom: 14 }}>
                     <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: C.secondary, marginBottom: 4 }}>Role</label>
-                    <select
-                      value={modal.role}
-                      onChange={(e) => setModal({ ...modal, role: e.target.value })}
-                      style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box" }}
-                    >
+                    <select value={modal.role} onChange={(e) => setModal({ ...modal, role: e.target.value })}
+                      style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box" }}>
                       {["Floor", "Kitchen", "Barista", "Manager"].map((r) => <option key={r}>{r}</option>)}
                     </select>
                   </div>
                   {warnings.length > 0 && (
                     <div style={{ background: "#fff8ec", border: "1px solid #f0c850", borderRadius: 8, padding: "10px 14px", marginBottom: 14 }}>
-                      {warnings.map((w, i) => (
-                        <div key={i} style={{ fontSize: 12, color: "#7a4f00", marginBottom: i < warnings.length - 1 ? 4 : 0 }}>⚠ {w}</div>
-                      ))}
+                      {warnings.map((w, i) => <div key={i} style={{ fontSize: 12, color: "#7a4f00", marginBottom: i < warnings.length - 1 ? 4 : 0 }}>⚠ {w}</div>)}
                       <div style={{ fontSize: 11, color: C.muted, marginTop: 6 }}>A rough check, not a compliance guarantee.</div>
                     </div>
                   )}
@@ -1202,44 +1222,22 @@ export default function RosteringPage() {
               ) : (
                 <div style={{ marginBottom: 14 }}>
                   <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: C.secondary, marginBottom: 4 }}>Reason</label>
-                  <input
-                    type="text" value={modal.reason}
-                    onChange={(e) => setModal({ ...modal, reason: e.target.value })}
-                    placeholder="e.g. Doctor appointment"
-                    style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, boxSizing: "border-box" }}
-                  />
+                  <input type="text" value={modal.reason} onChange={(e) => setModal({ ...modal, reason: e.target.value })} placeholder="e.g. Doctor appointment"
+                    style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, boxSizing: "border-box" }} />
                 </div>
               )}
-
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-                {!modal.isNew && (
-                  <button
-                    onClick={deleteModal}
-                    style={{ padding: "8px 14px", background: "none", color: C.danger, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700 }}
-                  >
-                    Delete
-                  </button>
-                )}
+                {!modal.isNew && <button onClick={deleteModal} style={{ padding: "8px 14px", background: "none", color: C.danger, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700 }}>Delete</button>}
                 <div style={{ flex: 1 }} />
-                <button
-                  onClick={() => setModal(null)}
-                  style={{ padding: "8px 16px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveModal}
-                  style={{ padding: "8px 16px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-                >
-                  Save
-                </button>
+                <button onClick={() => setModal(null)} style={{ padding: "8px 16px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+                <button onClick={saveModal} style={{ padding: "8px 16px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Save</button>
               </div>
             </div>
           </div>
         );
       })()}
 
-      {/* ─── Publish Modal ──────────────────────────────────────────────────── */}
+      {/* ─── Publish Modal ── */}
       {modal && modal.kind === "publish" && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
           <div style={{ background: C.white, borderRadius: 14, padding: 24, width: "100%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}>
@@ -1248,30 +1246,19 @@ export default function RosteringPage() {
             <div style={{ maxHeight: 240, overflowY: "auto", borderRadius: 8, border: `1px solid ${C.border}`, marginBottom: 20 }}>
               {rosteredStaff.length === 0 ? (
                 <p style={{ padding: 16, fontSize: 13, color: C.muted, margin: 0 }}>No staff rostered this week.</p>
-              ) : (
-                rosteredStaff.map((member) => {
-                  const hrs = currentShifts.filter((s) => s.staffId === member.id).reduce((sum, s) => sum + (s.end - s.start), 0);
-                  return (
-                    <div key={member.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", borderBottom: `1px solid ${C.divider}` }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: C.dark }}>{member.name}</span>
-                      <span style={{ fontSize: 13, color: C.secondary }}>{hrs}h</span>
-                    </div>
-                  );
-                })
-              )}
+              ) : rosteredStaff.map((member) => {
+                const hrs = currentShifts.filter((s) => s.staffId === member.id).reduce((sum, s) => sum + (s.end - s.start), 0);
+                return (
+                  <div key={member.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", borderBottom: `1px solid ${C.divider}` }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.dark }}>{member.name}</span>
+                    <span style={{ fontSize: 13, color: C.secondary }}>{hrs}h</span>
+                  </div>
+                );
+              })}
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <button
-                onClick={() => setModal(null)}
-                style={{ padding: "8px 16px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={publishRoster}
-                disabled={publishLoading}
-                style={{ padding: "8px 16px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: publishLoading ? "default" : "pointer", opacity: publishLoading ? 0.7 : 1 }}
-              >
+              <button onClick={() => setModal(null)} style={{ padding: "8px 16px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+              <button onClick={publishRoster} disabled={publishLoading} style={{ padding: "8px 16px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: publishLoading ? "default" : "pointer", opacity: publishLoading ? 0.7 : 1 }}>
                 {publishLoading ? "Sending…" : "Send"}
               </button>
             </div>
@@ -1279,7 +1266,7 @@ export default function RosteringPage() {
         </div>
       )}
 
-      {/* ─── Invite Modal ───────────────────────────────────────────────────── */}
+      {/* ─── Invite Modal ── */}
       {inviteModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
           <div style={{ background: C.white, borderRadius: 14, padding: 24, width: "100%", maxWidth: 360, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}>
@@ -1289,32 +1276,18 @@ export default function RosteringPage() {
             </p>
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Staff email</label>
-              <input
-                type="email" value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="staff@example.com"
-                style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box" }}
-              />
+              <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="staff@example.com"
+                style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box" }} />
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <button
-                onClick={() => setInviteModal(null)}
-                style={{ padding: "8px 16px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={sendInvite}
-                style={{ padding: "8px 16px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-              >
-                Send invite
-              </button>
+              <button onClick={() => setInviteModal(null)} style={{ padding: "8px 16px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+              <button onClick={sendInvite} style={{ padding: "8px 16px", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Send invite</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── Toast ─────────────────────────────────────────────────────────── */}
+      {/* ─── Toast ── */}
       {toast && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: C.dark, color: C.white, padding: "10px 20px", borderRadius: 8, fontSize: 13, fontWeight: 600, zIndex: 9999, whiteSpace: "nowrap" }}>
           {toast}
