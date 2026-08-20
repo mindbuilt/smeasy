@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 const API = "https://smeasy-production.up.railway.app";
@@ -20,6 +20,11 @@ interface Roster {
   status: "draft" | "published";
   publishedAt: string | null;
   createdAt: string;
+}
+
+interface RosterDetail {
+  id: number;
+  shifts: { staffId: number }[];
 }
 
 function getMonday(d: Date): Date {
@@ -69,6 +74,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [publishing, setPublishing] = useState<number | null>(null);
+  const [billedCount, setBilledCount] = useState<number | null>(null);
+  const billedLoadedForRef = useRef<number | null>(null);
 
   const currentWeek = thisWeekStart();
 
@@ -94,6 +101,20 @@ export default function DashboardPage() {
   }, [token, loadRosters]);
 
   const thisWeekRoster = rosters.find((r) => r.weekStart.slice(0, 10) === currentWeek);
+
+  // Load billed staff count when thisWeekRoster is available
+  useEffect(() => {
+    if (!token || !thisWeekRoster) return;
+    if (billedLoadedForRef.current === thisWeekRoster.id) return;
+    billedLoadedForRef.current = thisWeekRoster.id;
+    apiFetch(`/rosters/${thisWeekRoster.id}`, token).then((data: RosterDetail) => {
+      if (data && Array.isArray(data.shifts)) {
+        const uniqueStaffIds = new Set(data.shifts.map((s) => s.staffId));
+        setBilledCount(uniqueStaffIds.size);
+      }
+    });
+  }, [token, thisWeekRoster]);
+
   const pastRosters = rosters.filter((r) => r.weekStart.slice(0, 10) !== currentWeek);
 
   async function createThisWeekRoster() {
@@ -192,6 +213,11 @@ export default function DashboardPage() {
             </div>
             {thisWeekRoster && <span style={statusBadge(thisWeekRoster.status)}>{thisWeekRoster.status}</span>}
           </div>
+          {thisWeekRoster && billedCount !== null && (
+            <div style={{ fontSize: 13, color: C.secondary, marginTop: 4 }}>
+              {billedCount} staff rostered × 96c = <strong>${(billedCount * 0.96).toFixed(2)}</strong>
+            </div>
+          )}
 
           <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
             {loading ? (
