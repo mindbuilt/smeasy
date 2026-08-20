@@ -49,7 +49,7 @@ router.post("/magic", async (req: Request, res: Response) => {
   if (!process.env.RESEND_API_KEY) { res.status(503).json({ error: "Email not configured" }); return; }
 
   const magicToken = jwt.sign({ userId: user.id, type: "magic" }, process.env.JWT_SECRET!, { expiresIn: "15m" });
-  const link = `https://smeasy.vercel.app/rostering?magic=${magicToken}`;
+  const link = `https://smeasy.vercel.app/auth/callback?token=${magicToken}`;
 
   const resend = new Resend(process.env.RESEND_API_KEY);
   await resend.emails.send({
