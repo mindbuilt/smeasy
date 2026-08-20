@@ -31,14 +31,15 @@ model Business {
 }
 
 model Roster {
-  id          Int       @id @default(autoincrement())
-  businessId  Int
-  business    Business  @relation(fields: [businessId], references: [id])
-  weekStart   DateTime  @db.Date
-  weekEnd     DateTime  @db.Date
-  status      String    @default("draft")
-  publishedAt DateTime?
-  createdAt   DateTime  @default(now())
+  id           Int           @id @default(autoincrement())
+  businessId   Int
+  business     Business      @relation(fields: [businessId], references: [id])
+  weekStart    DateTime      @db.Date
+  weekEnd      DateTime      @db.Date
+  status       String        @default("draft")
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  rosterTokens RosterToken[]
 
   @@unique([businessId, weekStart])
 }
@@ -57,8 +58,9 @@ model Staff {
   createdAt     DateTime  @default(now())
   shifts        Shift[]
   timeOff       TimeOff[]
-  swapsFrom     Swap[]    @relation("SwapFrom")
-  swapsTo       Swap[]    @relation("SwapTo")
+  swapsFrom     Swap[]        @relation("SwapFrom")
+  swapsTo       Swap[]        @relation("SwapTo")
+  rosterTokens  RosterToken[]
 }
 
 model Shift {
@@ -79,18 +81,17 @@ model Shift {
 }
 
 model TimeOff {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   businessId Int
-  business   Business @relation(fields: [businessId], references: [id])
+  business   Business  @relation(fields: [businessId], references: [id])
   staffId    Int
-  staff      Staff    @relation(fields: [staffId], references: [id])
-  date       DateTime @db.Date
-  type       String   @default("Day Off")
-  reason     String   @default("")
-  status     String   @default("Pending")
-  createdAt  DateTime @default(now())
-
-  @@unique([staffId, date])
+  staff      Staff     @relation(fields: [staffId], references: [id])
+  date       DateTime  @db.Date
+  dateTo     DateTime? @db.Date
+  type       String    @default("Day Off")
+  reason     String    @default("")
+  status     String    @default("Pending")
+  createdAt  DateTime  @default(now())
 }
 
 model InviteToken {
@@ -115,4 +116,15 @@ model Swap {
   toShift     Shift?   @relation("SwapToShift", fields: [toShiftId], references: [id])
   status      String   @default("Pending")
   createdAt   DateTime @default(now())
+}
+
+model RosterToken {
+  id        Int      @id @default(autoincrement())
+  rosterId  Int
+  roster    Roster   @relation(fields: [rosterId], references: [id])
+  staffId   Int
+  staff     Staff    @relation(fields: [staffId], references: [id])
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
