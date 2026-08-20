@@ -27,6 +27,20 @@ model Business {
   shifts       Shift[]
   timeOff      TimeOff[]
   inviteTokens InviteToken[]
+  rosters      Roster[]
+}
+
+model Roster {
+  id          Int       @id @default(autoincrement())
+  businessId  Int
+  business    Business  @relation(fields: [businessId], references: [id])
+  weekStart   DateTime  @db.Date
+  weekEnd     DateTime  @db.Date
+  status      String    @default("draft")
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([businessId, weekStart])
 }
 
 model Staff {
