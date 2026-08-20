@@ -9,6 +9,7 @@ import RosterGrid from "../components/RosterGrid";
 import CellModal from "../components/CellModal";
 import PublishModal from "../components/PublishModal";
 import DeleteConfirm from "../components/DeleteConfirm";
+import ExportModal from "../components/ExportModal";
 
 const API = "https://smeasy-production.up.railway.app";
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -88,6 +89,7 @@ export default function RosterEditPage({ params }: { params: Promise<{ rosterId:
   const [publishModal, setPublishModal] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ kind: "shift" | "timeoff"; id: number } | null>(null);
+  const [exportModal, setExportModal] = useState(false);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -278,9 +280,14 @@ export default function RosterEditPage({ params }: { params: Promise<{ rosterId:
         </div>
         <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
           {published ? (
-            <button onClick={downloadCSV} style={{ padding: "7px 14px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-              Download CSV
-            </button>
+            <>
+              <button onClick={downloadCSV} style={{ padding: "7px 14px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                Download CSV
+              </button>
+              <button onClick={() => setExportModal(true)} style={{ padding: "7px 14px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                Export payroll
+              </button>
+            </>
           ) : (
             <>
               <button onClick={saveDraft} disabled={saving} style={{ padding: "7px 14px", background: C.white, color: C.dark, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1 }}>
@@ -377,6 +384,16 @@ export default function RosterEditPage({ params }: { params: Promise<{ rosterId:
           kind={deleteConfirm.kind}
           onConfirm={deleteEntry}
           onCancel={() => setDeleteConfirm(null)}
+        />
+      )}
+
+      {exportModal && roster && token && (
+        <ExportModal
+          weekStart={roster.weekStart.slice(0, 10)}
+          weekEnd={roster.weekEnd.slice(0, 10)}
+          rosterId={roster.id}
+          token={token}
+          onClose={() => setExportModal(false)}
         />
       )}
 
