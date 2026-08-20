@@ -24,7 +24,7 @@ async function apiFetch(path: string, token: string, options?: RequestInit) {
 type AppView = "login" | "manager" | "staffPortal";
 type ActiveTab = "roster" | "staff" | "billing" | "business" | "account";
 type AuthMode = "login" | "signup";
-type AuthMethod = "password" | "magic";
+type LoginType = "manager" | "staff";
 type StaffPortalTab = "shifts" | "timeoff";
 
 interface StaffMember {
@@ -54,7 +54,7 @@ interface TimeOff {
 }
 
 interface ApiStaff { id: number; name: string; email: string | null; canManage: boolean; canBeRostered: boolean; }
-interface ApiShift { id: number; staffId: number; date: string; startHour: number; endHour: number; role: string; }
+interface ApiShift { id: number; staffId: number; date: string; startTime: string; endTime: string; role: string; }
 interface ApiTimeOff { id: number; staffId: number; date: string; reason: string; status: string; }
 
 type ShiftsByWeek = Record<number, Shift[]>;
@@ -90,10 +90,15 @@ const C = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+function parseTime(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h + m / 60;
+}
+
 function fmtTime(h: number): string {
   const hh = Math.floor(h);
   const mm = Math.round((h - hh) * 60);
-  return String(hh).padStart(2, "0") + (mm ? `:${String(mm).padStart(2, "0")}` : "");
+  return String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
 }
 
 function computeWarnings(shifts: Shift[], staffId: number, day: number, start: number, end: number, excludeId: string | null): string[] {
@@ -166,13 +171,19 @@ export default function RosteringPage() {
   const [token, setToken] = useState<string | null>(() =>
     typeof window !== "undefined" ? localStorage.getItem("smeasy_token") : null
   );
+  const [loginType, setLoginType] = useState<LoginType>("manager");
   const [businessName, setBusinessName] = useState("Smeasy");
-  const [appView, setAppView] = useState<AppView>(() =>
-    typeof window !== "undefined" && localStorage.getItem("smeasy_token") ? "manager" : "login"
+  const [staffDisplayName, setStaffDisplayName] = useState(() =>
+    typeof window !== "undefined" ? (localStorage.getItem("smeasy_staff_name") ?? "") : ""
   );
+  const [appView, setAppView] = useState<AppView>(() => {
+    if (typeof window === "undefined") return "login";
+    const tk = localStorage.getItem("smeasy_token");
+    if (!tk) return "login";
+    return localStorage.getItem("smeasy_role") === "staff" ? "staffPortal" : "manager";
+  });
   const [authMode, setAuthMode] = useState<AuthMode>("login");
-  const [authMethod, setAuthMethod] = useState<AuthMethod>("password");
-  const [loginEmail, setLoginEmail] = useState("owner@acmecafe.com.au");
+  const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [accountEmail, setAccountEmail] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
@@ -192,9 +203,13 @@ export default function RosteringPage() {
   const [publishLoading, setPublishLoading] = useState(false);
 
   // Staff portal state
-  const [portalStaffId, setPortalStaffId] = useState<number | null>(null);
+  const [portalWeekOffset, setPortalWeekOffset] = useState(0);
   const [staffPortalTab, setStaffPortalTab] = useState<StaffPortalTab>("shifts");
-  const [portalTimeOffDay, setPortalTimeOffDay] = useState(0);
+  const [portalShifts, setPortalShifts] = useState<Shift[]>([]);
+  const [portalTimeOff, setPortalTimeOff] = useState<TimeOff[]>([]);
+  const [portalTimeOffDate, setPortalTimeOffDate] = useState(() =>
+    typeof window !== "undefined" ? dateFromOffset(getMonday(new Date()), 0) : ""
+  );
   const [portalTimeOffReason, setPortalTimeOffReason] = useState("");
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -210,6 +225,10 @@ export default function RosteringPage() {
   const monday = useMemo(() => addDays(baseMonday, weekOffset * 7), [baseMonday, weekOffset]);
   const weekDates = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(monday, i)), [monday]);
   const weekLabel = useMemo(() => fmtWeekLabel(monday), [monday]);
+
+  // Portal week
+  const portalMonday = useMemo(() => addDays(baseMonday, portalWeekOffset * 7), [baseMonday, portalWeekOffset]);
+  const portalWeekLabel = useMemo(() => fmtWeekLabel(portalMonday), [portalMonday]);
 
   // Current week data
   const currentShifts: Shift[] = shiftsByWeek[weekOffset] ?? [];
@@ -238,7 +257,7 @@ export default function RosteringPage() {
     }
   }, []);
 
-  // ─── Load shifts & timeoff for current week ─────────────────────────────────
+  // ─── Load shifts & timeoff for current week (manager) ───────────────────────
   const loadWeek = useCallback(async (tk: string, mon: Date, offset: number) => {
     const weekStr = dateFromOffset(mon, 0);
     const [shifts, timeoffs] = await Promise.all([
@@ -252,8 +271,8 @@ export default function RosteringPage() {
           id: String(s.id),
           staffId: s.staffId,
           day: dayOffset(s.date, mon),
-          start: s.startHour,
-          end: s.endHour,
+          start: parseTime(s.startTime),
+          end: parseTime(s.endTime),
           role: s.role,
         })),
       }));
@@ -272,15 +291,48 @@ export default function RosteringPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!token) return;
-    loadStaff(token);
-  }, [token, loadStaff]);
+  // ─── Load shifts & timeoff for staff portal ─────────────────────────────────
+  const loadPortal = useCallback(async (tk: string, mon: Date) => {
+    const weekStr = dateFromOffset(mon, 0);
+    const [shifts, timeoffs] = await Promise.all([
+      apiFetch(`/staff/roster?week=${weekStr}`, tk),
+      apiFetch(`/timeoff?week=${weekStr}`, tk),
+    ]);
+    if (Array.isArray(shifts)) {
+      setPortalShifts(shifts.map((s: ApiShift) => ({
+        id: String(s.id),
+        staffId: s.staffId,
+        day: dayOffset(s.date, mon),
+        start: parseTime(s.startTime),
+        end: parseTime(s.endTime),
+        role: s.role,
+      })));
+    }
+    if (Array.isArray(timeoffs)) {
+      setPortalTimeOff(timeoffs.map((o: ApiTimeOff) => ({
+        id: String(o.id),
+        staffId: o.staffId,
+        day: dayOffset(o.date, mon),
+        reason: o.reason,
+        status: o.status as "Pending" | "Approved",
+      })));
+    }
+  }, []);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || appView !== "manager") return;
+    loadStaff(token);
+  }, [token, appView, loadStaff]);
+
+  useEffect(() => {
+    if (!token || appView !== "manager") return;
     loadWeek(token, monday, weekOffset);
-  }, [token, monday, weekOffset, loadWeek]);
+  }, [token, monday, weekOffset, appView, loadWeek]);
+
+  useEffect(() => {
+    if (!token || appView !== "staffPortal") return;
+    loadPortal(token, portalMonday);
+  }, [token, portalMonday, appView, loadPortal]);
 
   const rosteredStaff = useMemo(() => {
     const ids = new Set(currentShifts.map((s) => s.staffId));
@@ -310,7 +362,7 @@ export default function RosteringPage() {
         const date = dateFromOffset(monday, modal.day);
         const res = await apiFetch("/shifts", token, {
           method: "POST",
-          body: JSON.stringify({ staffId: modal.staffId, date, startHour: modal.start, endHour: modal.end, role: modal.role }),
+          body: JSON.stringify({ staffId: modal.staffId, date, startTime: fmtTime(modal.start), endTime: fmtTime(modal.end), role: modal.role }),
         });
         if (res.id) {
           const s: Shift = { id: String(res.id), staffId: modal.staffId, day: modal.day, start: modal.start, end: modal.end, role: modal.role };
@@ -388,21 +440,41 @@ export default function RosteringPage() {
     setAuthError(null);
     setAuthLoading(true);
     try {
-      const endpoint = authMode === "signup" ? "/auth/signup" : "/auth/login";
-      const res = await fetch(`${API}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword, businessName: "My Business" }),
-      });
-      const data = await res.json();
-      if (data.token) {
-        localStorage.setItem("smeasy_token", data.token);
-        setToken(data.token);
-        setAccountEmail(data.email);
-        setBusinessName(data.businessName || "Smeasy");
-        setAppView("manager");
+      if (loginType === "staff") {
+        const res = await fetch(`${API}/staff-auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+        });
+        const data = await res.json();
+        if (data.token) {
+          localStorage.setItem("smeasy_token", data.token);
+          localStorage.setItem("smeasy_role", "staff");
+          localStorage.setItem("smeasy_staff_name", data.name ?? "");
+          setToken(data.token);
+          setStaffDisplayName(data.name ?? "");
+          setAppView("staffPortal");
+        } else {
+          setAuthError(data.error || "Login failed");
+        }
       } else {
-        setAuthError(data.error || "Login failed");
+        const endpoint = authMode === "signup" ? "/auth/signup" : "/auth/login";
+        const res = await fetch(`${API}${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: loginEmail, password: loginPassword, businessName: "My Business" }),
+        });
+        const data = await res.json();
+        if (data.token) {
+          localStorage.setItem("smeasy_token", data.token);
+          localStorage.setItem("smeasy_role", "manager");
+          setToken(data.token);
+          setAccountEmail(data.email ?? loginEmail);
+          setBusinessName(data.businessName || "Smeasy");
+          setAppView("manager");
+        } else {
+          setAuthError(data.error || "Login failed");
+        }
       }
     } catch {
       setAuthError("Could not reach server");
@@ -434,8 +506,13 @@ export default function RosteringPage() {
     setInviteEmail("");
   }
 
-  function sendInvite() {
-    if (!inviteModal) return;
+  async function sendInvite() {
+    if (!inviteModal || !token) return;
+    const res = await apiFetch("/staff/invite", token, {
+      method: "POST",
+      body: JSON.stringify({ staffId: inviteModal.staffId, email: inviteEmail }),
+    });
+    if (res.error) { showToast(res.error); return; }
     setStaff((prev) => prev.map((m) => m.id === inviteModal.staffId ? { ...m, invited: true, inviteEmail: inviteEmail } : m));
     setInviteModal(null);
     showToast(`Invite sent to ${inviteEmail}`);
@@ -467,10 +544,14 @@ export default function RosteringPage() {
 
   function handleLogout() {
     localStorage.removeItem("smeasy_token");
+    localStorage.removeItem("smeasy_role");
+    localStorage.removeItem("smeasy_staff_name");
     setToken(null);
     setStaff([]);
     setShiftsByWeek({});
     setTimeOffByWeek({});
+    setPortalShifts([]);
+    setPortalTimeOff([]);
     setAppView("login");
   }
 
@@ -484,25 +565,31 @@ export default function RosteringPage() {
             <div style={{ width: 28, height: 28, background: C.accent, borderRadius: 5 }} />
             <span style={{ fontWeight: 700, fontSize: 17, color: C.dark }}>Smeasy</span>
           </div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: C.dark, marginBottom: 20, marginTop: 0 }}>
-            {authMode === "login" ? "Log in to Smeasy" : "Create your Smeasy account"}
-          </h1>
-          <div style={{ display: "flex", gap: 6, marginBottom: 18, background: C.bg, borderRadius: 8, padding: 4 }}>
-            {(["password", "magic"] as AuthMethod[]).map((m) => (
+
+          {/* Manager / Staff toggle */}
+          <div style={{ display: "flex", gap: 6, marginBottom: 20, background: C.bg, borderRadius: 8, padding: 4 }}>
+            {(["manager", "staff"] as LoginType[]).map((t) => (
               <button
-                key={m}
-                onClick={() => setAuthMethod(m)}
+                key={t}
+                onClick={() => { setLoginType(t); setAuthError(null); }}
                 style={{
                   flex: 1, padding: "7px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600,
-                  background: authMethod === m ? C.dark : "transparent",
-                  color: authMethod === m ? C.white : C.secondary,
+                  background: loginType === t ? C.dark : "transparent",
+                  color: loginType === t ? C.white : C.secondary,
                   transition: "all 0.15s",
                 }}
               >
-                {m === "password" ? "Password" : "Magic link"}
+                {t === "manager" ? "Manager" : "Staff"}
               </button>
             ))}
           </div>
+
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: C.dark, marginBottom: 20, marginTop: 0 }}>
+            {loginType === "manager"
+              ? (authMode === "login" ? "Manager login" : "Create manager account")
+              : "Staff login"}
+          </h1>
+
           <form onSubmit={handleLogin}>
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Email</label>
@@ -513,20 +600,15 @@ export default function RosteringPage() {
                 style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box", outline: "none" }}
               />
             </div>
-            {authMethod === "password" && (
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Password</label>
-                <input
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box", outline: "none" }}
-                />
-              </div>
-            )}
-            {authMethod === "magic" && (
-              <p style={{ fontSize: 13, color: C.muted, marginBottom: 14 }}>We&apos;ll email you a one-click link</p>
-            )}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Password</label>
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box", outline: "none" }}
+              />
+            </div>
             {authError && (
               <p style={{ fontSize: 13, color: C.danger, marginBottom: 12 }}>{authError}</p>
             )}
@@ -535,18 +617,26 @@ export default function RosteringPage() {
               disabled={authLoading}
               style={{ width: "100%", padding: "11px 0", background: C.dark, color: C.white, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: authLoading ? "default" : "pointer", opacity: authLoading ? 0.7 : 1 }}
             >
-              {authLoading ? "…" : authMode === "login" ? (authMethod === "magic" ? "Send magic link" : "Log in") : (authMethod === "magic" ? "Send magic link" : "Create account")}
+              {authLoading ? "…" : loginType === "staff" ? "Log in as staff" : (authMode === "login" ? "Log in" : "Create account")}
             </button>
           </form>
-          <p style={{ textAlign: "center", fontSize: 13, color: C.muted, marginTop: 16, marginBottom: 0 }}>
-            {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
-            <button
-              onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(null); }}
-              style={{ background: "none", border: "none", color: C.dark, fontWeight: 600, cursor: "pointer", padding: 0, fontSize: 13 }}
-            >
-              {authMode === "login" ? "Sign up" : "Log in"}
-            </button>
-          </p>
+
+          {loginType === "manager" && (
+            <p style={{ textAlign: "center", fontSize: 13, color: C.muted, marginTop: 16, marginBottom: 0 }}>
+              {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
+              <button
+                onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(null); }}
+                style={{ background: "none", border: "none", color: C.dark, fontWeight: 600, cursor: "pointer", padding: 0, fontSize: 13 }}
+              >
+                {authMode === "login" ? "Sign up" : "Log in"}
+              </button>
+            </p>
+          )}
+          {loginType === "staff" && (
+            <p style={{ textAlign: "center", fontSize: 12, color: C.muted, marginTop: 16, marginBottom: 0 }}>
+              Use the email and password from your invite link.
+            </p>
+          )}
         </div>
       </div>
     );
@@ -555,34 +645,49 @@ export default function RosteringPage() {
   // ─── Staff Portal View ──────────────────────────────────────────────────────
 
   if (appView === "staffPortal") {
-    const portalMember = staff.find((m) => m.id === portalStaffId);
-    const firstName = portalMember?.name.split(" ")[0] ?? "";
-    const myShifts = currentShifts.filter((s) => s.staffId === portalStaffId);
-    const myTimeOff = currentTimeOff.filter((o) => o.staffId === portalStaffId);
+    const firstName = staffDisplayName.split(" ")[0] || "there";
     const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-    function submitPortalTimeOff(e: React.FormEvent) {
+    async function submitPortalTimeOff(e: React.FormEvent) {
       e.preventDefault();
-      if (!portalStaffId) return;
-      const newOff: TimeOff = { id: generateId(), staffId: portalStaffId, day: portalTimeOffDay, reason: portalTimeOffReason, status: "Pending" };
-      setCurrentTimeOff((prev) => [...prev, newOff]);
-      setPortalTimeOffReason("");
-      showToast("Request submitted");
+      if (!token || !portalTimeOffDate) return;
+      const res = await apiFetch("/timeoff", token, {
+        method: "POST",
+        body: JSON.stringify({ date: portalTimeOffDate, reason: portalTimeOffReason }),
+      });
+      if (res.id) {
+        const d = dayOffset(res.date ?? portalTimeOffDate, portalMonday);
+        setPortalTimeOff((prev) => [...prev, { id: String(res.id), staffId: res.staffId, day: d, reason: res.reason, status: "Pending" }]);
+        setPortalTimeOffReason("");
+        showToast("Request submitted");
+      } else {
+        showToast(res.error || "Failed to submit");
+      }
     }
 
     return (
       <div style={{ minHeight: "100vh", background: C.bg, paddingBottom: 40 }}>
         <div style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "0 16px", height: 58, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.dark }}>{businessName}</div>
-            <div style={{ fontSize: 12, color: C.muted }}>Hi {firstName} — view-only</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 24, height: 24, background: C.accent, borderRadius: 4 }} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.dark }}>Smeasy</div>
+              <div style={{ fontSize: 11, color: C.muted }}>Hi {firstName}</div>
+            </div>
           </div>
-          <button
-            onClick={() => setAppView("manager")}
-            style={{ fontSize: 12, color: C.muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
-          >
-            Exit demo
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <button onClick={() => setPortalWeekOffset((w) => w - 1)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: C.dark, padding: "2px 6px", lineHeight: 1 }}>‹</button>
+              <span style={{ fontSize: 12, fontWeight: 600, color: C.dark, minWidth: 130, textAlign: "center" }}>{portalWeekLabel}</span>
+              <button onClick={() => setPortalWeekOffset((w) => w + 1)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: C.dark, padding: "2px 6px", lineHeight: 1 }}>›</button>
+            </div>
+            <button
+              onClick={handleLogout}
+              style={{ fontSize: 12, color: C.muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
+            >
+              Log out
+            </button>
+          </div>
         </div>
         <div style={{ maxWidth: 420, margin: "0 auto", padding: "24px 16px" }}>
           <div style={{ display: "flex", gap: 6, marginBottom: 0, borderBottom: `1px solid ${C.border}` }}>
@@ -606,11 +711,11 @@ export default function RosteringPage() {
           </div>
           <div style={{ background: C.white, border: `1px solid ${C.border}`, borderTop: "none", borderRadius: "0 0 12px 12px", padding: 20 }}>
             {staffPortalTab === "shifts" ? (
-              myShifts.length === 0 ? (
+              portalShifts.length === 0 ? (
                 <p style={{ color: C.muted, fontSize: 14, margin: 0 }}>No shifts scheduled this week.</p>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {myShifts.map((s) => (
+                  {portalShifts.map((s) => (
                     <div key={s.id} style={{ background: C.shiftBg, border: `1px solid ${C.shiftBorder}`, borderRadius: 8, padding: "10px 14px" }}>
                       <div style={{ fontWeight: 700, fontSize: 14, color: C.shiftColor }}>{dayNames[s.day]} — {fmtTime(s.start)}–{fmtTime(s.end)}</div>
                       <div style={{ fontSize: 12, color: C.secondary, marginTop: 2 }}>{s.role}</div>
@@ -622,14 +727,13 @@ export default function RosteringPage() {
               <div>
                 <form onSubmit={submitPortalTimeOff} style={{ marginBottom: 20 }}>
                   <div style={{ marginBottom: 12 }}>
-                    <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Day</label>
-                    <select
-                      value={portalTimeOffDay}
-                      onChange={(e) => setPortalTimeOffDay(Number(e.target.value))}
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Date</label>
+                    <input
+                      type="date"
+                      value={portalTimeOffDate}
+                      onChange={(e) => setPortalTimeOffDate(e.target.value)}
                       style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 14, color: C.dark, background: C.white, boxSizing: "border-box" }}
-                    >
-                      {dayNames.map((d, i) => <option key={i} value={i}>{d}</option>)}
-                    </select>
+                    />
                   </div>
                   <div style={{ marginBottom: 12 }}>
                     <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Reason</label>
@@ -649,11 +753,11 @@ export default function RosteringPage() {
                   </button>
                 </form>
                 <div style={{ borderTop: `1px solid ${C.divider}`, paddingTop: 16 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: C.dark, marginBottom: 10 }}>Your requests</div>
-                  {myTimeOff.length === 0 ? (
-                    <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>No requests yet.</p>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.dark, marginBottom: 10 }}>Your requests this week</div>
+                  {portalTimeOff.length === 0 ? (
+                    <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>No requests this week.</p>
                   ) : (
-                    myTimeOff.map((o) => (
+                    portalTimeOff.map((o) => (
                       <div key={o.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${C.divider}` }}>
                         <span style={{ fontSize: 13, color: C.dark }}>{dayNames[o.day]} — {o.reason}</span>
                         <span style={{
@@ -914,15 +1018,7 @@ export default function RosteringPage() {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     {member.invited ? (
-                      <>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "#1a6b2f", background: "#e6f4ea", padding: "2px 8px", borderRadius: 10 }}>Invited ✓</span>
-                        <button
-                          onClick={() => { setPortalStaffId(member.id); setAppView("staffPortal"); }}
-                          style={{ fontSize: 12, color: C.secondary, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
-                        >
-                          View as (demo)
-                        </button>
-                      </>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#1a6b2f", background: "#e6f4ea", padding: "2px 8px", borderRadius: 10 }}>Invited ✓</span>
                     ) : (
                       <button
                         onClick={() => openInviteModal(member.id, member.name)}
@@ -1189,7 +1285,7 @@ export default function RosteringPage() {
           <div style={{ background: C.white, borderRadius: 14, padding: 24, width: "100%", maxWidth: 360, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}>
             <div style={{ fontWeight: 700, fontSize: 16, color: C.dark, marginBottom: 6 }}>Invite {inviteModal.staffName}</div>
             <p style={{ fontSize: 13, color: C.secondary, marginBottom: 16, lineHeight: 1.5, marginTop: 0 }}>
-              They&apos;ll receive a magic link — no password needed. They can view their shifts and request time off.
+              They&apos;ll get an email with a link to set their password and view their shifts.
             </p>
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.secondary, marginBottom: 5 }}>Staff email</label>
