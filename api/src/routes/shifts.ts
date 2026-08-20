@@ -21,6 +21,38 @@ async function getBusinessId(userId: number): Promise<number | null> {
   return biz?.id ?? null;
 }
 
+// GET /shifts/weeks — distinct weeks that have shifts (for history view)
+router.get("/weeks", async (req: AuthRequest, res: Response) => {
+  const businessId = await getBusinessId(req.userId!);
+  if (!businessId) { res.status(404).json({ error: "Business not found" }); return; }
+
+  const shifts = await prisma.shift.findMany({
+    where: { businessId },
+    select: { date: true, staffId: true },
+    orderBy: { date: "desc" },
+  });
+
+  const weeks = new Map<string, { staffIds: Set<number>; shiftCount: number }>();
+  for (const s of shifts) {
+    const d = new Date(s.date);
+    const day = d.getDay();
+    const mon = new Date(d);
+    mon.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+    mon.setHours(0, 0, 0, 0);
+    const key = mon.toISOString().slice(0, 10);
+    if (!weeks.has(key)) weeks.set(key, { staffIds: new Set(), shiftCount: 0 });
+    const w = weeks.get(key)!;
+    w.staffIds.add(s.staffId);
+    w.shiftCount++;
+  }
+
+  res.json(Array.from(weeks.entries()).map(([weekStart, { staffIds, shiftCount }]) => ({
+    weekStart,
+    shiftCount,
+    staffCount: staffIds.size,
+  })));
+});
+
 router.get("/", async (req: AuthRequest, res: Response) => {
   const businessId = await getBusinessId(req.userId!);
   if (!businessId) { res.status(404).json({ error: "Business not found" }); return; }
