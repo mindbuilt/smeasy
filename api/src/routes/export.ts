@@ -1,16 +1,15 @@
 import { Router, Response } from "express";
-import { AuthRequest, authenticate } from "../middleware/auth";
+import { AuthRequest, authenticate, requireManager } from "../middleware/auth";
 import { prisma } from "../lib/prisma";
 
 const router = Router();
-router.use(authenticate);
+router.use(authenticate, requireManager);
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-function fmtTime(h: number): string {
-  const hh = Math.floor(h);
-  const mm = Math.round((h - hh) * 60);
-  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "00")}`;
+function timeToHours(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h + m / 60;
 }
 
 router.get("/csv", async (req: AuthRequest, res: Response) => {
@@ -22,22 +21,24 @@ router.get("/csv", async (req: AuthRequest, res: Response) => {
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
 
+  const biz = await prisma.business.findUnique({ where: { userId: req.userId! } });
+  if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
+
   const shifts = await prisma.shift.findMany({
-    where: { userId: req.userId!, date: { gte: monday, lte: sunday } },
+    where: { businessId: biz.id, date: { gte: monday, lte: sunday } },
     include: { staff: { select: { name: true } } },
-    orderBy: [{ date: "asc" }, { startHour: "asc" }],
+    orderBy: [{ date: "asc" }, { startTime: "asc" }],
   });
 
-  const rows = [["Name", "Date", "Day", "Start", "End", "Hours", "Role"]];
+  const rows = [["Name", "Date", "Day", "Start", "End", "Role"]];
   for (const s of shifts) {
     const d = new Date(s.date);
     rows.push([
       s.staff.name,
       d.toISOString().slice(0, 10),
       DAY_NAMES[d.getDay()],
-      fmtTime(s.startHour),
-      fmtTime(s.endHour),
-      String(s.endHour - s.startHour),
+      s.startTime,
+      s.endTime,
       s.role,
     ]);
   }

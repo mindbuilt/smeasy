@@ -14,50 +14,91 @@ model User {
   password     String
   businessName String    @default("My Business")
   createdAt    DateTime  @default(now())
+  business     Business?
+}
+
+model Business {
+  id           Int           @id @default(autoincrement())
+  userId       Int           @unique
+  user         User          @relation(fields: [userId], references: [id])
+  name         String
+  createdAt    DateTime      @default(now())
   staff        Staff[]
   shifts       Shift[]
   timeOff      TimeOff[]
+  inviteTokens InviteToken[]
 }
 
 model Staff {
   id            Int       @id @default(autoincrement())
-  userId        Int
-  user          User      @relation(fields: [userId], references: [id])
-  name          String
+  businessId    Int
+  business      Business  @relation(fields: [businessId], references: [id])
   email         String?
+  passwordHash  String?
+  name          String
+  phone         String?
   defaultRole   String    @default("Floor")
   canManage     Boolean   @default(false)
   canBeRostered Boolean   @default(true)
   createdAt     DateTime  @default(now())
   shifts        Shift[]
   timeOff       TimeOff[]
+  swapsFrom     Swap[]    @relation("SwapFrom")
+  swapsTo       Swap[]    @relation("SwapTo")
 }
 
 model Shift {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  staffId   Int
-  staff     Staff    @relation(fields: [staffId], references: [id])
-  date      DateTime @db.Date
-  startHour Float
-  endHour   Float
-  role      String
-  createdAt DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  businessId Int
+  business   Business @relation(fields: [businessId], references: [id])
+  staffId    Int
+  staff      Staff    @relation(fields: [staffId], references: [id])
+  date       DateTime @db.Date
+  startTime  String
+  endTime    String
+  role       String
+  createdAt  DateTime @default(now())
+  swapsFrom  Swap[]   @relation("SwapFromShift")
+  swapsTo    Swap[]   @relation("SwapToShift")
 
   @@unique([staffId, date])
 }
 
 model TimeOff {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  staffId   Int
-  staff     Staff    @relation(fields: [staffId], references: [id])
-  date      DateTime @db.Date
-  reason    String   @default("")
-  status    String   @default("Pending")
-  createdAt DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  businessId Int
+  business   Business @relation(fields: [businessId], references: [id])
+  staffId    Int
+  staff      Staff    @relation(fields: [staffId], references: [id])
+  date       DateTime @db.Date
+  type       String   @default("Day Off")
+  reason     String   @default("")
+  status     String   @default("Pending")
+  createdAt  DateTime @default(now())
 
   @@unique([staffId, date])
+}
+
+model InviteToken {
+  id         Int      @id @default(autoincrement())
+  businessId Int
+  business   Business @relation(fields: [businessId], references: [id])
+  email      String
+  token      String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+}
+
+model Swap {
+  id          Int      @id @default(autoincrement())
+  fromStaffId Int
+  fromStaff   Staff    @relation("SwapFrom", fields: [fromStaffId], references: [id])
+  toStaffId   Int
+  toStaff     Staff    @relation("SwapTo", fields: [toStaffId], references: [id])
+  fromShiftId Int
+  fromShift   Shift    @relation("SwapFromShift", fields: [fromShiftId], references: [id])
+  toShiftId   Int?
+  toShift     Shift?   @relation("SwapToShift", fields: [toShiftId], references: [id])
+  status      String   @default("Pending")
+  createdAt   DateTime @default(now())
 }

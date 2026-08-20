@@ -1,16 +1,10 @@
 import { Router, Response } from "express";
 import { Resend } from "resend";
-import { AuthRequest, authenticate } from "../middleware/auth";
+import { AuthRequest, authenticate, requireManager } from "../middleware/auth";
 import { prisma } from "../lib/prisma";
 
 const router = Router();
-router.use(authenticate);
-
-function fmtTime(h: number): string {
-  const hh = Math.floor(h);
-  const mm = Math.round((h - hh) * 60);
-  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "00")}`;
-}
+router.use(authenticate, requireManager);
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -24,9 +18,11 @@ router.post("/", async (req: AuthRequest, res: Response) => {
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
 
-  const user = await prisma.user.findUnique({ where: { id: req.userId! } });
+  const biz = await prisma.business.findUnique({ where: { userId: req.userId! } });
+  if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
+
   const staff = await prisma.staff.findMany({
-    where: { userId: req.userId!, canBeRostered: true },
+    where: { businessId: biz.id, canBeRostered: true },
     include: { shifts: { where: { date: { gte: monday, lte: sunday } }, orderBy: { date: "asc" } } },
   });
 
@@ -46,14 +42,14 @@ router.post("/", async (req: AuthRequest, res: Response) => {
 
     const lines = member.shifts.map((s) => {
       const d = new Date(s.date);
-      return `${DAY_NAMES[d.getDay()]} ${d.getDate()} — ${fmtTime(s.startHour)}–${fmtTime(s.endHour)} (${s.role})`;
+      return `${DAY_NAMES[d.getDay()]} ${d.getDate()} — ${s.startTime}–${s.endTime} (${s.role})`;
     });
 
     const firstName = member.name.split(" ")[0];
     const body =
       lines.length > 0
-        ? `Hi ${firstName},\n\nYour shifts for ${weekLabel}:\n\n${lines.join("\n")}\n\n— ${user?.businessName ?? "Your employer"}`
-        : `Hi ${firstName},\n\nYou have no shifts scheduled for ${weekLabel}.\n\n— ${user?.businessName ?? "Your employer"}`;
+        ? `Hi ${firstName},\n\nYour shifts for ${weekLabel}:\n\n${lines.join("\n")}\n\n— ${biz.name}`
+        : `Hi ${firstName},\n\nYou have no shifts scheduled for ${weekLabel}.\n\n— ${biz.name}`;
 
     try {
       await resend.emails.send({

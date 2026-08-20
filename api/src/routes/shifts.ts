@@ -1,9 +1,9 @@
 import { Router, Response } from "express";
-import { AuthRequest, authenticate } from "../middleware/auth";
+import { AuthRequest, authenticate, requireManager } from "../middleware/auth";
 import { prisma } from "../lib/prisma";
 
 const router = Router();
-router.use(authenticate);
+router.use(authenticate, requireManager);
 
 function weekRange(dateStr: string) {
   const d = new Date(dateStr);
@@ -16,52 +16,66 @@ function weekRange(dateStr: string) {
   return { gte: mon, lte: sun };
 }
 
+async function getBusinessId(userId: number): Promise<number | null> {
+  const biz = await prisma.business.findUnique({ where: { userId } });
+  return biz?.id ?? null;
+}
+
 router.get("/", async (req: AuthRequest, res: Response) => {
-  const where: Record<string, unknown> = { userId: req.userId! };
+  const businessId = await getBusinessId(req.userId!);
+  if (!businessId) { res.status(404).json({ error: "Business not found" }); return; }
+  const where: Record<string, unknown> = { businessId };
   if (req.query.week) where.date = weekRange(req.query.week as string);
   res.json(await prisma.shift.findMany({
     where,
     include: { staff: { select: { name: true, email: true } } },
-    orderBy: [{ date: "asc" }, { startHour: "asc" }],
+    orderBy: [{ date: "asc" }, { startTime: "asc" }],
   }));
 });
 
 router.post("/", async (req: AuthRequest, res: Response) => {
-  const { staffId, date, startHour, endHour, role } = req.body;
-  if (!staffId || !date || startHour == null || endHour == null) {
-    res.status(400).json({ error: "staffId, date, startHour, endHour required" }); return;
+  const businessId = await getBusinessId(req.userId!);
+  if (!businessId) { res.status(404).json({ error: "Business not found" }); return; }
+  const { staffId, date, startTime, endTime, role } = req.body;
+  if (!staffId || !date || !startTime || !endTime) {
+    res.status(400).json({ error: "staffId, date, startTime, endTime required" }); return;
   }
-  const member = await prisma.staff.findFirst({ where: { id: staffId, userId: req.userId! } });
+  const member = await prisma.staff.findFirst({ where: { id: staffId, businessId } });
   if (!member) { res.status(404).json({ error: "Staff not found" }); return; }
-  if (await prisma.timeOff.findFirst({ where: { staffId, date: new Date(date), userId: req.userId! } })) {
+  if (await prisma.timeOff.findFirst({ where: { staffId, date: new Date(date), businessId } })) {
     res.status(409).json({ error: "Staff has time-off on this date" }); return;
   }
   res.status(201).json(await prisma.shift.upsert({
     where: { staffId_date: { staffId, date: new Date(date) } },
-    create: { userId: req.userId!, staffId, date: new Date(date), startHour, endHour, role: role || member.defaultRole },
-    update: { startHour, endHour, role: role || member.defaultRole },
+    create: { businessId, staffId, date: new Date(date), startTime, endTime, role: role || member.defaultRole },
+    update: { startTime, endTime, role: role || member.defaultRole },
   }));
 });
 
 router.put("/:id", async (req: AuthRequest, res: Response) => {
+  const businessId = await getBusinessId(req.userId!);
+  if (!businessId) { res.status(404).json({ error: "Business not found" }); return; }
   const id = parseInt(req.params.id);
-  const existing = await prisma.shift.findFirst({ where: { id, userId: req.userId! } });
+  const existing = await prisma.shift.findFirst({ where: { id, businessId } });
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await prisma.shift.update({
     where: { id },
     data: {
-      startHour: req.body.startHour ?? existing.startHour,
-      endHour: req.body.endHour ?? existing.endHour,
+      startTime: req.body.startTime ?? existing.startTime,
+      endTime: req.body.endTime ?? existing.endTime,
       role: req.body.role ?? existing.role,
     },
   }));
 });
 
 router.delete("/:id", async (req: AuthRequest, res: Response) => {
+  const businessId = await getBusinessId(req.userId!);
+  if (!businessId) { res.status(404).json({ error: "Business not found" }); return; }
   const id = parseInt(req.params.id);
-  if (!(await prisma.shift.findFirst({ where: { id, userId: req.userId! } }))) {
+  if (!(await prisma.shift.findFirst({ where: { id, businessId } }))) {
     res.status(404).json({ error: "Not found" }); return;
   }
+  await prisma.swap.deleteMany({ where: { OR: [{ fromShiftId: id }, { toShiftId: id }] } });
   await prisma.shift.delete({ where: { id } });
   res.json({ ok: true });
 });
