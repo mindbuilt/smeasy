@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  password     String
+  businessName String    @default("My Business")
+  createdAt    DateTime  @default(now())
+  staff        Staff[]
+  shifts       Shift[]
+  timeOff      TimeOff[]
+}
+
+model Staff {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+  name          String
+  email         String?
+  defaultRole   String    @default("Floor")
+  canManage     Boolean   @default(false)
+  canBeRostered Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  shifts        Shift[]
+  timeOff       TimeOff[]
+}
+
+model Shift {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  staffId   Int
+  staff     Staff    @relation(fields: [staffId], references: [id])
+  date      DateTime @db.Date
+  startHour Float
+  endHour   Float
+  role      String
+  createdAt DateTime @default(now())
+
+  @@unique([staffId, date])
+}
+
+model TimeOff {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  staffId   Int
+  staff     Staff    @relation(fields: [staffId], references: [id])
+  date      DateTime @db.Date
+  reason    String   @default("")
+  status    String   @default("Pending")
+  createdAt DateTime @default(now())
+
+  @@unique([staffId, date])
+}
