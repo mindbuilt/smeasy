@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { Router, Response } from "express";
 import { Resend } from "resend";
 import { AuthRequest, authenticate, requireManager } from "../middleware/auth";
@@ -21,6 +22,12 @@ router.post("/", async (req: AuthRequest, res: Response) => {
   const biz = await prisma.business.findUnique({ where: { userId: req.userId! } });
   if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
 
+  // Find the roster record for this weekStart
+  const roster = await prisma.roster.findUnique({
+    where: { businessId_weekStart: { businessId: biz.id, weekStart: monday } },
+  });
+  if (!roster) { res.status(404).json({ error: "Roster not found for this week. Please create and publish the roster first." }); return; }
+
   const staff = await prisma.staff.findMany({
     where: { businessId: biz.id, canBeRostered: true },
     include: { shifts: { where: { date: { gte: monday, lte: sunday } }, orderBy: { date: "asc" } } },
@@ -32,6 +39,27 @@ router.post("/", async (req: AuthRequest, res: Response) => {
     " – " +
     sunday.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
 
+  // Delete existing RosterTokens for this roster so re-publish regenerates them
+  await prisma.rosterToken.deleteMany({ where: { rosterId: roster.id } });
+
+  // Generate tokens for all rostered staff
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  const tokenMap = new Map<number, string>();
+  for (const member of staff) {
+    const token = randomUUID();
+    await prisma.rosterToken.create({
+      data: {
+        rosterId: roster.id,
+        staffId: member.id,
+        token,
+        expiresAt,
+      },
+    });
+    tokenMap.set(member.id, token);
+  }
+
   const results: { name: string; email: string | null; sent: boolean; error?: string }[] = [];
 
   for (const member of staff) {
@@ -39,6 +67,9 @@ router.post("/", async (req: AuthRequest, res: Response) => {
       results.push({ name: member.name, email: null, sent: false, error: "No email address" });
       continue;
     }
+
+    const token = tokenMap.get(member.id)!;
+    const portalUrl = `https://smeasy.vercel.app/roster/invite?token=${token}`;
 
     const lines = member.shifts.map((s) => {
       const d = new Date(s.date);
@@ -48,8 +79,8 @@ router.post("/", async (req: AuthRequest, res: Response) => {
     const firstName = member.name.split(" ")[0];
     const body =
       lines.length > 0
-        ? `Hi ${firstName},\n\nYour shifts for ${weekLabel}:\n\n${lines.join("\n")}\n\n— ${biz.name}`
-        : `Hi ${firstName},\n\nYou have no shifts scheduled for ${weekLabel}.\n\n— ${biz.name}`;
+        ? `Hi ${firstName},\n\nYour shifts for ${weekLabel}:\n\n${lines.join("\n")}\n\nView your full roster and make requests here:\n${portalUrl}\n\n— ${biz.name}`
+        : `Hi ${firstName},\n\nYou have no shifts scheduled for ${weekLabel}.\n\nView the full roster here:\n${portalUrl}\n\n— ${biz.name}`;
 
     try {
       await resend.emails.send({
@@ -64,7 +95,7 @@ router.post("/", async (req: AuthRequest, res: Response) => {
     }
   }
 
-  res.json({ weekLabel, results });
+  res.json({ weekLabel, results, tokens: tokenMap.size });
 });
 
 export default router;
