@@ -31,6 +31,7 @@ interface StaffMember {
   canBeRostered: boolean;
   invited: boolean;
   inviteEmail: string | null;
+  payrollId: string | null;
 }
 
 interface ApiStaff {
@@ -39,6 +40,7 @@ interface ApiStaff {
   email: string | null;
   canManage: boolean;
   canBeRostered: boolean;
+  payrollId: string | null;
 }
 
 interface ApiShift {
@@ -107,6 +109,8 @@ export default function RosteringPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [payrollIdInputs, setPayrollIdInputs] = useState<Record<number, string>>({});
+  const [payrollIdErrors, setPayrollIdErrors] = useState<Record<number, string>>({});
 
   // Billing state
   const [billingShifts, setBillingShifts] = useState<ApiShift[]>([]);
@@ -135,16 +139,17 @@ export default function RosteringPage() {
   const loadStaff = useCallback(async (tk: string) => {
     const data = await apiFetch("/staff", tk);
     if (Array.isArray(data)) {
-      setStaff(
-        data.map((m: ApiStaff) => ({
-          id: m.id,
-          name: m.name,
-          canManage: m.canManage,
-          canBeRostered: m.canBeRostered,
-          invited: !!m.email,
-          inviteEmail: m.email || null,
-        }))
-      );
+      const mapped = data.map((m: ApiStaff) => ({
+        id: m.id,
+        name: m.name,
+        canManage: m.canManage,
+        canBeRostered: m.canBeRostered,
+        invited: !!m.email,
+        inviteEmail: m.email || null,
+        payrollId: m.payrollId || null,
+      }));
+      setStaff(mapped);
+      setPayrollIdInputs(Object.fromEntries(mapped.map((m) => [m.id, m.payrollId ?? ""])));
       setStaffLoaded(true);
     }
   }, []);
@@ -191,8 +196,10 @@ export default function RosteringPage() {
           canBeRostered: res.canBeRostered ?? true,
           invited: !!res.email,
           inviteEmail: res.email || null,
+          payrollId: null,
         },
       ]);
+      setPayrollIdInputs((prev) => ({ ...prev, [res.id]: "" }));
     }
     setNewStaffName("");
   }
@@ -235,6 +242,25 @@ export default function RosteringPage() {
     );
     setInviteModal(null);
     showToast(`Invite sent to ${inviteEmail}`);
+  }
+
+  async function savePayrollId(memberId: number) {
+    if (!token) return;
+    const value = payrollIdInputs[memberId] ?? "";
+    const member = staff.find((m) => m.id === memberId);
+    if (!member) return;
+    // No change
+    if (value === (member.payrollId ?? "")) return;
+    setPayrollIdErrors((prev) => ({ ...prev, [memberId]: "" }));
+    const res = await apiFetch(`/staff/${memberId}`, token, {
+      method: "PUT",
+      body: JSON.stringify({ payrollId: value || null }),
+    });
+    if (res.error) {
+      setPayrollIdErrors((prev) => ({ ...prev, [memberId]: res.error }));
+    } else {
+      setStaff((prev) => prev.map((m) => m.id === memberId ? { ...m, payrollId: res.payrollId ?? null } : m));
+    }
   }
 
   function handleLogout() {
@@ -352,19 +378,36 @@ export default function RosteringPage() {
           ))}
         </div>
 
-        {/* Log out */}
-        <button
-          onClick={handleLogout}
-          style={{
-            fontSize: 13,
-            color: C.muted,
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          Log out
-        </button>
+        {/* Right side: payroll link + log out */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Link
+            href="/payroll-settings"
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: C.secondary,
+              textDecoration: "none",
+              padding: "5px 10px",
+              border: `1px solid ${C.border}`,
+              borderRadius: 7,
+              background: C.white,
+            }}
+          >
+            Payroll settings →
+          </Link>
+          <button
+            onClick={handleLogout}
+            style={{
+              fontSize: 13,
+              color: C.muted,
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Log out
+          </button>
+        </div>
       </div>
 
       {/* ── Tab content ── */}
@@ -470,6 +513,30 @@ export default function RosteringPage() {
                           />
                           Can be rostered
                         </label>
+                      </div>
+
+                      {/* Payroll ID */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <input
+                          type="text"
+                          value={payrollIdInputs[member.id] ?? ""}
+                          onChange={(e) => setPayrollIdInputs((prev) => ({ ...prev, [member.id]: e.target.value }))}
+                          onBlur={() => savePayrollId(member.id)}
+                          placeholder="Payroll ID"
+                          style={{
+                            maxWidth: 120,
+                            padding: "5px 8px",
+                            border: `1px solid ${C.border}`,
+                            borderRadius: 7,
+                            fontSize: 12,
+                            color: C.dark,
+                            background: C.white,
+                            outline: "none",
+                          }}
+                        />
+                        {payrollIdErrors[member.id] && (
+                          <span style={{ fontSize: 11, color: "#b3261e" }}>ID already in use</span>
+                        )}
                       </div>
 
                       {/* Invite status */}
