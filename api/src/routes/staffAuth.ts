@@ -65,13 +65,13 @@ router.post("/signup", async (req: Request, res: Response) => {
 
 // POST /staff-auth/login — verify staff credentials, return staff JWT
 router.post("/login", async (req: Request, res: Response) => {
-  const { email, password, businessId } = req.body;
-  if (!email || !password || !businessId) {
-    res.status(400).json({ error: "email, password, and businessId required" });
+  const { email, password } = req.body;
+  if (!email || !password) {
+    res.status(400).json({ error: "email and password required" });
     return;
   }
   const staff = await prisma.staff.findFirst({
-    where: { email, businessId: Number(businessId) },
+    where: { email },
   });
   if (!staff || !staff.passwordHash || !(await bcrypt.compare(password, staff.passwordHash))) {
     res.status(401).json({ error: "Invalid credentials" });
