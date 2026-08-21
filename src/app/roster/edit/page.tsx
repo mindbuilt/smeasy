@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useCallback, use, useRef, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { C, MONTHS } from "../[rosterId]/components/tokens";
 import { StaffMember, Shift, TimeOff, Roster, ApiRoster, CellModalState } from "../[rosterId]/components/types";
@@ -10,6 +10,7 @@ import CellModal from "../[rosterId]/components/CellModal";
 import PublishModal from "../[rosterId]/components/PublishModal";
 import DeleteConfirm from "../[rosterId]/components/DeleteConfirm";
 import ExportModal from "../[rosterId]/components/ExportModal";
+import StaffModal from "../[rosterId]/components/StaffModal";
 
 const API = "https://smeasy-production.up.railway.app";
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -91,6 +92,7 @@ function RosterEditInner() {
   const [publishing, setPublishing] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ kind: "shift" | "timeoff"; id: number } | null>(null);
   const [exportModal, setExportModal] = useState(false);
+  const [staffModal, setStaffModal] = useState<StaffMember | null>(null);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -122,7 +124,7 @@ function RosterEditInner() {
     } else {
       router.replace("/dashboard");
     }
-    if (Array.isArray(staffData)) setStaff(staffData);
+    if (Array.isArray(staffData)) setStaff(staffData.map((m: StaffMember & { payrollId?: string | null }) => ({ ...m, payrollId: m.payrollId ?? null })));
     if (Array.isArray(allRostersData)) setAllRosters(allRostersData);
     setLoading(false);
   }, [rosterId, router]);
@@ -319,6 +321,7 @@ function RosterEditInner() {
           shifts={shifts}
           timeOffs={timeOffs}
           onCellClick={openCell}
+          onStaffClick={setStaffModal}
         />
 
         {/* ── Time-off requests panel ── */}
@@ -386,6 +389,19 @@ function RosterEditInner() {
           kind={deleteConfirm.kind}
           onConfirm={deleteEntry}
           onCancel={() => setDeleteConfirm(null)}
+        />
+      )}
+
+      {staffModal && token && (
+        <StaffModal
+          member={staffModal}
+          token={token}
+          onSave={(updated) => {
+            setStaff((prev) => prev.map((m) => m.id === updated.id ? updated : m));
+            setStaffModal(null);
+            showToast("Payroll ID saved");
+          }}
+          onCancel={() => setStaffModal(null)}
         />
       )}
 
