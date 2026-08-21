@@ -11,6 +11,7 @@ interface Props {
   shifts: Shift[];
   timeOffs: TimeOff[];
   onCellClick: (member: StaffMember, date: string) => void;
+  onStaffClick?: (member: StaffMember) => void;
 }
 
 function parseHours(t: string): number {
@@ -69,7 +70,7 @@ function GridCell({ member, dateStr, shifts, timeOffs, onCellClick }: {
   );
 }
 
-function DesktopGrid({ weekDates, rosterableStaff, shifts, timeOffs, onCellClick }: Props) {
+function DesktopGrid({ weekDates, rosterableStaff, shifts, timeOffs, onCellClick, onStaffClick }: Props) {
   return (
     <div style={{ overflowX: "auto" }}>
       <div style={{ minWidth: 780 }}>
@@ -102,8 +103,13 @@ function DesktopGrid({ weekDates, rosterableStaff, shifts, timeOffs, onCellClick
             const totalHrs = memberShifts.reduce((sum, s) => sum + (parseHours(s.endTime) - parseHours(s.startTime)), 0);
             return (
               <div key={member.id} style={{ display: "grid", gridTemplateColumns: "150px repeat(7, 1fr) 64px", borderBottom: `1px solid ${C.divider}` }}>
-                <div style={{ padding: "10px 12px", fontSize: 13, fontWeight: 600, color: C.dark, display: "flex", alignItems: "center" }}>
-                  {member.name}
+                <div style={{ padding: "10px 12px", display: "flex", alignItems: "center" }}>
+                  <button
+                    onClick={() => onStaffClick?.(member)}
+                    style={{ background: "none", border: "none", padding: 0, cursor: onStaffClick ? "pointer" : "default", fontSize: 13, fontWeight: 600, color: C.dark, textAlign: "left", textDecoration: onStaffClick ? "underline" : "none", textDecorationColor: C.border }}
+                  >
+                    {member.name}
+                  </button>
                 </div>
                 {weekDates.map((dateStr) => (
                   <GridCell key={dateStr} member={member} dateStr={dateStr} shifts={shifts} timeOffs={timeOffs} onCellClick={onCellClick} />
@@ -122,7 +128,7 @@ function DesktopGrid({ weekDates, rosterableStaff, shifts, timeOffs, onCellClick
 
 // ── Mobile card view (one card per day) ───────────────────────────────────────
 
-function MobileView({ weekDates, rosterableStaff, shifts, timeOffs, onCellClick }: Props) {
+function MobileView({ weekDates, rosterableStaff, shifts, timeOffs, onCellClick, onStaffClick }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {weekDates.map((dateStr) => {
@@ -149,7 +155,9 @@ function MobileView({ weekDates, rosterableStaff, shifts, timeOffs, onCellClick 
                   return (
                     <button key={member.id} onClick={() => onCellClick(member, dateStr)}
                       style={{ display: "flex", alignItems: "center", width: "100%", padding: "10px 14px", background: "none", border: "none", borderTop: `1px solid ${C.divider}`, cursor: "pointer", gap: 10, textAlign: "left" }}>
-                      <span style={{ fontSize: 13, color: C.muted, minWidth: 100 }}>{member.name}</span>
+                      <button onClick={(e) => { e.stopPropagation(); onStaffClick?.(member); }} style={{ background: "none", border: "none", padding: 0, cursor: onStaffClick ? "pointer" : "default", fontSize: 13, color: C.muted, minWidth: 100, textAlign: "left", textDecoration: onStaffClick ? "underline" : "none", textDecorationColor: C.border }}>
+                        {member.name}
+                      </button>
                       <span style={{ fontSize: 11, color: C.mutedFaint, border: `1px dashed #d8d3c4`, borderRadius: 8, padding: "3px 8px" }}>+ Add shift</span>
                     </button>
                   );
@@ -163,7 +171,9 @@ function MobileView({ weekDates, rosterableStaff, shifts, timeOffs, onCellClick 
                 return (
                   <button key={member.id} onClick={() => onCellClick(member, dateStr)}
                     style={{ display: "flex", alignItems: "center", width: "100%", padding: "10px 14px", background: "none", border: "none", borderTop: `1px solid ${C.divider}`, cursor: "pointer", gap: 10, textAlign: "left" }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: C.dark, minWidth: 100 }}>{member.name}</span>
+                    <button onClick={(e) => { e.stopPropagation(); onStaffClick?.(member); }} style={{ background: "none", border: "none", padding: 0, cursor: onStaffClick ? "pointer" : "default", fontSize: 13, fontWeight: 600, color: C.dark, minWidth: 100, textAlign: "left", textDecoration: onStaffClick ? "underline" : "none", textDecorationColor: C.border }}>
+                      {member.name}
+                    </button>
                     <span style={{ fontSize: 11, fontWeight: 700, background: chipBg, border: `1px solid ${chipBorder}`, color: chipColor, borderRadius: 8, padding: "3px 8px" }}>
                       {chipLabel}
                     </span>
