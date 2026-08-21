@@ -2,6 +2,7 @@ export interface StaffMember {
   id: number;
   name: string;
   canBeRostered: boolean;
+  payrollId: string | null;
 }
 
 export interface Shift {
