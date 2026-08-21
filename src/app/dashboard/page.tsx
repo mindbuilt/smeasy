@@ -164,7 +164,7 @@ export default function DashboardPage() {
   }
 
   function openRosterWeek(rosterId: number) {
-    router.push(`/roster/${rosterId}/edit`);
+    router.push(`/roster/edit?id=${rosterId}`);
   }
 
   function handleLogout() {
