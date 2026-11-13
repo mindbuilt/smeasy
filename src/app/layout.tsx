@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "smeasy",
+  title: "Smeasy — simple rostering for Australian small businesses",
   description:
-    "A private tax set-aside estimator for Australian sole traders. Upload your bank export or spreadsheet and get a rough estimate — no login, no stored data.",
+    "Build your weekly roster, send it to staff, and export hours to Xero or MYOB.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

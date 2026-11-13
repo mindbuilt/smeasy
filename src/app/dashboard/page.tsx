@@ -186,7 +186,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div style={{ height: 58, background: C.white, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Link href="/" style={{ display: "block", width: 28, height: 28, background: C.accent, borderRadius: 5, textDecoration: "none", flexShrink: 0 }} />
+          <Link href="/dashboard" style={{ display: "block", width: 28, height: 28, background: C.accent, borderRadius: 5, textDecoration: "none", flexShrink: 0 }} />
           <span style={{ fontWeight: 700, fontSize: 16, color: C.dark }}>Smeasy</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>

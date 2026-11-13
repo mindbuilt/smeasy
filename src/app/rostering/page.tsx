@@ -328,7 +328,7 @@ export default function RosteringPage() {
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Link
-            href="/"
+            href="/dashboard"
             style={{
               display: "block",
               width: 28,
