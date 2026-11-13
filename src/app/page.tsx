@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const C = {
   bg: "#faf8f3",
@@ -14,6 +14,13 @@ const C = {
 };
 
 export default function Home() {
+  // Backstop: if Supabase falls back to the Site URL, a login link lands
+  // here with the session (or an error) in the hash. Hand it to the callback.
+  useEffect(() => {
+    const h = window.location.hash;
+    if (/[#&](access_token|error)=/.test(h)) window.location.replace(`/auth/callback/${h}`);
+  }, []);
+
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
