@@ -1,5 +1,18 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "out",
-  "framework": null
+  "services": {
+    "web": {
+      "root": ".",
+      "framework": "nextjs",
+      "buildCommand": "cd api && npm install && npm run build && npx prisma generate && npx prisma migrate deploy"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "web"
+      }
+    }
+  ]
 }
