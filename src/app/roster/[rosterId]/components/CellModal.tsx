@@ -5,6 +5,7 @@ import { CellModalState, ModalMode } from "./types";
 
 interface Props {
   modal: CellModalState;
+  staffName: string;
   warnings: string[];
   loading: boolean;
   onChange: (updated: CellModalState) => void;
@@ -13,7 +14,7 @@ interface Props {
   onDeleteClick: () => void;
 }
 
-export default function CellModal({ modal, warnings, loading, onChange, onSave, onCancel, onDeleteClick }: Props) {
+export default function CellModal({ modal, staffName, warnings, loading, onChange, onSave, onCancel, onDeleteClick }: Props) {
   const hasExisting = !!(modal.existingShift || modal.existingTimeOff);
 
   return (
@@ -22,7 +23,7 @@ export default function CellModal({ modal, warnings, loading, onChange, onSave, 
 
         {/* Header */}
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: C.dark }}>{modal.staffName}</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.dark }}>{staffName}</div>
           <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{modal.dayLabel}</div>
         </div>
 

@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { C, DAY_NAMES, MONTHS } from "./tokens";
 import { StaffMember, Shift, TimeOff } from "./types";
+import { toDateOnly } from "@/lib/dateUtils";
 
 interface Props {
   weekDates: string[];
@@ -35,13 +36,14 @@ function fmtDayFull(dateStr: string): string {
 
 // ── Desktop grid ──────────────────────────────────────────────────────────────
 
-function GridCell({ member, dateStr, shifts, timeOffs, onCellClick }: {
-  member: StaffMember; dateStr: string; shifts: Shift[]; timeOffs: TimeOff[];
+function GridCell({ member, dateStr, shiftMap, timeOffMap, onCellClick }: {
+  member: StaffMember; dateStr: string;
+  shiftMap: Record<string, Shift>; timeOffMap: Record<string, TimeOff>;
   onCellClick: (member: StaffMember, date: string) => void;
 }) {
-  const [hovered, setHovered] = useState(false);
-  const shift = shifts.find((s) => s.staffId === member.id && s.date.slice(0, 10) === dateStr);
-  const off = timeOffs.find((o) => o.staffId === member.id && o.date.slice(0, 10) === dateStr);
+  const key = `${member.id}-${dateStr}`;
+  const shift = shiftMap[key];
+  const off = timeOffMap[key];
   const isEmpty = !shift && !off;
 
   let bg = "transparent", border = `1px dashed #d8d3c4`, color = C.mutedFaint, label = "+";
@@ -51,17 +53,12 @@ function GridCell({ member, dateStr, shifts, timeOffs, onCellClick }: {
   } else if (off) {
     bg = C.offBg; border = `1px solid ${C.offBorder}`; color = C.offText;
     label = off.status === "Approved" ? "Off" : "Off (req)";
-  } else if (hovered) {
-    border = `1px dashed ${C.hoverBorder}`;
-    color = C.secondary;
   }
 
   return (
     <div
       onClick={() => onCellClick(member, dateStr)}
-      onMouseEnter={() => isEmpty && setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{ padding: "6px 4px", minHeight: 48, borderLeft: `1px solid ${C.divider}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: isEmpty && hovered ? C.hoverBg : "transparent" }}
+      style={{ padding: "6px 4px", minHeight: 48, borderLeft: `1px solid ${C.divider}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: isEmpty ? C.hoverBg : "transparent", transition: "background 0.15s", "&:hover": isEmpty ? { background: C.hoverBg } : {} }}
     >
       <div style={{ fontSize: 11, fontWeight: 700, textAlign: "center", padding: "5px 6px", borderRadius: 10, width: "100%", background: bg, border, color }}>
         {label}
@@ -71,6 +68,33 @@ function GridCell({ member, dateStr, shifts, timeOffs, onCellClick }: {
 }
 
 function DesktopGrid({ weekDates, rosterableStaff, shifts, timeOffs, onCellClick, onStaffClick }: Props) {
+  const shiftMap = useMemo(() => {
+    const map: Record<string, Shift> = {};
+    shifts.forEach(s => {
+      const key = `${s.staffId}-${toDateOnly(s.date)}`;
+      map[key] = s;
+    });
+    return map;
+  }, [shifts]);
+
+  const timeOffMap = useMemo(() => {
+    const map: Record<string, TimeOff> = {};
+    timeOffs.forEach(o => {
+      const key = `${o.staffId}-${toDateOnly(o.date)}`;
+      map[key] = o;
+    });
+    return map;
+  }, [timeOffs]);
+
+  const staffHoursMap = useMemo(() => {
+    const map: Record<number, number> = {};
+    shifts.forEach(s => {
+      if (!map[s.staffId]) map[s.staffId] = 0;
+      map[s.staffId] += parseHours(s.endTime) - parseHours(s.startTime);
+    });
+    return map;
+  }, [shifts]);
+
   return (
     <div style={{ overflowX: "auto" }}>
       <div style={{ minWidth: 780 }}>
@@ -99,8 +123,7 @@ function DesktopGrid({ weekDates, rosterableStaff, shifts, timeOffs, onCellClick
           </div>
         ) : (
           rosterableStaff.map((member) => {
-            const memberShifts = shifts.filter((s) => s.staffId === member.id);
-            const totalHrs = memberShifts.reduce((sum, s) => sum + (parseHours(s.endTime) - parseHours(s.startTime)), 0);
+            const totalHrs = staffHoursMap[member.id] ?? 0;
             return (
               <div key={member.id} style={{ display: "grid", gridTemplateColumns: "150px repeat(7, 1fr) 64px", borderBottom: `1px solid ${C.divider}` }}>
                 <div style={{ padding: "10px 12px", display: "flex", alignItems: "center" }}>
@@ -112,7 +135,7 @@ function DesktopGrid({ weekDates, rosterableStaff, shifts, timeOffs, onCellClick
                   </button>
                 </div>
                 {weekDates.map((dateStr) => (
-                  <GridCell key={dateStr} member={member} dateStr={dateStr} shifts={shifts} timeOffs={timeOffs} onCellClick={onCellClick} />
+                  <GridCell key={dateStr} member={member} dateStr={dateStr} shiftMap={shiftMap} timeOffMap={timeOffMap} onCellClick={onCellClick} />
                 ))}
                 <div style={{ padding: "10px 6px", fontSize: 13, fontWeight: 600, color: C.dark, display: "flex", alignItems: "center", justifyContent: "center", borderLeft: `1px solid ${C.divider}` }}>
                   {totalHrs > 0 ? `${totalHrs.toFixed(1)}` : "—"}
@@ -129,14 +152,31 @@ function DesktopGrid({ weekDates, rosterableStaff, shifts, timeOffs, onCellClick
 // ── Mobile card view (one card per day) ───────────────────────────────────────
 
 function MobileView({ weekDates, rosterableStaff, shifts, timeOffs, onCellClick, onStaffClick }: Props) {
+  const shiftMap = useMemo(() => {
+    const map: Record<string, Shift> = {};
+    shifts.forEach(s => {
+      const key = `${s.staffId}-${toDateOnly(s.date)}`;
+      map[key] = s;
+    });
+    return map;
+  }, [shifts]);
+
+  const timeOffMap = useMemo(() => {
+    const map: Record<string, TimeOff> = {};
+    timeOffs.forEach(o => {
+      const key = `${o.staffId}-${toDateOnly(o.date)}`;
+      map[key] = o;
+    });
+    return map;
+  }, [timeOffs]);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {weekDates.map((dateStr) => {
         const dayLabel = fmtDayFull(dateStr);
-        const dayShifts = rosterableStaff.flatMap((m) => {
-          const shift = shifts.find((s) => s.staffId === m.id && s.date.slice(0, 10) === dateStr);
-          const off = timeOffs.find((o) => o.staffId === m.id && o.date.slice(0, 10) === dateStr);
-          return [{ member: m, shift, off }];
+        const dayShifts = rosterableStaff.map((m) => {
+          const key = `${m.id}-${dateStr}`;
+          return { member: m, shift: shiftMap[key], off: timeOffMap[key] };
         });
         const hasAny = dayShifts.some((d) => d.shift || d.off);
 

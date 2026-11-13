@@ -87,6 +87,7 @@ function RosterEditInner() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [cellModal, setCellModal] = useState<CellModalState | null>(null);
+  const [cellModalStaffName, setCellModalStaffName] = useState<string>("");
   const [formLoading, setFormLoading] = useState(false);
   const [publishModal, setPublishModal] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -146,8 +147,9 @@ function RosterEditInner() {
   function openCell(member: StaffMember, date: string) {
     const existingShift = shifts.find((s) => s.staffId === member.id && s.date.slice(0, 10) === date) ?? null;
     const existingTimeOff = timeOffs.find((o) => o.staffId === member.id && o.date.slice(0, 10) === date) ?? null;
+    setCellModalStaffName(member.name);
     setCellModal({
-      staffId: member.id, staffName: member.name, date, dayLabel: fmtDayLabel(date),
+      staffId: member.id, date, dayLabel: fmtDayLabel(date),
       existingShift, existingTimeOff,
       mode: existingTimeOff && !existingShift ? "timeoff" : "shift",
       startTime: existingShift?.startTime ?? "09:00",
@@ -178,7 +180,7 @@ function RosterEditInner() {
             method: "POST",
             body: JSON.stringify({ staffId: cellModal.staffId, date: cellModal.date, startTime: cellModal.startTime, endTime: cellModal.endTime, role: cellModal.role }),
           });
-          if (res.id) { setShifts((prev) => [...prev, { ...res, staff: { name: cellModal.staffName } }]); showToast("Shift added"); }
+          if (res.id) { setShifts((prev) => [...prev, { ...res, staff: { name: cellModalStaffName } }]); showToast("Shift added"); }
           else showToast(res.error || "Failed to add shift");
         }
       } else {
@@ -191,13 +193,14 @@ function RosterEditInner() {
             method: "POST",
             body: JSON.stringify({ staffId: cellModal.staffId, date: cellModal.date, type: "Day Off", reason: cellModal.reason }),
           });
-          if (res.id) { setTimeOffs((prev) => [...prev, { ...res, staff: { name: cellModal.staffName } }]); showToast("Time-off added"); }
+          if (res.id) { setTimeOffs((prev) => [...prev, { ...res, staff: { name: cellModalStaffName } }]); showToast("Time-off added"); }
           else showToast(res.error || "Failed to add time-off");
         } else {
           showToast("Time-off already set");
         }
       }
       setCellModal(null);
+      setCellModalStaffName("");
     } finally { setFormLoading(false); }
   }
 
@@ -361,11 +364,12 @@ function RosterEditInner() {
       {cellModal && (
         <CellModal
           modal={cellModal}
+          staffName={cellModalStaffName}
           warnings={modalWarnings}
           loading={formLoading}
           onChange={setCellModal}
           onSave={saveCell}
-          onCancel={() => setCellModal(null)}
+          onCancel={() => { setCellModal(null); setCellModalStaffName(""); }}
           onDeleteClick={() => {
             if (cellModal.existingShift) setDeleteConfirm({ kind: "shift", id: cellModal.existingShift.id });
             else if (cellModal.existingTimeOff) setDeleteConfirm({ kind: "timeoff", id: cellModal.existingTimeOff.id });

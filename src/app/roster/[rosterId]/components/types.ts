@@ -45,7 +45,6 @@ export type ModalMode = "shift" | "timeoff";
 
 export interface CellModalState {
   staffId: number;
-  staffName: string;
   date: string;
   dayLabel: string;
   existingShift: Shift | null;

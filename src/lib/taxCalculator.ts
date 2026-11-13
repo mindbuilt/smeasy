@@ -23,6 +23,7 @@ export function computeTax(income: number, fyBrackets: FYBrackets): number {
     if (income > b.min) {
       const upper = b.max !== null ? Math.min(income, b.max) : income;
       tax = b.baseTax + (upper - b.min) * b.rate;
+      break;
     }
   }
   return tax + (income * medicareLevy);
