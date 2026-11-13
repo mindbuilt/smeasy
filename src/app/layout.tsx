@@ -6,6 +6,19 @@ export const metadata: Metadata = {
   title: "Smeasy — simple rostering for Australian small businesses",
   description:
     "Build your weekly roster, send it to staff, and export hours to Xero or MYOB.",
+  openGraph: {
+    title: "Smeasy — Roster Management Made Simple",
+    description: "Create weekly rosters in minutes. Staff notified instantly. Export to Xero or MYOB. Free for up to 10 staff.",
+    url: "https://smeasy.au",
+    siteName: "Smeasy",
+    locale: "en_AU",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Smeasy — Roster Management Made Simple",
+    description: "Create weekly rosters in minutes. Staff notified instantly.",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
