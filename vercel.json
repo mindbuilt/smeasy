@@ -1,18 +1,32 @@
 {
-  "services": {
-    "web": {
-      "root": ".",
-      "framework": "nextjs",
-      "buildCommand": "cd api && npm install && npm run build && npx prisma generate && npx prisma migrate deploy"
-    }
-  },
-  "rewrites": [
+  "buildCommand": "npm run build",
+  "outputDirectory": "out",
+  "framework": null,
+  "redirects": [
     {
-      "source": "/(.*)",
-      "destination": {
-        "type": "service",
-        "service": "web"
-      }
+      "source": "/dashboard",
+      "destination": "/week/",
+      "permanent": false
+    },
+    {
+      "source": "/dashboard/",
+      "destination": "/week/",
+      "permanent": false
+    },
+    {
+      "source": "/rostering/:path*",
+      "destination": "/week/",
+      "permanent": false
+    },
+    {
+      "source": "/roster/:path*",
+      "destination": "/week/",
+      "permanent": false
+    },
+    {
+      "source": "/payroll-settings/:path*",
+      "destination": "/week/",
+      "permanent": false
     }
   ]
 }
