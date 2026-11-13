@@ -112,7 +112,7 @@ export default function TeamRoster() {
         </>
       )}
 
-      <p style={{ fontSize: 12, color: C.muted, marginTop: 28 }}>Bookmark this page or add it to your home screen — it always shows the latest published roster.</p>
+      <p style={{ fontSize: 12, color: C.muted, marginTop: 28 }}>Bookmark this page or add it to your home screen — it always shows the latest published roster. <a href="/privacy/" style={{ color: C.muted }}>Privacy</a></p>
     </Shell>
   );
 }

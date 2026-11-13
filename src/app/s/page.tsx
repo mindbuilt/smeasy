@@ -133,7 +133,7 @@ export default function StaffRoster() {
           : <button onClick={() => setAsking(true)} style={{ ...btn(), marginTop: 8 }}>Request time off</button>}
       </div>
 
-      <p style={{ fontSize: 12, color: C.muted, marginTop: 32 }}>Bookmark this page — it&apos;s your personal link and stays the same every week.</p>
+      <p style={{ fontSize: 12, color: C.muted, marginTop: 32 }}>Bookmark this page — it&apos;s your personal link and stays the same every week. <a href="/privacy/" style={{ color: C.muted }}>Privacy</a></p>
     </Shell>
   );
 }

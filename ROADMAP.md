@@ -5,8 +5,9 @@ have been removed from the site until built.
 
 ## 1. Before inviting real businesses
 - [ ] **Branded login emails** — Resend as Supabase SMTP, sending from `hello@smeasy.au` (DNS records on smeasy.au); Smeasy-styled "Magic link" and "Confirm signup" templates. Removes Supabase's few-per-hour email limit.
-- [ ] **Privacy policy + terms** — needed: we store staff names/phone numbers and run analytics. Owner to supply or approve wording; then link in footer.
-- [ ] **Contact address** — e.g. `hello@smeasy.au`, shown in footer and FAQ (also for account/data deletion requests).
+- [x] **Privacy policy** — published at /privacy (Open County Pty Ltd). Get a professional review when convenient.
+- [ ] **Terms of service**.
+- [x] **Contact address** — `hello@smeasy.au` in footer, FAQ and privacy policy. **Make sure this mailbox receives mail.**
 - [ ] **GTM container** — add the GA4 tag inside GTM-P4V884NF (the site now loads GTM correctly, public pages only); verify Search Console and submit `sitemap.xml`.
 - [ ] **Decommission Railway + Neon** — old backend, no longer used.
 - [ ] **Error monitoring** (e.g. Sentry) on the app screens.

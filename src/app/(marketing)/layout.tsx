@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { C } from "@/lib/theme";
+import { CONTACT_EMAIL, LEGAL_ENTITY } from "@/lib/site";
 import CookieNotice, { CookieSettingsLink } from "@/components/CookieNotice";
 
 // Public, pre-login pages: landing, guides, FAQ. Analytics loads here only,
@@ -31,11 +32,13 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
 
       <footer style={{ borderTop: `1px solid ${C.border}`, marginTop: 64 }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", padding: "28px 20px", display: "flex", flexWrap: "wrap", gap: 20, alignItems: "center", fontSize: 13, color: C.muted }}>
-          <span>© {new Date().getFullYear()} Smeasy · Rostering for Australian small businesses</span>
-          <nav style={{ marginLeft: "auto", display: "flex", gap: 16 }}>
+          <span>© {new Date().getFullYear()} {LEGAL_ENTITY} · Smeasy</span>
+          <nav style={{ marginLeft: "auto", display: "flex", gap: 16, flexWrap: "wrap" }}>
             <Link href="/guides/" style={{ color: C.secondary }}>Guides</Link>
             <Link href="/faq/" style={{ color: C.secondary }}>FAQ</Link>
             <Link href="/auth/login/" style={{ color: C.secondary }}>Log in</Link>
+            <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>
+            <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: C.secondary }}>Contact</a>
             <CookieSettingsLink style={{ color: C.secondary }} />
           </nav>
         </div>

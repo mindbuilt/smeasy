@@ -61,6 +61,9 @@ export default function LoginPage() {
             <button type="submit" disabled={sending} style={{ ...btn("primary"), width: "100%", marginTop: 16, opacity: sending ? 0.6 : 1 }}>
               {sending ? "Sending…" : "Email me a login link"}
             </button>
+            <p style={{ fontSize: 12, color: C.muted, margin: "14px 0 0", lineHeight: 1.5 }}>
+              By continuing you agree to how we handle data in our <a href="/privacy/" style={{ color: C.secondary }}>privacy policy</a>.
+            </p>
           </form>
         )}
       </div>
