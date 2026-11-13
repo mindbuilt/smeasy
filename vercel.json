@@ -1,5 +1,32 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "out",
-  "framework": null
+  "framework": null,
+  "redirects": [
+    {
+      "source": "/dashboard",
+      "destination": "/week/",
+      "permanent": false
+    },
+    {
+      "source": "/dashboard/",
+      "destination": "/week/",
+      "permanent": false
+    },
+    {
+      "source": "/rostering/:path*",
+      "destination": "/week/",
+      "permanent": false
+    },
+    {
+      "source": "/roster/:path*",
+      "destination": "/week/",
+      "permanent": false
+    },
+    {
+      "source": "/payroll-settings/:path*",
+      "destination": "/week/",
+      "permanent": false
+    }
+  ]
 }
