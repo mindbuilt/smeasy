@@ -78,7 +78,7 @@ export default function GuidesPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
           {guides.map((guide) => (
             <Link key={guide.slug} href={`/guides/${guide.slug}`} style={{ textDecoration: "none" }}>
-              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24, cursor: "pointer", transition: "all 0.2s", "&:hover": { borderColor: C.accent } }}>
+              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24, cursor: "pointer", transition: "all 0.2s" }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: C.accent, textTransform: "uppercase" }}>{guide.category}</span>
                 <h3 style={{ fontSize: 18, fontWeight: 600, color: C.dark, margin: "12px 0 8px 0" }}>{guide.title}</h3>
                 <p style={{ fontSize: 14, color: C.muted, margin: 0, lineHeight: 1.6 }}>{guide.description}</p>

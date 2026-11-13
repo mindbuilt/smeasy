@@ -163,7 +163,7 @@ export default function Home() {
               <li style={{ padding: "8px 0" }}>✓ Unlimited staff</li>
               <li style={{ padding: "8px 0" }}>✓ Priority support</li>
             </ul>
-            <Link href="/auth/login" style={{ display: "block", background: C.accent, color: C.dark, padding: "10px 20px", borderRadius: 6, textDecoration: "none", fontSize: 14, fontWeight: 600, textAlign: "center", fontWeight: 700 }}>Start free trial</Link>
+            <Link href="/auth/login" style={{ display: "block", background: C.accent, color: C.dark, padding: "10px 20px", borderRadius: 6, textDecoration: "none", fontSize: 14, fontWeight: 700, textAlign: "center" }}>Start free trial</Link>
           </div>
         </div>
       </section>
