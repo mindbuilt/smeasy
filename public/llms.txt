@@ -1,47 +1,26 @@
-# Smeasy — Roster Management for Australian Small Businesses
+# Smeasy
 
-## About
-Smeasy is a lightweight, mobile-first roster management tool designed for Australian hospitality businesses. It helps cafe, bar, and restaurant managers create weekly rosters, manage staff shifts, and handle time-off requests in minutes instead of hours.
+> Simple staff rostering for Australian small businesses — cafés, restaurants, bars, shops and other small teams. Free during early access.
 
-## Key Features
-- **Quick Roster Creation** — Build a weekly roster in under 5 minutes
-- **Mobile-First** — Works perfectly on phones and tablets
-- **Staff Notifications** — Publish rosters and staff are notified instantly
-- **Time Off Requests** — Staff request days off in-app; you approve with one click
-- **Export to Payroll** — Download rosters in formats for Xero and MYOB
-- **Shift Management** — Add, edit, or delete shifts on the fly
-- **Zero Learning Curve** — No training needed; intuitive for non-technical users
+## What Smeasy does
+- Managers sign in with an emailed login link (no password).
+- Build a weekly roster: tap a day to add a shift with start, finish, unpaid break and role. Split shifts and shifts past midnight are supported.
+- Copy last week's roster in one tap.
+- See paid hours per person and for the team, plus a wage estimate from base hourly rates (no penalty rates or super).
+- Publish when ready; drafts stay private.
+- Share with staff via one team roster link (for the staff group chat) or a printable A4 PDF. Staff need no app, account or password, and see only names, days, times and roles.
+- Staff request time off from a personal link; managers approve or decline on the roster.
+- Download paid hours as a CSV with payroll IDs for Xero, MYOB or a bookkeeper.
+- Data is stored in Australia (Sydney).
 
-## Target Audience
-- Small hospitality businesses (cafes, bars, restaurants, venues)
-- Australian managers and owners
-- Non-technical users seeking simplicity
+## What Smeasy does not do (yet)
+- No automatic notifications (SMS, email or push).
+- No in-app shift swaps.
+- No award interpretation, penalty-rate calculation or payroll processing.
+- No ready-to-import Xero/MYOB timesheet files (CSV only for now).
+- One manager login and one location per business.
 
-## Business Model
-- **Free tier:** Up to 10 staff members
-- **Pro tier:** $19/month for unlimited staff + SMS notifications
-
-## Use Cases
-1. Weekly roster creation and publishing
-2. Staff time-off management
-3. Last-minute shift coverage
-4. Payroll data export
-5. Mobile roster management on-the-go
-
-## Content
-- Homepage: Landing page with features, pricing, and CTAs
-- Guides: Tutorials on roster creation, payroll export, shift scheduling, and mobile tips
-- SEO focus: Ranking for "roster management," "shift scheduling," "staff rostering," and related terms
-
-## Technology
-- Frontend: Next.js 16, React 19, Tailwind CSS
-- Deployed on Vercel
-- Domain: smeasy.au
-
-## Contact & Links
-- Website: https://smeasy.au
-- Email: (via contact form)
-- No social media yet
-
-## Additional Info
-Smeasy focuses on solving one problem exceptionally well: making roster management simple, fast, and stress-free for Australian small business managers. It prioritizes simplicity over features, mobile usability over desktop-first design, and local context over generic solutions.
+## Pages
+- Home: https://www.smeasy.au/
+- Guides: https://www.smeasy.au/guides/
+- FAQ: https://www.smeasy.au/faq/
