@@ -1,20 +1,14 @@
 import Link from "next/link";
-import Script from "next/script";
 import type { ReactNode } from "react";
 import { C } from "@/lib/theme";
-import { GTM_ID } from "@/lib/site";
+import CookieNotice, { CookieSettingsLink } from "@/components/CookieNotice";
 
-// Public, pre-login pages: landing, guides, FAQ. Analytics loads here only —
-// never on manager or staff pages, whose URLs carry private roster links.
+// Public, pre-login pages: landing, guides, FAQ. Analytics loads here only,
+// after consent — never on manager or staff pages, whose URLs carry private links.
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <div style={{ background: C.bg, minHeight: "100vh", color: C.dark }}>
-      <Script id="gtm" strategy="afterInteractive">{`
-        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
-        var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
-        j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','${GTM_ID}');
-      `}</Script>
+      <CookieNotice />
 
       <header style={{ borderBottom: `1px solid ${C.border}`, background: C.white }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px", height: 60, display: "flex", alignItems: "center", gap: 20 }}>
@@ -42,6 +36,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <Link href="/guides/" style={{ color: C.secondary }}>Guides</Link>
             <Link href="/faq/" style={{ color: C.secondary }}>FAQ</Link>
             <Link href="/auth/login/" style={{ color: C.secondary }}>Log in</Link>
+            <CookieSettingsLink style={{ color: C.secondary }} />
           </nav>
         </div>
       </footer>
