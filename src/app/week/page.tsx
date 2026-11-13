@@ -8,6 +8,7 @@ import { useManager } from "@/lib/useManager";
 import type { Business, Roster, Shift, Staff, TimeOff } from "@/lib/types";
 import { addDays, fmtAUD, fmtDay, fmtTime, fmtWeek, mondayOf, shiftHours, thisMonday, weekDates } from "@/lib/dates";
 import { AppShell, C, Loading, Modal, btn, input, label } from "@/components/ui";
+import { downloadRosterPdf } from "@/lib/rosterPdf";
 
 type Draft = {
   id?: string;
@@ -61,6 +62,7 @@ function WeekPage() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [justPublished, setJustPublished] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     if (!business) return;
@@ -100,6 +102,7 @@ function WeekPage() {
   const wages = [...hoursByStaff.entries()].reduce((sum, [id, h]) => sum + h * Number(staffById.get(id)?.hourly_rate ?? 0), 0);
   const missingRate = [...hoursByStaff.keys()].filter((id) => staffById.get(id)?.hourly_rate == null).length;
   const pending = timeOff.filter((t) => t.status === "pending");
+  const published = roster?.status === "published";
 
   const offOn = (staffId: string, date: string) =>
     timeOff.find((t) => t.staff_id === staffId && t.status === "approved" && t.start_date <= date && t.end_date >= date);
@@ -190,6 +193,25 @@ function WeekPage() {
     setTimeOff((all) => (status === "declined" ? all.filter((x) => x.id !== t.id) : all.map((x) => (x.id === t.id ? { ...x, status } : x))));
   }
 
+  const teamLink = () => `${window.location.origin}/r/#${business!.team_token}`;
+
+  async function copyTeamLink() {
+    await navigator.clipboard.writeText(teamLink());
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 1800);
+  }
+
+  function downloadPdf() {
+    if (!business) return;
+    downloadRosterPdf({
+      business: business.name,
+      weekStart: monday,
+      people: (staff ?? []).map((p) => p.name),
+      shifts: shifts.map((s) => ({ ...s, staff_name: staffById.get(s.staff_id)?.name ?? "" })),
+      teamLink: published ? teamLink() : undefined,
+    });
+  }
+
   function downloadCSV() {
     const rows = [["Name", "Payroll ID", "Date", "Start", "End", "Unpaid break (min)", "Paid hours", "Role"]];
     for (const s of [...shifts].sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time))) {
@@ -206,8 +228,6 @@ function WeekPage() {
   }
 
   if (!business || !staff) return <AppShell><Loading /></AppShell>;
-
-  const published = roster?.status === "published";
 
   return (
     <AppShell businessName={business.name} email={email}>
@@ -229,7 +249,9 @@ function WeekPage() {
           {shifts.length === 0 && staff.length > 0 && (
             <button onClick={copyLastWeek} disabled={busy} style={btn()}>Copy last week</button>
           )}
-          {shifts.length > 0 && <button onClick={downloadCSV} style={btn()}>Download hours</button>}
+          {published && <button onClick={copyTeamLink} style={btn()}>{linkCopied ? "Link copied ✓" : "Copy team link"}</button>}
+          {shifts.length > 0 && <button onClick={downloadPdf} style={btn()}>PDF</button>}
+          {shifts.length > 0 && <button onClick={downloadCSV} style={btn()}>Hours CSV</button>}
           {published
             ? <button onClick={unpublish} style={btn("ghost")}>Unpublish</button>
             : <button onClick={publish} disabled={busy || shifts.length === 0} style={{ ...btn("primary"), opacity: shifts.length ? 1 : 0.5 }}>Publish to team</button>}
@@ -251,7 +273,7 @@ function WeekPage() {
       )}
 
       {published && (
-        <Banner>Published — your team can see this week at their links. Changes you make now show up for them straight away.</Banner>
+        <Banner>Published — your team can see this week on the team link. Changes you make now show up for them straight away.</Banner>
       )}
       {notice && <Banner onClose={() => setNotice(null)}>{notice}</Banner>}
 
@@ -292,12 +314,13 @@ function WeekPage() {
       {justPublished && (
         <Modal title="Roster published" onClose={() => setJustPublished(false)}>
           <p style={{ fontSize: 14, color: C.secondary, lineHeight: 1.5, marginTop: 0 }}>
-            Your team can now see {fmtWeek(monday)} at their personal links. If someone hasn&apos;t got their link yet,
-            send it from the Team page — it stays the same every week.
+            Let your team know — paste the team link in your staff group chat, or send the PDF.
+            The link stays the same every week and always shows the latest roster.
           </p>
-          <div style={{ display: "flex", gap: 8 }}>
-            <Link href="/team" style={{ ...btn(), textDecoration: "none" }}>Send links</Link>
-            <button onClick={() => setJustPublished(false)} style={btn("primary")}>Done</button>
+          <div style={{ display: "grid", gap: 8 }}>
+            <button onClick={copyTeamLink} style={btn("primary")}>{linkCopied ? "Link copied ✓ — paste it in your group chat" : "Copy team link"}</button>
+            <button onClick={downloadPdf} style={btn()}>Download PDF</button>
+            <button onClick={() => setJustPublished(false)} style={btn("ghost")}>Done</button>
           </div>
         </Modal>
       )}

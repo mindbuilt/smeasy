@@ -47,6 +47,7 @@ export type Database = {
           owner_id: string
           payroll_settings: Json | null
           roles: string[]
+          team_token: string
           timezone: string
         }
         Insert: {
@@ -56,6 +57,7 @@ export type Database = {
           owner_id?: string
           payroll_settings?: Json | null
           roles?: string[]
+          team_token?: string
           timezone?: string
         }
         Update: {
@@ -65,6 +67,7 @@ export type Database = {
           owner_id?: string
           payroll_settings?: Json | null
           roles?: string[]
+          team_token?: string
           timezone?: string
         }
         Relationships: []
@@ -269,6 +272,10 @@ export type Database = {
     }
     Functions: {
       get_staff_roster: {
+        Args: { p_token: string; p_week?: string }
+        Returns: Json
+      }
+      get_team_roster: {
         Args: { p_token: string; p_week?: string }
         Returns: Json
       }

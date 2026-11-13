@@ -59,9 +59,14 @@ function TeamPage() {
         <h1 style={{ fontSize: 22, fontWeight: 700, color: C.dark, margin: "0 0 4px" }}>Team</h1>
         <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 20px" }}>
           {isNew && active.length === 0
-            ? "Add the people you roster. Each person gets a private link to see their shifts — no app or password."
-            : "Each person has a private link to see published rosters and request time off."}
+            ? "Add the people you roster. Your team sees published rosters on one shared link — no app or password."
+            : "The people you roster, and the link your team uses to see published rosters."}
         </p>
+
+        <TeamLinkCard token={business.team_token} onReset={async () => {
+          const { data } = await supabase().from("businesses").update({ team_token: crypto.randomUUID() }).eq("id", business.id).select().single();
+          if (data) setBusiness(data);
+        }} />
 
         <form onSubmit={add} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
           <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Name, e.g. Sam Nguyen"
@@ -81,9 +86,10 @@ function TeamPage() {
                   {[s.default_role, s.hourly_rate != null ? `$${s.hourly_rate}/hr` : null, s.mobile].filter(Boolean).join(" · ") || "Tap to add details"}
                 </div>
               </button>
-              <a href={smsHref(s, business.name)} style={{ ...btn(), padding: "7px 12px", fontSize: 13, textDecoration: "none" }}>Text link</a>
-              <button onClick={() => copyLink(s)} style={{ ...btn(), padding: "7px 12px", fontSize: 13 }}>
-                {copied === s.id ? "Copied ✓" : "Copy link"}
+              <a href={smsHref(s, business.name)} title="Their personal link: own shifts + time-off requests"
+                style={{ ...btn(), padding: "7px 12px", fontSize: 13, textDecoration: "none" }}>Text personal link</a>
+              <button onClick={() => copyLink(s)} title="Their personal link: own shifts + time-off requests" style={{ ...btn(), padding: "7px 12px", fontSize: 13 }}>
+                {copied === s.id ? "Copied ✓" : "Copy"}
               </button>
             </div>
           ))}
@@ -114,6 +120,38 @@ function TeamPage() {
           onSaved={(s) => { setStaff((all) => all!.map((x) => (x.id === s.id ? s : x))); setEditing(null); }} />
       )}
     </AppShell>
+  );
+}
+
+function TeamLinkCard({ token, onReset }: { token: string; onReset: () => Promise<void> }) {
+  const [copied, setCopied] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const link = typeof window === "undefined" ? "" : `${window.location.origin}/r/#${token}`;
+  return (
+    <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16, marginBottom: 20 }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: C.dark }}>Team roster link</div>
+      <p style={{ fontSize: 13, color: C.secondary, margin: "4px 0 12px" }}>
+        Pin this in your staff group chat. It always shows the latest published roster, and staff can download it as a PDF.
+      </p>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <input readOnly value={link} onFocus={(e) => e.target.select()} style={{ ...input, flex: 1, minWidth: 200, fontSize: 13, color: C.secondary }} aria-label="Team roster link" />
+        <button onClick={async () => { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 1800); }}
+          style={btn("primary")}>{copied ? "Copied ✓" : "Copy"}</button>
+        <a href={link} target="_blank" rel="noreferrer" style={{ ...btn(), textDecoration: "none" }}>Open</a>
+      </div>
+      <div style={{ marginTop: 10, fontSize: 12, color: C.muted }}>
+        {confirmReset ? (
+          <>Old link stops working for everyone.{" "}
+            <button onClick={async () => { await onReset(); setConfirmReset(false); }} style={{ ...btn("danger"), padding: "3px 8px", fontSize: 12 }}>Reset link</button>{" "}
+            <button onClick={() => setConfirmReset(false)} style={{ ...btn("ghost"), padding: "3px 8px", fontSize: 12 }}>Cancel</button>
+          </>
+        ) : (
+          <>Anyone with this link can see the roster (names and shift times only). Someone left?{" "}
+            <button onClick={() => setConfirmReset(true)} style={{ background: "none", border: "none", padding: 0, color: C.secondary, textDecoration: "underline", cursor: "pointer", fontSize: 12 }}>Reset the link</button>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
