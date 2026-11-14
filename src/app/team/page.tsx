@@ -70,9 +70,9 @@ function TeamPage() {
             Staff {active.length > 0 && <span style={{ color: C.muted, fontWeight: 500 }}>({active.length})</span>}
           </h2>
           <form onSubmit={add} style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Add a person, e.g. Sam Nguyen"
+            <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Name, e.g. Sam"
               style={input} aria-label="New team member name" autoFocus={isNew} />
-            <button type="submit" disabled={!newName.trim()} className="app-press" style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: newName.trim() ? 1 : 0.5 }}>Add to team</button>
+            <button type="submit" disabled={!newName.trim()} className="app-press" style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: newName.trim() ? 1 : 0.5 }}>Add</button>
           </form>
 
           <div style={{ background: C.white, borderRadius: C.r2, boxShadow: C.shadow, overflow: "hidden" }}>

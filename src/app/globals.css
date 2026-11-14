@@ -158,3 +158,5 @@ button:active:not(:disabled) { transform: scale(0.98); }
 .grid-cell { transition: background-color 150ms ease; }
 .grid-plus { display: grid; place-items: center; color: #d1d5db; transition: color 150ms ease, transform 150ms ease; }
 @media (hover: hover) { .grid-cell:hover { background: #f8faf3 !important; } .grid-cell:hover .grid-plus { color: #65a30d; transform: scale(1.15); } }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

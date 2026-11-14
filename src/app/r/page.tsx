@@ -72,7 +72,7 @@ export default function TeamRoster() {
         <>
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontSize: 14, fontWeight: 650, color: C.secondary, marginBottom: 8 }}>Show my shifts</div>
-            <div role="radiogroup" aria-label="Show my shifts" style={{ display: "flex", gap: 8, overflowX: "auto", padding: "2px 2px 6px", margin: "0 -2px" }}>
+            <div role="radiogroup" aria-label="Show my shifts" className="no-scrollbar" style={{ display: "flex", gap: 8, overflowX: "auto", padding: "2px 2px 6px", margin: "0 -2px" }}>
               <NameChip on={!me} onClick={() => pickMe("")} label="Everyone" />
               {view.staff.map((n) => <NameChip key={n} on={me === n} onClick={() => pickMe(n)} label={n} avatar />)}
             </div>
