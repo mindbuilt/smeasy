@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { C } from "@/lib/theme";
 import { SITE_URL } from "@/lib/site";
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
     url: "/",
     title: "Smeasy — simple staff rostering",
     description: "Build the week's roster in minutes and share it with one link. Made for Australian small businesses.",
+    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "Smeasy — simple staff rostering" }],
   },
 };
 
@@ -74,6 +76,14 @@ export default function Home() {
         <p style={{ fontSize: 13, color: C.muted, marginTop: 14 }}>No credit card. Sign in with your email.</p>
       </section>
 
+      {/* Hero image */}
+      <section style={{ ...wrap, marginBottom: 48 }}>
+        <ScrollReveal>
+          <Image src="/hero.jpg" alt="A café owner building a staff roster on their laptop" width={1400} height={782}
+            style={{ width: "100%", height: "auto", borderRadius: C.r2, display: "block" }} priority />
+        </ScrollReveal>
+      </section>
+
       {/* Roster preview */}
       <section style={{ ...wrap, marginBottom: 72 }}>
         <Parallax speed={0.08}>
@@ -122,19 +132,23 @@ export default function Home() {
       {/* For staff */}
       <section style={{ ...wrap, marginBottom: 72 }}>
         <ScrollReveal>
-        <div style={{ background: C.dark, color: C.white, borderRadius: C.r2, padding: "36px 28px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24, alignItems: "center" }}>
-          <div>
-            <h2 style={{ fontSize: 26, margin: "0 0 10px" }}>Your staff will actually use it</h2>
-            <p style={{ fontSize: 16, lineHeight: 1.55, margin: 0, color: "#d9d6cc" }}>
-              No app to download, no account, no password. Staff open the team link, see who&apos;s on when, and download the roster as a PDF if they want.
-            </p>
+        <div style={{ background: C.dark, color: C.white, borderRadius: C.r2, overflow: "hidden" }}>
+          <Image src="/staff.jpg" alt="A barista checking their roster on their phone" width={1400} height={782}
+            style={{ width: "100%", height: "auto", display: "block" }} />
+          <div style={{ padding: "28px 28px 32px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24, alignItems: "start" }}>
+            <div>
+              <h2 style={{ fontSize: 26, margin: "0 0 10px" }}>Your staff will actually use it</h2>
+              <p style={{ fontSize: 16, lineHeight: 1.55, margin: 0, color: "#d9d6cc" }}>
+                No app to download, no account, no password. Staff open the team link, see who&apos;s on when, and download the roster as a PDF if they want.
+              </p>
+            </div>
+            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 15, lineHeight: 1.9, color: "#eceae3" }}>
+              <li>Only sees published rosters, never your drafts</li>
+              <li>Names and shift times only — no pay rates or phone numbers</li>
+              <li>Reset the link any time someone leaves</li>
+              <li>Data stored in Australia (Sydney)</li>
+            </ul>
           </div>
-          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 15, lineHeight: 1.9, color: "#eceae3" }}>
-            <li>Only sees published rosters, never your drafts</li>
-            <li>Names and shift times only — no pay rates or phone numbers</li>
-            <li>Reset the link any time someone leaves</li>
-            <li>Data stored in Australia (Sydney)</li>
-          </ul>
         </div>
         </ScrollReveal>
       </section>
