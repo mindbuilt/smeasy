@@ -333,37 +333,57 @@ function WeekPage() {
   return (
     <AppShell businessName={business.name} email={email}>
       {/* Week header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <button onClick={() => goWeek(-1)} className="app-press" style={{ ...btn(), width: 42, padding: 0, borderRadius: 999 }} aria-label="Previous week"><ChevronLeft size={20} /></button>
-          <button onClick={() => goWeek(1)} className="app-press" style={{ ...btn(), width: 42, padding: 0, borderRadius: 999 }} aria-label="Next week"><ChevronRight size={20} /></button>
-        </div>
-        <div style={{ minWidth: 0 }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: C.dark, margin: 0, letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 12, flexWrap: isMobile ? "nowrap" : "wrap", marginBottom: isMobile ? 10 : 14 }}>
+        <button onClick={() => goWeek(-1)} className="app-press" style={{ ...btn(), width: 42, padding: 0, borderRadius: 999, flex: "none" }} aria-label="Previous week"><ChevronLeft size={20} /></button>
+        {isMobile ? null : <button onClick={() => goWeek(1)} className="app-press" style={{ ...btn(), width: 42, padding: 0, borderRadius: 999, flex: "none" }} aria-label="Next week"><ChevronRight size={20} /></button>}
+        <div style={{ minWidth: 0, flex: isMobile ? 1 : "none", textAlign: isMobile ? "center" : "left" }}>
+          <h1 style={{ fontSize: isMobile ? 19 : 24, fontWeight: 800, color: C.dark, margin: 0, letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 8, justifyContent: isMobile ? "center" : "flex-start", flexWrap: "wrap" }}>
             {fmtWeek(monday)}
-            <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0, padding: "4px 10px", borderRadius: 999, background: statusTone.bg, color: statusTone.text, transition: "background-color 400ms ease, color 400ms ease" }}>{statusTone.label}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0, padding: "3px 9px", borderRadius: 999, background: statusTone.bg, color: statusTone.text, transition: "background-color 400ms ease, color 400ms ease" }}>{statusTone.label}</span>
           </h1>
-          <div style={{ fontSize: 14, color: C.muted, marginTop: 2 }}>
+          <div style={{ fontSize: isMobile ? 13 : 14, color: C.muted, marginTop: 2 }}>
             {monday === thisMonday() ? "This week" : <Link href="/week" style={{ color: C.secondary }}>Back to this week</Link>}
-            {!published && <> · your team can&apos;t see this week until you publish</>}
-            {published && !isPast && <> · your team can see this week, and changes show straight away</>}
+            {!isMobile && !published && <> · your team can&apos;t see this week until you publish</>}
+            {!isMobile && published && !isPast && <> · your team can see this week, and changes show straight away</>}
           </div>
         </div>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {staff.length > 0 && !isPast && (
-            <button onClick={copyLastWeek} disabled={busy} className="app-press" style={btn()} title="Adds last week's shifts to this week. Shifts already here aren't doubled up.">
-              <Copy size={17} /> Copy last week
+        {isMobile && <button onClick={() => goWeek(1)} className="app-press" style={{ ...btn(), width: 42, padding: 0, borderRadius: 999, flex: "none" }} aria-label="Next week"><ChevronRight size={20} /></button>}
+        {!isMobile && (
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {staff.length > 0 && !isPast && (
+              <button onClick={copyLastWeek} disabled={busy} className="app-press" style={btn()} title="Adds last week's shifts to this week. Shifts already here aren't doubled up.">
+                <Copy size={17} /> Copy last week
+              </button>
+            )}
+            {published && <button onClick={copyTeamLink} className="app-press" style={btn()}><Link2 size={17} />{linkCopied ? "Copied" : "Team link"}</button>}
+            {shifts.length > 0 && <button onClick={downloadPdf} className="app-press" style={btn()}><FileText size={17} /> PDF</button>}
+            {published
+              ? <button onClick={unpublish} className="app-press" style={btn("ghost")}>Unpublish</button>
+              : <button onClick={publish} disabled={busy || shifts.length === 0} className="app-press" style={{ ...btn("accent"), opacity: shifts.length ? 1 : 0.45, padding: "10px 20px" }}>
+                  {busy ? "Publishing…" : "Publish to team"}
+                </button>}
+          </div>
+        )}
+      </div>
+      {isMobile && (
+        <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
+          {!published && shifts.length > 0 && (
+            <button onClick={publish} disabled={busy} className="app-press" style={{ ...btn("accent"), minHeight: 48, fontSize: 16 }}>
+              {busy ? "Publishing…" : "Publish to team"}
             </button>
           )}
-          {published && <button onClick={copyTeamLink} className="app-press" style={btn()}><Link2 size={17} />{linkCopied ? "Copied" : "Team link"}</button>}
-          {shifts.length > 0 && <button onClick={downloadPdf} className="app-press" style={btn()}><FileText size={17} /> PDF</button>}
-          {published
-            ? <button onClick={unpublish} className="app-press" style={btn("ghost")}>Unpublish</button>
-            : <button onClick={publish} disabled={busy || shifts.length === 0} className="app-press" style={{ ...btn("accent"), opacity: shifts.length ? 1 : 0.45, padding: "10px 20px" }}>
-                {busy ? "Publishing…" : "Publish to team"}
-              </button>}
+          <div style={{ display: "flex", gap: 8, overflowX: "auto", margin: "0 -16px", padding: "2px 16px" }}>
+            {staff.length > 0 && !isPast && <button onClick={copyLastWeek} disabled={busy} className="app-press" style={{ ...btn(), flex: "none" }}><Copy size={17} /> Copy last week</button>}
+            {published && <button onClick={copyTeamLink} className="app-press" style={{ ...btn(), flex: "none" }}><Link2 size={17} />{linkCopied ? "Copied" : "Team link"}</button>}
+            {shifts.length > 0 && <button onClick={downloadPdf} className="app-press" style={{ ...btn(), flex: "none" }}><FileText size={17} /> PDF</button>}
+            {shifts.length > 0 && <button onClick={downloadCSV} className="app-press" style={{ ...btn(), flex: "none" }}><Download size={17} /> Hours CSV</button>}
+            {published && <button onClick={unpublish} className="app-press" style={{ ...btn("ghost"), flex: "none" }}>Unpublish</button>}
+          </div>
+          <div style={{ fontSize: 13, color: C.muted, textAlign: "center" }}>
+            {published ? (isPast ? "This week is done." : "Your team can see this week. Changes show straight away.") : "Your team can't see this week until you publish."}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Summary */}
       {shifts.length > 0 && (
@@ -379,8 +399,8 @@ function WeekPage() {
                 style={{ background: "none", border: "none", padding: 0, color: C.muted, cursor: "pointer", display: "grid" }}><Info size={16} /></button>
             </span>
           )}
-          <button onClick={downloadCSV} className="app-press" style={{ ...btn("ghost"), marginLeft: "auto", color: C.dark }}
-            title="One row per shift, plus totals by person. Open in Excel or send to your bookkeeper."><Download size={17} /> Hours for payroll (CSV)</button>
+          {!isMobile && <button onClick={downloadCSV} className="app-press" style={{ ...btn("ghost"), marginLeft: "auto", color: C.dark }}
+            title="One row per shift, plus totals by person. Open in Excel or send to your bookkeeper."><Download size={17} /> Hours for payroll (CSV)</button>}
         </div>
       )}
       {pay && wagesHelp && wages > 0 && (
@@ -431,7 +451,7 @@ function WeekPage() {
           <DayView key={day} slide={slide} d={day} staff={staff} shifts={shifts} roles={roles} offOn={offOn} info={dayInfo(day)}
             onEdit={editShift} onDay={() => setEditingDay(day)} onSwipe={stepDay} cascadeIds={cascadeIds}
             emptyHint={!isPast ? "Tap + to add a shift, or use Copy last week." : "No shifts this day."} />
-          <div style={{ ...card, marginTop: 12 }}><AddStaff onAdd={addStaff} /></div>
+          <div style={{ ...card, marginTop: 12, marginBottom: 72 }}><AddStaff onAdd={addStaff} /></div>
           {!isPast && (
             <button onClick={() => { haptic(6); newShift(staff[0].id, day); }} aria-label={`Add a shift on ${fmtDay(day)}`} className="app-press" style={{
               position: "fixed", right: 18, bottom: "calc(92px + env(safe-area-inset-bottom))", zIndex: 44, width: 60, height: 60, borderRadius: 20,
