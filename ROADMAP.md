@@ -30,7 +30,7 @@ have been removed from the site until built.
 - [ ] ★ **Drag-and-drop** shifts on desktop.
 - [ ] **Multiple locations** per business.
 - [ ] **Installable app (PWA)** and offline viewing of the published roster.
-- [ ] **Pricing and billing** — tiers decided (Free ≤10 staff with every feature; Pro $19/month inc. GST for more staff + priority email support). Build: staff-limit check, Stripe billing, advance email before charging.
+- [ ] **Pricing and billing** — tiers decided (Free ≤10 staff with every feature; Pro $19/month + GST for more staff + priority email support). Build: staff-limit check, Stripe billing, advance email before charging.
 
 ## SEO and content
 - [ ] More guides: printable/free roster template (could use the PDF), rostering around public holidays, how to roster a small café, casual vs part-time rostering basics (link to Fair Work, no legal advice).

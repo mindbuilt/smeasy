@@ -9,7 +9,7 @@ export const faqGroups: FaqGroup[] = [
     items: [
       { q: "What is Smeasy?", a: "Smeasy is simple rostering for Australian small businesses. You build the week's roster, share it with your team using one link or a PDF, handle time-off requests, and download the hours for payroll." },
       { q: "Who is it for?", a: "Owners and managers of small teams — cafés, restaurants, bars, shops and other businesses rostering a handful to a few dozen people, often casuals. If you want rostering without a big HR system, it's built for you." },
-      { q: "How much does it cost?", a: "Nothing during early access, and no credit card is needed. After that, the plan is free for up to 10 staff with every feature, and $19 a month (including GST) for bigger teams. We'll email you well in advance before any charges start." },
+      { q: "How much does it cost?", a: "Nothing during early access, and no credit card is needed. After that, the plan is free for up to 10 staff with every feature, and $19 a month plus GST ($20.90 in total) for bigger teams. We'll email you well in advance before any charges start." },
       { q: "Do I need to install anything?", a: "No. Smeasy runs in the browser on your phone, tablet or computer. You can add it to your phone's home screen so it opens like an app." },
       { q: "Where is my data stored?", a: "In Australia. Smeasy's database is hosted in Sydney. Our privacy policy explains what we collect and which providers we use." },
       { q: "How do I get help, or delete my account?", a: "Email hello@smeasy.au. We'll delete your account and your business's data within 30 days of your request." },

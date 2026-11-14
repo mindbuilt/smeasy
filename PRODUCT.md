@@ -26,7 +26,7 @@ Notifications, Xero/MYOB import formats, swaps, availability, award checks,
 penalty-rate costing, multiple managers/locations, billing.
 
 ## Pricing
-Free during early access. Planned: Free up to 10 staff with every feature; Pro $19/month (inc. GST) for more than 10 staff plus priority email support. Limits and billing not built yet — see ROADMAP.md.
+Free during early access. Planned: Free up to 10 staff with every feature; Pro $19/month + GST ($20.90) for more than 10 staff plus priority email support. Limits and billing not built yet — see ROADMAP.md.
 
 ## Voice
 Australian English, plain and friendly, manager-to-manager. Short sentences.
