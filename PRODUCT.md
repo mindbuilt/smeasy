@@ -36,3 +36,6 @@ testimonials.
 ## Stack
 Next.js 16 static export on Vercel (www.smeasy.au) · Supabase (auth + Postgres,
 migrations in `supabase/migrations/`) · jsPDF for PDFs · GTM on public pages only.
+
+## Brand commitments
+- App screens follow the category standard (clean modern scheduling app), at the craft level of Deputy / Homebase and Square / Afterpay merchant apps. Lime #b7e021 and the square logo stay. (Chosen by the owner, Nov 2026.)

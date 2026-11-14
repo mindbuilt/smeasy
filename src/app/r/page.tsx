@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { addDays, fmtDay, fmtTime, fmtWeek, shiftHours, thisMonday, weekDates } from "@/lib/dates";
+import { addDays, thisMonday } from "@/lib/dates";
 import { downloadRosterPdf, PdfShift } from "@/lib/rosterPdf";
-import Link from "next/link";
-import { C, btn, input } from "@/components/ui";
-import { DayExtras, RolePill } from "@/components/StaffBits";
+import { Avatar, C, Loading, btn, card, haptic } from "@/components/ui";
+import { DayList, NextShift, StaffFooter, StaffShell, WeekNav, hoursOf, readToken } from "@/components/StaffBits";
 
 type TeamShift = PdfShift & { id: string };
 type View = {
@@ -15,6 +15,7 @@ type View = {
 };
 
 const ME_KEY = "smeasy_me";
+const TOKEN_KEY = "smeasy_team_token";
 
 // Shared team roster: /r/#<team_token>. Read-only, published weeks only.
 export default function TeamRoster() {
@@ -25,7 +26,7 @@ export default function TeamRoster() {
 
   useEffect(() => {
     const read = () => {
-      setToken(window.location.hash.slice(1) || "");
+      setToken(readToken(TOKEN_KEY));
       setMe(localStorage.getItem(ME_KEY) ?? "");
     };
     read();
@@ -45,112 +46,62 @@ export default function TeamRoster() {
   }, [token, validToken, week]);
 
   if ((token !== null && !validToken) || view === "invalid") return (
-    <Shell>
-      <h1 style={{ fontSize: 20, color: C.dark }}>This roster link isn&apos;t working</h1>
-      <p style={{ color: C.secondary, fontSize: 15 }}>It may have been replaced. Ask your manager for the new team link.</p>
-    </Shell>
+    <StaffShell>
+      <div style={{ ...card, padding: "24px 20px" }}>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: C.dark, margin: "0 0 6px" }}>This roster link isn&apos;t working</h1>
+        <p style={{ color: C.secondary, fontSize: 15, margin: 0, lineHeight: 1.5 }}>It may have been replaced. Ask your manager for the new team link.</p>
+      </div>
+    </StaffShell>
   );
-  if (view === null) return <Shell><p style={{ color: C.muted }}>Loading…</p></Shell>;
+  if (view === null) return <StaffShell><Loading /></StaffShell>;
 
-  const pickMe = (name: string) => { setMe(name); localStorage.setItem(ME_KEY, name); };
+  const pickMe = (name: string) => { haptic(5); setMe(name); localStorage.setItem(ME_KEY, name); };
   const mine = view.shifts.filter((s) => s.staff_name === me);
-  const myHours = mine.reduce((h, s) => h + shiftHours(s.start_time, s.end_time, s.break_minutes), 0);
+  const step = (n: number) => { setWeek(addDays(week, n * 7)); haptic(5); };
 
   return (
-    <Shell business={view.business}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
-        <button onClick={() => setWeek(addDays(week, -7))} style={{ ...btn(), padding: "8px 12px" }} aria-label="Previous week">‹</button>
-        <div style={{ flex: 1, textAlign: "center" }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: C.dark }}>{fmtWeek(view.week_start)}</div>
-          <div style={{ fontSize: 12, color: C.muted }}>{view.week_start === thisMonday() ? "This week" : " "}</div>
-        </div>
-        <button onClick={() => setWeek(addDays(week, 7))} style={{ ...btn(), padding: "8px 12px" }} aria-label="Next week">›</button>
-      </div>
+    <StaffShell business={view.business}>
+      <WeekNav weekStart={view.week_start} onStep={step} />
 
       {!view.published ? (
-        <Card><p style={{ margin: 0, color: C.secondary, fontSize: 15 }}>This week&apos;s roster hasn&apos;t been published yet.</p></Card>
+        <div style={{ ...card, padding: "28px 20px", textAlign: "center" }}>
+          <p style={{ fontSize: 17, fontWeight: 750, color: C.dark, margin: "0 0 4px" }}>Not out yet</p>
+          <p style={{ margin: 0, color: C.secondary, fontSize: 15 }}>This week&apos;s roster hasn&apos;t been published. Check back soon.</p>
+        </div>
       ) : (
         <>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
-            <select value={me} onChange={(e) => pickMe(e.target.value)} style={{ ...input, flex: 1, minWidth: 180 }} aria-label="Highlight my shifts">
-              <option value="">Highlight my shifts…</option>
-              {view.staff.map((n) => <option key={n}>{n}</option>)}
-            </select>
-            <button onClick={() => downloadRosterPdf({ business: view.business, weekStart: view.week_start, shifts: view.shifts, roles: view.roles ?? [], state: view.state, dayNotes: view.day_notes ?? [], teamLink: window.location.href })}
-              style={btn()}>Download PDF</button>
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: 650, color: C.secondary, marginBottom: 8 }}>Show my shifts</div>
+            <div role="radiogroup" aria-label="Show my shifts" style={{ display: "flex", gap: 8, overflowX: "auto", padding: "2px 2px 6px", margin: "0 -2px" }}>
+              <NameChip on={!me} onClick={() => pickMe("")} label="Everyone" />
+              {view.staff.map((n) => <NameChip key={n} on={me === n} onClick={() => pickMe(n)} label={n} avatar />)}
+            </div>
           </div>
 
-          {me && (
-            <Card>
-              <div style={{ fontSize: 13, color: C.muted, marginBottom: 4 }}>{me}&apos;s shifts · {myHours.toFixed(1).replace(/\.0$/, "")} hours</div>
-              {mine.length === 0 ? <div style={{ fontSize: 15, color: C.secondary }}>Not rostered on this week.</div> : mine.map((s) => (
-                <div key={s.id} style={{ padding: "6px 0", fontSize: 15 }}>
-                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                    <strong style={{ width: 96, color: C.dark }}>{fmtDay(s.date)}</strong>
-                    <span style={{ fontWeight: 700, color: C.dark }}>{fmtTime(s.start_time)} – {fmtTime(s.end_time)}</span>
-                    <span style={{ marginLeft: "auto" }}><RolePill role={s.role} roles={view.roles ?? []} /></span>
-                  </div>
-                  {s.notes && <div style={{ fontSize: 13, color: C.secondary, marginTop: 2 }}>📝 {s.notes}</div>}
-                </div>
-              ))}
-            </Card>
-          )}
+          {me && <NextShift shifts={mine} roles={view.roles ?? []} totalHours={hoursOf(mine)} count={mine.length} name={me} />}
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
-            {weekDates(view.week_start).map((d) => {
-              const day = view.shifts.filter((s) => s.date === d);
-              return (
-                <Card key={d}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: C.dark, marginBottom: 2 }}>{fmtDay(d)}</div>
-                  <DayExtras date={d} state={view.state} dayNotes={view.day_notes ?? []} />
-                  {day.length === 0 && <div style={{ fontSize: 13, color: C.faint }}>No shifts</div>}
-                  {day.map((s) => {
-                    const isMe = s.staff_name === me;
-                    return (
-                      <div key={s.id} style={{ padding: "4px 0", fontSize: 14, color: isMe ? C.dark : C.secondary, fontWeight: isMe ? 700 : 400 }}>
-                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                          <span style={{ flex: 1 }}>{s.staff_name}</span>
-                          <span>{fmtTime(s.start_time)}–{fmtTime(s.end_time)}</span>
-                          <RolePill role={s.role} roles={view.roles ?? []} />
-                        </div>
-                        {s.notes && <div style={{ fontSize: 12, fontWeight: 400, color: C.secondary }}>📝 {s.notes}</div>}
-                      </div>
-                    );
-                  })}
-                </Card>
-              );
-            })}
-          </div>
+          <DayList weekStart={view.week_start} shifts={view.shifts} roles={view.roles ?? []} state={view.state}
+            dayNotes={view.day_notes ?? []} isMine={(s) => !!me && s.staff_name === me} />
+
+          <button onClick={() => downloadRosterPdf({ business: view.business, weekStart: view.week_start, shifts: view.shifts, roles: view.roles ?? [], state: view.state, dayNotes: view.day_notes ?? [], teamLink: window.location.href })}
+            className="app-press" style={{ ...btn(), width: "100%", marginTop: 14, minHeight: 48 }}><FileText size={18} /> Download this week as a PDF</button>
         </>
       )}
 
-      <p style={{ fontSize: 13, color: C.secondary, marginTop: 24 }}>
-        Want your shifts in your phone&apos;s calendar? Ask your manager for your personal link.
-      </p>
-      <p style={{ fontSize: 12, color: C.muted, marginTop: 12 }}>Bookmark this page or add it to your home screen — it always shows the latest published roster.</p>
-      <p style={{ fontSize: 12, color: C.muted, marginTop: 8 }}>
-        <Link href="/" style={{ color: C.secondary }}>SMEasy</Link>
-        {" · "}
-        <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>
-      </p>
-    </Shell>
+      <StaffFooter hint="Add this page to your home screen and it opens like an app, always showing the latest published roster. Want your shifts in your phone's calendar? Ask your manager for your personal link." />
+    </StaffShell>
   );
 }
 
-function Card({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "12px 16px" }}>{children}</div>;
-}
-
-function Shell({ business, children }: { business?: string; children: React.ReactNode }) {
+function NameChip({ on, onClick, label, avatar }: { on: boolean; onClick: () => void; label: string; avatar?: boolean }) {
   return (
-    <div style={{ minHeight: "100vh", background: C.bg }}>
-      <header style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "14px 16px", display: "flex", alignItems: "center", gap: 8 }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <span style={{ width: 20, height: 20, borderRadius: C.r1, background: C.accent, display: "block" }} />
-          <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>{business ? `${business} roster` : "SMEasy"}</span>
-        </Link>
-      </header>
-      <main style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 48px" }}>{children}</main>
-    </div>
+    <button role="radio" aria-checked={on} onClick={onClick} className="app-press" style={{
+      flex: "none", display: "inline-flex", alignItems: "center", gap: 8, padding: avatar ? "5px 14px 5px 5px" : "8px 16px",
+      borderRadius: 999, border: `1.5px solid ${on ? C.dark : C.border}`, background: on ? C.dark : C.white, color: on ? C.white : C.dark,
+      fontSize: 15, fontWeight: 650, cursor: "pointer", fontFamily: "inherit", transition: "background-color 180ms ease, color 180ms ease",
+    }}>
+      {avatar && <Avatar name={label} size={28} tone={on ? { bg: C.accent, text: C.dark } : undefined} />}
+      {label}
+    </button>
   );
 }

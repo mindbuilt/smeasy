@@ -6,7 +6,9 @@ import { supabase } from "@/lib/supabase";
 import { useManager } from "@/lib/useManager";
 import type { Staff } from "@/lib/types";
 import { payDetailsOn } from "@/lib/pay";
-import { AppShell, C, Loading, Modal, btn, input, label } from "@/components/ui";
+import { AppShell, Avatar, C, Loading, Modal, btn, haptic, input, label } from "@/components/ui";
+import { roleSwatch } from "@/lib/roleColors";
+import { Check, Copy, MessageSquare, Pencil } from "lucide-react";
 
 function staffLink(s: Staff) {
   return `${window.location.origin}/s/#${s.roster_token}`;
@@ -53,27 +55,27 @@ function TeamPage() {
 
   const active = staff.filter((s) => s.active);
   const former = staff.filter((s) => !s.active);
-  const small = { ...btn(), padding: "7px 12px", fontSize: 13, textDecoration: "none" } as const;
+  const small = { ...btn(), padding: "8px 12px", fontSize: 14, minHeight: 38, textDecoration: "none" } as const;
 
   return (
     <AppShell businessName={business.name} email={email}>
       <div style={{ maxWidth: 680, margin: "0 auto" }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: C.dark, margin: "0 0 4px" }}>Team</h1>
-        <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 20px", lineHeight: 1.5 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: C.dark, margin: "0 0 4px", letterSpacing: "-0.02em" }}>Team</h1>
+        <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 20px", lineHeight: 1.5 }}>
           Everyone you add here gets a row on your roster. Staff don&apos;t need an app or a password.
         </p>
 
         <section style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: C.dark, margin: "0 0 10px" }}>
+          <h2 style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: "0 0 10px" }}>
             Staff {active.length > 0 && <span style={{ color: C.muted, fontWeight: 500 }}>({active.length})</span>}
           </h2>
           <form onSubmit={add} style={{ display: "flex", gap: 8, marginBottom: 10 }}>
             <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Add a person, e.g. Sam Nguyen"
               style={input} aria-label="New team member name" autoFocus={isNew} />
-            <button type="submit" disabled={!newName.trim()} style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: newName.trim() ? 1 : 0.5 }}>Add to team</button>
+            <button type="submit" disabled={!newName.trim()} className="app-press" style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: newName.trim() ? 1 : 0.5 }}>Add to team</button>
           </form>
 
-          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, overflow: "hidden" }}>
+          <div style={{ background: C.white, borderRadius: C.r2, boxShadow: C.shadow, overflow: "hidden" }}>
             {active.length === 0 && (
               <div style={{ padding: "32px 24px", margin: 0, textAlign: "center" }}>
                 <p style={{ fontSize: 15, fontWeight: 600, color: C.dark, margin: "0 0 4px" }}>No one here yet</p>
@@ -81,18 +83,21 @@ function TeamPage() {
               </div>
             )}
             {active.map((s, i) => (
-              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", borderTop: i ? `1px solid ${C.divider}` : "none", flexWrap: "wrap" }}>
-                <div style={{ flex: 1, minWidth: 140 }}>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: C.dark }}>{s.name}</div>
-                  <div style={{ fontSize: 12, color: C.muted }}>
+              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderTop: i ? `1px solid ${C.divider}` : "none", flexWrap: "wrap" }}>
+                <Avatar name={s.name} size={42} tone={s.default_role ? (() => { const sw = roleSwatch(s.default_role, business.roles); return { bg: sw.bg, text: sw.text }; })() : undefined} />
+                <div style={{ flex: 1, minWidth: 130 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.dark }}>{s.name}</div>
+                  <div style={{ fontSize: 14, color: C.muted }}>
                     {[s.default_role, s.mobile].filter(Boolean).join(" · ") || "No role or mobile yet"}
                   </div>
                 </div>
-                <button onClick={() => setEditing(s)} style={small}>Edit</button>
-                <a href={smsHref(s, business.name)} title="Text them their personal link: their shifts, time-off requests and calendar" style={small}>Text personal link</a>
-                <button onClick={() => copyLink(s)} title="Copy their personal link: their shifts, time-off requests and calendar" style={small}>
-                  {copied === s.id ? "Copied ✓" : "Copy link"}
-                </button>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <button onClick={() => setEditing(s)} className="app-press" style={small}><Pencil size={15} /> Edit</button>
+                  <a href={smsHref(s, business.name)} className="app-press" title="Text them their personal link: their shifts, time-off requests and calendar" style={small}><MessageSquare size={15} /> Text link</a>
+                  <button onClick={() => { copyLink(s); haptic(8); }} className="app-press" title="Copy their personal link: their shifts, time-off requests and calendar" style={small}>
+                    {copied === s.id ? <><Check size={15} /> Copied</> : <><Copy size={15} /> Copy link</>}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -136,8 +141,8 @@ function TeamLinkCard({ token, onReset }: { token: string; onReset: () => Promis
   const [confirmReset, setConfirmReset] = useState(false);
   const link = typeof window === "undefined" ? "" : `${window.location.origin}/r/#${token}`;
   return (
-    <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 16 }}>
-      <h2 style={{ fontSize: 16, fontWeight: 700, color: C.dark, margin: 0 }}>Team roster link</h2>
+    <div style={{ background: C.white, borderRadius: C.r2, boxShadow: C.shadow, padding: 16 }}>
+      <h2 style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: 0 }}>Team roster link</h2>
       <p style={{ fontSize: 13, color: C.secondary, margin: "4px 0 12px" }}>
         Pin this in your staff group chat. It always shows the latest published roster, and staff can download it as a PDF.
       </p>

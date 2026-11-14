@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { SITE_URL } from "@/lib/site";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -16,6 +16,18 @@ const plex = localFont({
   variable: "--font-plex",
 });
 
+// Figtree (SIL Open Font License), the app screens' face. Variable, self-hosted.
+const figtree = localFont({
+  src: [{ path: "../fonts/Figtree-Variable.woff2", weight: "400 800", style: "normal" }],
+  display: "swap",
+  variable: "--font-app",
+});
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -30,11 +42,14 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: { card: "summary" },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "SMEasy", statusBarStyle: "default" },
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-AU" className={plex.variable}>
+    <html lang="en-AU" className={`${plex.variable} ${figtree.variable}`}>
       <body>{children}</body>
     </html>
   );

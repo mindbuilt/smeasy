@@ -8,11 +8,11 @@ import SetPassword from "@/components/SetPassword";
 import { STATES, STATE_TIMEZONE, type State } from "@/lib/holidays";
 import { roleSwatch } from "@/lib/roleColors";
 import { payDetailsOn, withPayDetails } from "@/lib/pay";
-import { AppShell, C, Loading, btn, input, label } from "@/components/ui";
+import { AppShell, C, Loading, btn, haptic, input, label } from "@/components/ui";
 
-const card = { background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "18px 18px 20px", marginBottom: 16 } as const;
-const h2 = { fontSize: 16, fontWeight: 700, color: C.dark, margin: "0 0 4px" } as const;
-const help = { fontSize: 13, color: C.secondary, margin: "0 0 12px", lineHeight: 1.5 } as const;
+const card = { background: C.white, borderRadius: C.r2, boxShadow: C.shadow, padding: "20px 20px 22px", marginBottom: 14 } as const;
+const h2 = { fontSize: 18, fontWeight: 750, color: C.dark, margin: "0 0 4px" } as const;
+const help = { fontSize: 15, color: C.secondary, margin: "0 0 14px", lineHeight: 1.5 } as const;
 
 export default function SettingsPage() {
   const { business, setBusiness, email } = useManager();
@@ -26,7 +26,7 @@ export default function SettingsPage() {
   return (
     <AppShell businessName={business.name} email={email}>
       <div style={{ maxWidth: 680, margin: "0 auto" }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: C.dark, margin: "0 0 20px" }}>Settings</h1>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: C.dark, margin: "0 0 20px", letterSpacing: "-0.02em" }}>Settings</h1>
 
         <section style={card}>
           <h2 style={h2}>Your business</h2>
@@ -54,11 +54,8 @@ export default function SettingsPage() {
             Turn this on to add each person&apos;s hourly rate and payroll ID on the Team page. SMEasy then shows a base-rate wage estimate on the roster,
             and adds payroll ID, hourly rate and base pay to your hours CSV.
           </p>
-          <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: C.dark, cursor: "pointer" }}>
-            <input type="checkbox" checked={payDetailsOn(business)} style={{ width: 18, height: 18, marginTop: 1, accentColor: C.dark }}
-              onChange={(e) => update({ payroll_settings: withPayDetails(business, e.target.checked) })} />
-            <span>Use pay details</span>
-          </label>
+          <Switch on={payDetailsOn(business)} label="Use pay details"
+            onChange={(on) => update({ payroll_settings: withPayDetails(business, on) })} />
           <p style={{ fontSize: 12, color: C.muted, margin: "10px 0 0", lineHeight: 1.5 }}>
             The estimate is hours × the rate you enter. It doesn&apos;t include penalty rates, overtime, allowances or super, and it isn&apos;t award advice.
             Only you see pay details. They never appear on the team link, personal links or the PDF.
@@ -74,6 +71,18 @@ export default function SettingsPage() {
         </section>
       </div>
     </AppShell>
+  );
+}
+
+function Switch({ on, label: text, onChange }: { on: boolean; label: string; onChange: (on: boolean) => void }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} onClick={() => { haptic(6); onChange(!on); }} className="app-press"
+      style={{ display: "flex", alignItems: "center", gap: 12, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", fontSize: 16, fontWeight: 650, color: C.dark }}>
+      <span aria-hidden style={{ width: 50, height: 30, borderRadius: 999, background: on ? C.accent : "#d1d5db", position: "relative", transition: "background-color 200ms ease", flex: "none" }}>
+        <span style={{ position: "absolute", top: 3, left: on ? 23 : 3, width: 24, height: 24, borderRadius: "50%", background: C.white, boxShadow: "0 1px 3px rgba(17,24,39,0.25)", transition: "left 220ms cubic-bezier(.16,1,.3,1)" }} />
+      </span>
+      {text}
+    </button>
   );
 }
 
