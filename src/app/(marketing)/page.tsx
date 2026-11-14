@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { C } from "@/lib/theme";
 import { SITE_URL } from "@/lib/site";
@@ -78,8 +77,8 @@ export default function Home() {
 
       {/* Hero image */}
       <section style={{ ...wrap, marginBottom: 48 }}>
-        <Image src="/hero.jpg" alt="A café owner building a staff roster on their laptop" width={1400} height={782}
-          style={{ width: "100%", height: "auto", borderRadius: C.r2, display: "block" }} priority />
+        <img src="/hero.jpg" alt="A café owner building a staff roster on their laptop" width={1400} height={782}
+          style={{ width: "100%", height: "auto", borderRadius: C.r2, display: "block" }} />
       </section>
 
       {/* Roster preview */}
@@ -131,7 +130,7 @@ export default function Home() {
       <section style={{ ...wrap, marginBottom: 72 }}>
         <ScrollReveal>
         <div style={{ background: C.dark, color: C.white, borderRadius: C.r2, overflow: "hidden" }}>
-          <Image src="/staff.jpg" alt="A barista checking their roster on their phone" width={1400} height={782}
+          <img src="/staff.jpg" alt="A barista checking their roster on their phone" width={1400} height={782}
             style={{ width: "100%", height: "auto", display: "block" }} />
           <div style={{ padding: "28px 28px 32px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24, alignItems: "start" }}>
             <div>
