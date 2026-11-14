@@ -213,16 +213,20 @@ function WeekPage() {
   }
 
   function downloadCSV() {
-    const rows = [["Name", "Payroll ID", "Date", "Start", "End", "Unpaid break (min)", "Paid hours", "Role"]];
-    for (const s of [...shifts].sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time))) {
-      const p = staffById.get(s.staff_id);
-      rows.push([p?.name ?? "", p?.payroll_id ?? "", s.date, hhmm(s.start_time), hhmm(s.end_time),
-        String(s.break_minutes), shiftHours(s.start_time, s.end_time, s.break_minutes).toFixed(2), s.role ?? ""]);
+    // One row per staff member: scheduled hours (from roster) and actual hours
+    // (defaults to scheduled — the manager edits this column in the spreadsheet
+    // before sending to their bookkeeper).
+    const rows = [["Name", "Scheduled Hours", "Actual Hours"]];
+    for (const p of (staff ?? []).sort((a, b) => a.name.localeCompare(b.name))) {
+      const h = hoursByStaff.get(p.id);
+      if (!h) continue;
+      const hrs = h.toFixed(2);
+      rows.push([p.name, hrs, hrs]);
     }
     const csv = rows.map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    a.download = `roster-${monday}.csv`;
+    a.download = `hours-${monday}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
   }
@@ -279,7 +283,7 @@ function WeekPage() {
 
       {/* Time-off requests */}
       {pending.length > 0 && (
-        <div style={{ background: C.offBg, border: `1px solid ${C.offBorder}`, borderRadius: 10, padding: "10px 14px", marginBottom: 14 }}>
+        <div style={{ background: C.offBg, border: `1px solid ${C.offBorder}`, borderRadius: C.r2, padding: "10px 14px", marginBottom: 14 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: C.offText, marginBottom: 6 }}>Time-off requests</div>
           {pending.map((t) => (
             <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "4px 0", fontSize: 14 }}>
@@ -296,7 +300,7 @@ function WeekPage() {
       )}
 
       {staff.length === 0 ? (
-        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: 32, textAlign: "center" }}>
+        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 32, textAlign: "center" }}>
           <p style={{ fontSize: 15, color: C.dark, margin: "0 0 12px" }}>Add your team first, then build the week here.</p>
           <Link href="/team" style={{ ...btn("primary"), textDecoration: "none", display: "inline-block" }}>Add team members</Link>
         </div>
@@ -330,7 +334,7 @@ function WeekPage() {
 
 function Banner({ children, onClose }: { children: React.ReactNode; onClose?: () => void }) {
   return (
-    <div style={{ display: "flex", gap: 10, alignItems: "flex-start", background: C.white, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 14px", fontSize: 13, color: C.secondary, marginBottom: 14 }}>
+    <div style={{ display: "flex", gap: 10, alignItems: "flex-start", background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "10px 14px", fontSize: 13, color: C.secondary, marginBottom: 14 }}>
       <span style={{ flex: 1 }}>{children}</span>
       {onClose && <button onClick={onClose} aria-label="Dismiss" style={{ background: "none", border: "none", cursor: "pointer", color: C.muted }}>✕</button>}
     </div>
@@ -343,7 +347,7 @@ function Chip({ s, onClick }: { s: Shift; onClick: () => void }) {
   return (
     <button onClick={(e) => { e.stopPropagation(); onClick(); }} style={{
       display: "block", width: "100%", textAlign: "left", background: C.shiftBg, border: `1px solid ${C.shiftBorder}`,
-      color: C.shiftText, borderRadius: 8, padding: "4px 6px", fontSize: 12, fontWeight: 700, cursor: "pointer", lineHeight: 1.3,
+      color: C.shiftText, borderRadius: C.r1, padding: "4px 6px", fontSize: 12, fontWeight: 700, cursor: "pointer", lineHeight: 1.3,
     }}>
       {fmtTime(s.start_time)}–{fmtTime(s.end_time)}
       {s.role && <span style={{ display: "block", fontWeight: 500, opacity: 0.8 }}>{s.role}</span>}
@@ -353,7 +357,7 @@ function Chip({ s, onClick }: { s: Shift; onClick: () => void }) {
 
 function OffChip({ t }: { t: TimeOff }) {
   return (
-    <div style={{ background: C.offBg, border: `1px solid ${C.offBorder}`, color: C.offText, borderRadius: 8, padding: "4px 6px", fontSize: 12, fontWeight: 700 }}>
+    <div style={{ background: C.offBg, border: `1px solid ${C.offBorder}`, color: C.offText, borderRadius: C.r1, padding: "4px 6px", fontSize: 12, fontWeight: 700 }}>
       Off{t.reason ? ` · ${t.reason}` : ""}
     </div>
   );
@@ -365,7 +369,7 @@ function Grid({ days, staff, shifts, hours, offOn, onAdd, onEdit }: {
 }) {
   const cols = "160px repeat(7, minmax(90px, 1fr)) 60px";
   return (
-    <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflowX: "auto" }}>
+    <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, overflowX: "auto" }}>
       <div style={{ display: "grid", gridTemplateColumns: cols, background: C.bg, borderBottom: `1px solid ${C.border}`, minWidth: 860 }}>
         <div style={{ padding: "8px 12px", fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase" }}>Team</div>
         {days.map((d) => (
@@ -409,7 +413,7 @@ function DayCards({ days, staff, shifts, offOn, onAdd, onEdit }: {
         const dayShifts = shifts.filter((s) => s.date === d);
         const offs = staff.map((p) => ({ p, t: offOn(p.id, d) })).filter((x) => x.t);
         return (
-          <div key={d} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
+          <div key={d} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center", padding: "8px 14px", background: C.bg, borderBottom: `1px solid ${C.border}` }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: C.dark }}>{fmtDay(d)}</span>
               <button onClick={() => onAdd(staff[0].id, d)} style={{ ...btn("ghost"), marginLeft: "auto", padding: "4px 8px", fontSize: 13 }}>+ Add shift</button>
@@ -418,7 +422,7 @@ function DayCards({ days, staff, shifts, offOn, onAdd, onEdit }: {
             {dayShifts.map((s) => (
               <button key={s.id} onClick={() => onEdit(s)} style={{ display: "flex", width: "100%", gap: 10, alignItems: "center", padding: "10px 14px", background: "none", border: "none", borderTop: `1px solid ${C.divider}`, cursor: "pointer", textAlign: "left" }}>
                 <span style={{ fontSize: 14, fontWeight: 600, color: C.dark, flex: 1 }}>{staff.find((p) => p.id === s.staff_id)?.name}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: C.shiftText, background: C.shiftBg, border: `1px solid ${C.shiftBorder}`, borderRadius: 8, padding: "3px 8px" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: C.shiftText, background: C.shiftBg, border: `1px solid ${C.shiftBorder}`, borderRadius: C.r1, padding: "3px 8px" }}>
                   {fmtTime(s.start_time)}–{fmtTime(s.end_time)}{s.role ? ` · ${s.role}` : ""}
                 </span>
               </button>

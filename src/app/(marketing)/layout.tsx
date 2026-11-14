@@ -14,7 +14,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
       <header style={{ borderBottom: `1px solid ${C.border}`, background: C.white }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 20px", height: 60, display: "flex", alignItems: "center", gap: 20 }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-            <span style={{ width: 24, height: 24, borderRadius: 6, background: C.accent, display: "block" }} />
+            <span style={{ width: 24, height: 24, borderRadius: C.r1, background: C.accent, display: "block" }} />
             <span style={{ fontWeight: 700, fontSize: 17, color: C.dark }}>Smeasy</span>
           </Link>
           <nav style={{ display: "flex", gap: 18, fontSize: 14, fontWeight: 500 }}>
@@ -23,7 +23,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
           </nav>
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
             <Link href="/auth/login/" style={{ color: C.secondary, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Log in</Link>
-            <Link href="/auth/login/" style={{ background: C.dark, color: C.white, padding: "9px 16px", borderRadius: 8, textDecoration: "none", fontSize: 14, fontWeight: 600 }}>Get started</Link>
+            <Link href="/auth/login/" style={{ background: C.dark, color: C.white, padding: "9px 16px", borderRadius: C.r1, textDecoration: "none", fontSize: 14, fontWeight: 600 }}>Get started</Link>
           </div>
         </div>
       </header>

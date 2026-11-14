@@ -6,7 +6,7 @@ export const C = {
   accent: "#b7e021",
   border: "#e7e2d6",
   divider: "#f0ede4",
-  muted: "#8a8678",
+  muted: "#6e6a5e",
   secondary: "#5b584f",
   faint: "#c2bcaa",
   shiftBg: "#eaf9c8",
@@ -16,4 +16,7 @@ export const C = {
   offBorder: "#d98c1f",
   offText: "#8a5a10",
   danger: "#b3261e",
-};
+  // Border radii — flat, sharp aesthetic
+  r1: 4,   // small: chips, buttons, inputs, shift tags
+  r2: 6,   // medium: cards, modals, containers
+} as const;

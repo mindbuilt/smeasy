@@ -10,8 +10,8 @@ export { C };
 
 export const input: CSSProperties = {
   width: "100%", boxSizing: "border-box", padding: "10px 12px", fontSize: 15,
-  border: `1px solid ${C.border}`, borderRadius: 8, background: C.white,
-  color: C.dark, fontFamily: "inherit", outline: "none",
+  border: `1px solid ${C.border}`, borderRadius: C.r1, background: C.white,
+  color: C.dark, fontFamily: "inherit",
 };
 
 export const label: CSSProperties = {
@@ -20,7 +20,7 @@ export const label: CSSProperties = {
 
 export function btn(kind: "primary" | "secondary" | "ghost" | "danger" = "secondary"): CSSProperties {
   const base: CSSProperties = {
-    padding: "10px 16px", borderRadius: 8, fontSize: 14, fontWeight: 600,
+    padding: "10px 16px", borderRadius: C.r1, fontSize: 14, fontWeight: 600,
     cursor: "pointer", fontFamily: "inherit", border: "1px solid transparent",
   };
   if (kind === "primary") return { ...base, background: C.dark, color: C.white };
@@ -47,7 +47,7 @@ export function AppShell({ businessName, email, children }: {
         alignItems: "center", gap: 16, padding: "0 16px",
       }}>
         <Link href="/week" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <span style={{ width: 22, height: 22, borderRadius: 5, background: C.accent, display: "block" }} />
+          <span style={{ width: 22, height: 22, borderRadius: C.r1, background: C.accent, display: "block" }} />
           <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>Smeasy</span>
         </Link>
         <nav style={{ display: "flex", gap: 4 }}>
@@ -55,7 +55,7 @@ export function AppShell({ businessName, email, children }: {
             const active = path?.startsWith(n.href);
             return (
               <Link key={n.href} href={n.href} style={{
-                padding: "6px 12px", borderRadius: 7, fontSize: 14, fontWeight: 600,
+                padding: "6px 12px", borderRadius: C.r1, fontSize: 14, fontWeight: 600,
                 textDecoration: "none", color: active ? C.white : C.secondary,
                 background: active ? C.dark : "transparent",
               }}>{n.label}</Link>
@@ -69,7 +69,7 @@ export function AppShell({ businessName, email, children }: {
           {menu && (
             <div style={{
               position: "absolute", right: 0, top: 40, background: C.white, minWidth: 220,
-              border: `1px solid ${C.border}`, borderRadius: 10, padding: 8,
+              border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 8,
               boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
             }}>
               {email && <div style={{ fontSize: 12, color: C.muted, padding: "6px 8px" }}>{email}</div>}
@@ -90,7 +90,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
       display: "flex", alignItems: "center", justifyContent: "center", padding: 12,
     }}>
       <div onClick={(e) => e.stopPropagation()} style={{
-        background: C.white, width: "100%", maxWidth: 440, borderRadius: 16,
+        background: C.white, width: "100%", maxWidth: 440, borderRadius: C.r2,
         padding: 20, margin: "0 auto", maxHeight: "90vh", overflowY: "auto",
       }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>

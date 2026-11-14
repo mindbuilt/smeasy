@@ -118,14 +118,14 @@ export default function TeamRoster() {
 }
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 16px" }}>{children}</div>;
+  return <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "12px 16px" }}>{children}</div>;
 }
 
 function Shell({ business, children }: { business?: string; children: React.ReactNode }) {
   return (
     <div style={{ minHeight: "100vh", background: C.bg }}>
       <header style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "14px 16px", display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ width: 20, height: 20, borderRadius: 5, background: C.accent, display: "block" }} />
+        <span style={{ width: 20, height: 20, borderRadius: C.r1, background: C.accent, display: "block" }} />
         <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>{business ? `${business} roster` : "Smeasy"}</span>
       </header>
       <main style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 48px" }}>{children}</main>

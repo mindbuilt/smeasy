@@ -27,7 +27,7 @@ function render(b: Block, i: number) {
   if ("h2" in b) return <h2 key={i} style={{ fontSize: 22, margin: "32px 0 10px" }}>{b.h2}</h2>;
   if ("p" in b) return <p key={i} style={{ fontSize: 17, lineHeight: 1.65, color: C.secondary, margin: "0 0 14px" }}>{b.p}</p>;
   if ("tip" in b) return (
-    <div key={i} style={{ background: C.shiftBg, border: `1px solid ${C.shiftBorder}`, borderRadius: 10, padding: "12px 16px", margin: "6px 0 18px", fontSize: 15, lineHeight: 1.55, color: C.shiftText }}>
+    <div key={i} style={{ background: C.shiftBg, border: `1px solid ${C.shiftBorder}`, borderRadius: C.r2, padding: "12px 16px", margin: "6px 0 18px", fontSize: 15, lineHeight: 1.55, color: C.shiftText }}>
       <strong>Tip: </strong>{b.tip}
     </div>
   );
@@ -65,10 +65,10 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       <p style={{ fontSize: 14, color: C.muted, margin: "0 0 28px" }}>Updated {fmtDate(g.updated)}</p>
       {g.body.map(render)}
 
-      <div style={{ background: C.dark, color: C.white, borderRadius: 16, padding: "24px 22px", margin: "40px 0" }}>
+      <div style={{ background: C.dark, color: C.white, borderRadius: C.r2, padding: "24px 22px", margin: "40px 0" }}>
         <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Try Smeasy free</div>
         <p style={{ margin: "0 0 16px", color: "#d9d6cc", fontSize: 15 }}>Simple rostering for Australian small businesses. Free during early access.</p>
-        <Link href="/auth/login/" style={{ background: C.accent, color: C.dark, padding: "11px 20px", borderRadius: 8, textDecoration: "none", fontWeight: 700, fontSize: 15 }}>Get started</Link>
+        <Link href="/auth/login/" style={{ background: C.accent, color: C.dark, padding: "11px 20px", borderRadius: C.r1, textDecoration: "none", fontWeight: 700, fontSize: 15 }}>Get started</Link>
       </div>
 
       <h2 style={{ fontSize: 18, margin: "0 0 12px" }}>More guides</h2>

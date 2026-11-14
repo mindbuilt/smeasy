@@ -33,9 +33,9 @@ export default function LoginPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 16, padding: "32px 28px", width: "100%", maxWidth: 380 }}>
+      <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "32px 28px", width: "100%", maxWidth: 380 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
-          <span style={{ width: 24, height: 24, borderRadius: 5, background: C.accent, display: "block" }} />
+          <span style={{ width: 24, height: 24, borderRadius: C.r1, background: C.accent, display: "block" }} />
           <span style={{ fontWeight: 700, fontSize: 17, color: C.dark }}>Smeasy</span>
         </div>
 

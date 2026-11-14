@@ -44,15 +44,15 @@ export default function CookieNotice() {
   return (
     <div role="dialog" aria-label="Cookie preferences" style={{
       position: "fixed", left: 16, right: 16, bottom: 16, zIndex: 80, maxWidth: 520, margin: "0 auto",
-      background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px",
+      background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "14px 16px",
       boxShadow: "0 10px 30px rgba(33,31,26,0.12)", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap",
     }}>
       <p style={{ margin: 0, fontSize: 14, color: C.secondary, flex: 1, minWidth: 220, lineHeight: 1.45 }}>
         Can we use analytics cookies to see how people use this site? They&apos;re never used on rostering screens.
       </p>
       <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={() => choose(false)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.white, color: C.dark, fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>No thanks</button>
-        <button onClick={() => choose(true)} style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: C.dark, color: C.white, fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>OK</button>
+        <button onClick={() => choose(false)} style={{ padding: "8px 14px", borderRadius: C.r1, border: `1px solid ${C.border}`, background: C.white, color: C.dark, fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>No thanks</button>
+        <button onClick={() => choose(true)} style={{ padding: "8px 14px", borderRadius: C.r1, border: "none", background: C.dark, color: C.white, fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>OK</button>
       </div>
     </div>
   );

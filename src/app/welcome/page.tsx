@@ -40,7 +40,7 @@ export default function Welcome() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <form onSubmit={save} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 16, padding: "32px 28px", width: "100%", maxWidth: 420 }}>
+      <form onSubmit={save} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "32px 28px", width: "100%", maxWidth: 420 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, color: C.dark, margin: "0 0 6px" }}>Welcome to Smeasy</h1>
         <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 20px" }}>Two quick questions, then you can add your team.</p>
 
@@ -52,8 +52,8 @@ export default function Welcome() {
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {Object.keys(PRESETS).map((k) => (
             <label key={k} style={{
-              display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderRadius: 10, cursor: "pointer",
-              border: `1.5px solid ${kind === k ? C.dark : C.border}`, fontSize: 14, color: C.dark,
+              display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", cursor: "pointer",
+              borderRadius: C.r2, border: `1.5px solid ${kind === k ? C.dark : C.border}`, fontSize: 14, color: C.dark,
             }}>
               <input type="radio" name="kind" checked={kind === k} onChange={() => setKind(k)} style={{ accentColor: C.dark }} />
               <span>{k}<span style={{ display: "block", fontSize: 12, color: C.muted }}>{PRESETS[k].join(" · ")}</span></span>

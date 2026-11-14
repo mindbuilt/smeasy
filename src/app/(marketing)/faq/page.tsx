@@ -31,7 +31,7 @@ export default function FaqPage() {
       {faqGroups.map((g) => (
         <section key={g.title} style={{ marginBottom: 32 }}>
           <h2 style={{ fontSize: 20, margin: "0 0 10px" }}>{g.title}</h2>
-          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12 }}>
+          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2 }}>
             {g.items.map((f, i) => (
               <details key={f.q} style={{ borderTop: i ? `1px solid ${C.divider}` : "none", padding: "14px 18px" }}>
                 <summary style={{ fontSize: 16, fontWeight: 600, cursor: "pointer", color: C.dark }}>{f.q}</summary>
@@ -42,7 +42,7 @@ export default function FaqPage() {
         </section>
       ))}
       <div style={{ textAlign: "center", marginTop: 40 }}>
-        <Link href="/auth/login/" style={{ background: C.dark, color: C.white, padding: "13px 26px", borderRadius: 10, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>Get started free</Link>
+        <Link href="/auth/login/" style={{ background: C.dark, color: C.white, padding: "13px 26px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>Get started free</Link>
       </div>
     </div>
   );

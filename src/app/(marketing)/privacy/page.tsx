@@ -98,7 +98,7 @@ export default function Privacy() {
 
       <h2 style={h2}>Who we share information with</h2>
       <p style={p}>We use these service providers to run Smeasy. They process information on our behalf:</p>
-      <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflowX: "auto", margin: "0 0 14px" }}>
+      <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, overflowX: "auto", margin: "0 0 14px" }}>
         <table style={{ borderCollapse: "collapse", width: "100%", minWidth: 520 }}>
           <thead>
             <tr>{["Provider", "What for", "Where"].map((h) => <th key={h} style={{ ...td, borderTop: "none", textAlign: "left", color: C.dark, fontSize: 14 }}>{h}</th>)}</tr>

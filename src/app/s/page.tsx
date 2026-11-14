@@ -157,7 +157,7 @@ function TimeOffForm({ token, onDone, onCancel }: { token: string; onDone: () =>
   }
 
   return (
-    <form onSubmit={submit} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16, marginTop: 8, display: "grid", gap: 12 }}>
+    <form onSubmit={submit} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 16, marginTop: 8, display: "grid", gap: 12 }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <div><label style={label}>From</label><input type="date" style={input} min={today} value={from} onChange={(e) => { setFrom(e.target.value); if (to < e.target.value) setTo(e.target.value); }} required /></div>
         <div><label style={label}>To</label><input type="date" style={input} min={from} value={to} onChange={(e) => setTo(e.target.value)} required /></div>
@@ -173,14 +173,14 @@ function TimeOffForm({ token, onDone, onCancel }: { token: string; onDone: () =>
 }
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 16px" }}>{children}</div>;
+  return <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "12px 16px" }}>{children}</div>;
 }
 
 function Shell({ business, children }: { business?: string; children: React.ReactNode }) {
   return (
     <div style={{ minHeight: "100vh", background: C.bg }}>
       <header style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "14px 16px", display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ width: 20, height: 20, borderRadius: 5, background: C.accent, display: "block" }} />
+        <span style={{ width: 20, height: 20, borderRadius: C.r1, background: C.accent, display: "block" }} />
         <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>{business ?? "Smeasy"}</span>
       </header>
       <main style={{ maxWidth: 520, margin: "0 auto", padding: "20px 16px 48px" }}>{children}</main>

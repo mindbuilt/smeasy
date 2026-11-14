@@ -27,7 +27,7 @@ export default function GuidesIndex() {
             <h2 style={{ fontSize: 13, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 10px" }}>{cat}</h2>
             <div style={{ display: "grid", gap: 10 }}>
               {list.map((g) => (
-                <Link key={g.slug} href={`/guides/${g.slug}/`} style={{ display: "block", background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: "16px 18px", textDecoration: "none", color: C.dark }}>
+                <Link key={g.slug} href={`/guides/${g.slug}/`} style={{ display: "block", background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "16px 18px", textDecoration: "none", color: C.dark }}>
                   <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{g.title}</div>
                   <div style={{ fontSize: 14, color: C.secondary, lineHeight: 1.5 }}>{g.description}</div>
                 </Link>

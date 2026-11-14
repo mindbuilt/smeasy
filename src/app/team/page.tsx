@@ -74,7 +74,7 @@ function TeamPage() {
           <button type="submit" disabled={!newName.trim()} style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: newName.trim() ? 1 : 0.5 }}>Add</button>
         </form>
 
-        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
+        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, overflow: "hidden" }}>
           {active.length === 0 && (
             <p style={{ padding: 24, margin: 0, textAlign: "center", color: C.muted, fontSize: 14 }}>No one yet — add your first team member above.</p>
           )}
@@ -128,7 +128,7 @@ function TeamLinkCard({ token, onReset }: { token: string; onReset: () => Promis
   const [confirmReset, setConfirmReset] = useState(false);
   const link = typeof window === "undefined" ? "" : `${window.location.origin}/r/#${token}`;
   return (
-    <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16, marginBottom: 20 }}>
+    <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 16, marginBottom: 20 }}>
       <div style={{ fontSize: 15, fontWeight: 700, color: C.dark }}>Team roster link</div>
       <p style={{ fontSize: 13, color: C.secondary, margin: "4px 0 12px" }}>
         Pin this in your staff group chat. It always shows the latest published roster, and staff can download it as a PDF.
