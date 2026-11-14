@@ -185,3 +185,5 @@ html:has(.app), body:has(.app) { background: #f6f7f9; }
 @media (prefers-reduced-motion: reduce) {
   .route-in, .sheet.is-closing, .sheet-scrim.is-closing { animation: none !important; }
 }
+/* Touch screens wide enough for the grid (tablets) can't hover: keep a faint + as the add cue */
+@media (hover: none) { .grid-plus { opacity: 1; } }
