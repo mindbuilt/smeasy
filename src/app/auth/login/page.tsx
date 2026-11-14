@@ -12,10 +12,13 @@ export default function LoginPage() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Don't show the login form until we know they aren't already logged in.
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     supabase().auth.getSession().then(({ data }) => {
-      if (data.session) router.replace("/week");
+      if (data.session) router.replace("/week/");
+      else setChecking(false);
     });
   }, [router]);
 
@@ -40,7 +43,9 @@ export default function LoginPage() {
           <span style={{ fontWeight: 700, fontSize: 17, color: C.dark }}>SMEasy</span>
         </Link>
 
-        {sent ? (
+        {checking ? (
+          <p style={{ fontSize: 14, color: C.muted, margin: 0 }}>Checking if you&apos;re already logged in…</p>
+        ) : sent ? (
           <>
             <h1 style={{ fontSize: 20, fontWeight: 700, color: C.dark, margin: "0 0 8px" }}>Check your email</h1>
             <p style={{ fontSize: 14, color: C.secondary, lineHeight: 1.5, margin: "0 0 20px" }}>

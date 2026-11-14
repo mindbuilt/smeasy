@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { C } from "@/lib/theme";
 import { LEGAL_ENTITY } from "@/lib/site";
+import AccountLinks from "@/components/AccountLinks";
 import CookieNotice, { CookieSettingsLink } from "@/components/CookieNotice";
 
 // Public, pre-login pages: landing, guides, FAQ. Analytics loads here only,
@@ -23,8 +24,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <Link href="/faq/" style={{ color: C.secondary, textDecoration: "none" }}>FAQ</Link>
           </nav>
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
-            <Link href="/auth/login/" style={{ color: C.secondary, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Log in</Link>
-            <Link href="/auth/login/" style={{ background: C.dark, color: C.white, padding: "9px 16px", borderRadius: C.r1, textDecoration: "none", fontSize: 14, fontWeight: 600 }}>Get started</Link>
+            <AccountLinks />
           </div>
         </div>
       </header>
