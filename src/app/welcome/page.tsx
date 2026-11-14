@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 import { C, btn, input, label } from "@/components/ui";
 
 const PRESETS: Record<string, string[]> = {
@@ -67,6 +68,15 @@ export default function Welcome() {
           {saving ? "Setting up…" : "Continue"}
         </button>
       </form>
+      <footer style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "14px 20px", textAlign: "center", fontSize: 12, color: C.muted }}>
+        <Link href="/" style={{ color: C.secondary }}>Smeasy</Link>
+        {" · "}
+        <Link href="/guides/" style={{ color: C.secondary }}>Guides</Link>
+        {" · "}
+        <Link href="/faq/" style={{ color: C.secondary }}>FAQ</Link>
+        {" · "}
+        <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>
+      </footer>
     </div>
   );
 }

@@ -79,6 +79,15 @@ export function AppShell({ businessName, email, children }: {
         </div>
       </header>
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 16px 64px" }}>{children}</main>
+      <footer style={{ borderTop: `1px solid ${C.border}`, padding: "16px 20px", textAlign: "center", fontSize: 12, color: C.muted }}>
+        <Link href="/" style={{ color: C.secondary }}>Smeasy</Link>
+        {" · "}
+        <Link href="/guides/" style={{ color: C.secondary }}>Guides</Link>
+        {" · "}
+        <Link href="/faq/" style={{ color: C.secondary }}>FAQ</Link>
+        {" · "}
+        <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>
+      </footer>
     </div>
   );
 }
