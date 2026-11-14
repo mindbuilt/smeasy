@@ -88,6 +88,12 @@ a:focus-visible {
   border-radius: 2px;
 }
 
+/* Marketing header: hide mid-nav on mobile, keep logo + CTA */
+@media (max-width: 640px) {
+  .mkt-nav { display: none !important; }
+  .mkt-login { display: none !important; }
+}
+
 /* Copy-last-week cascade entrance */
 @keyframes cascade-pop {
   0% { opacity: 0; transform: translateY(8px) scale(0.92); }
