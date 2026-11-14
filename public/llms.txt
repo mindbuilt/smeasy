@@ -1,6 +1,6 @@
 # Smeasy
 
-> Simple staff rostering for Australian small businesses — cafés, restaurants, bars, shops and other small teams. Free during early access.
+> Simple staff rostering for Australian small businesses — cafés, restaurants, bars, shops and other small teams. Free during early access; afterwards free for up to 10 staff, $19/month for bigger teams.
 
 ## What Smeasy does
 - Managers sign in with an emailed login link (no password).

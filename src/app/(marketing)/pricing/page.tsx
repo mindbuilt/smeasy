@@ -5,26 +5,27 @@ import { C } from "@/lib/theme";
 export const metadata: Metadata = {
   title: "Pricing — Smeasy",
   description:
-    "Free for small teams, $19/month for bigger ones. Simple staff rostering for Australian small businesses.",
+    "Every feature is free for teams of up to 10. $19 a month for bigger teams. Free for everyone during early access.",
   alternates: { canonical: "/pricing/" },
 };
 
 const free = [
   "Up to 10 staff",
-  "Weekly roster builder",
-  "Copy last week",
-  "Publish and share via link",
-  "Printable PDF roster",
+  "Weekly roster builder with copy last week",
+  "Role colours, shift notes and day notes",
+  "Unfilled shifts and a daily cover count",
+  "Public holidays for your state",
+  "Publish to a team link or printable PDF",
+  "Personal links for each staff member",
   "Staff time-off requests",
-  "Works on any device",
+  "Shifts in staff phone calendars",
+  "CSV hours export for payroll",
 ];
 
 const pro = [
   "Everything in Free, plus:",
-  "Unlimited staff",
-  "CSV hours export for payroll",
-  "Personal roster links per staff member",
-  "Priority support",
+  "More than 10 staff",
+  "Priority email support",
 ];
 
 export default function PricingPage() {
@@ -35,7 +36,7 @@ export default function PricingPage() {
           Simple pricing. No surprises.
         </h1>
         <p style={{ fontSize: 17, color: C.secondary, margin: 0, lineHeight: 1.5 }}>
-          Free for small teams. One flat price when you grow.
+          Every feature on the free plan. You only pay if your team grows past 10.
         </p>
       </div>
 
@@ -79,7 +80,7 @@ export default function PricingPage() {
             <span style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-0.02em" }}>$19</span>
             <span style={{ fontSize: 14, color: "#b0ad9f" }}>/month</span>
           </div>
-          <div style={{ fontSize: 13, color: "#b0ad9f", marginBottom: 20 }}>Billed monthly. Cancel any time.</div>
+          <div style={{ fontSize: 13, color: "#b0ad9f", marginBottom: 20 }}>Per business, including GST. Billed monthly, cancel any time.</div>
           <Link href="/auth/login/" style={{
             display: "block", textAlign: "center", background: C.accent, color: C.dark,
             padding: "12px 20px", borderRadius: C.r1,
@@ -100,7 +101,7 @@ export default function PricingPage() {
 
       <div style={{ textAlign: "center", marginTop: 40, fontSize: 14, color: C.secondary, lineHeight: 1.6 }}>
         <p style={{ margin: "0 0 6px" }}>
-          <strong style={{ color: C.dark }}>Everything is free right now.</strong> We are in early access and both plans are completely free while we build.
+          <strong style={{ color: C.dark }}>Everything is free right now.</strong> We&rsquo;re in early access, so there&rsquo;s no staff limit and nothing to pay. Before any paid plan starts, we&rsquo;ll email you well in advance — no credit card needed until then.
         </p>
         <p style={{ margin: 0 }}>
           Questions? Read the <Link href="/faq/" style={{ color: C.secondary }}>FAQ</Link> or <a href="mailto:hello@smeasy.au" style={{ color: C.secondary }}>get in touch</a>.
