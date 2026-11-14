@@ -16,9 +16,15 @@ const plex = localFont({
   variable: "--font-plex",
 });
 
-// Figtree (SIL Open Font License), the app screens' face. Variable, self-hosted.
+// Figtree (SIL Open Font License), the app screens' face. Latin subset, five weights, self-hosted.
 const figtree = localFont({
-  src: [{ path: "../fonts/Figtree-Variable.woff2", weight: "400 800", style: "normal" }],
+  src: [
+    { path: "../fonts/figtree-latin-400.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/figtree-latin-500.woff2", weight: "500", style: "normal" },
+    { path: "../fonts/figtree-latin-600.woff2", weight: "600", style: "normal" },
+    { path: "../fonts/figtree-latin-700.woff2", weight: "700", style: "normal" },
+    { path: "../fonts/figtree-latin-800.woff2", weight: "800", style: "normal" },
+  ],
   display: "swap",
   variable: "--font-app",
 });
