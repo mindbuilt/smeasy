@@ -627,7 +627,7 @@ function DayView({ d, slide, staff, shifts, roles, offOn, info, onEdit, onDay, o
         start.current = null;
         if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) onSwipe(dx < 0 ? 1 : -1);
       }}
-      className={slide === "right" ? "day-in-right" : "day-in-left"} style={{ display: "grid", gap: 10, minHeight: 240, alignContent: "start" }}>
+      className={slide === "right" ? "day-in-right" : "day-in-left"} style={{ display: "grid", gap: 10, alignContent: "start" }}>
       <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.01em" }}>{fmtDay(d)}</h2>
