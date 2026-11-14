@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { C } from "@/lib/theme";
-import { CONTACT_EMAIL, LEGAL_ENTITY } from "@/lib/site";
+import { LEGAL_ENTITY } from "@/lib/site";
 import CookieNotice, { CookieSettingsLink } from "@/components/CookieNotice";
 
 // Public, pre-login pages: landing, guides, FAQ. Analytics loads here only,
@@ -40,7 +40,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <Link href="/faq/" style={{ color: C.secondary }}>FAQ</Link>
             <Link href="/auth/login/" style={{ color: C.secondary }}>Log in</Link>
             <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>
-            <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: C.secondary }}>Contact</a>
+            <Link href="/contact/" style={{ color: C.secondary }}>Contact</Link>
             <CookieSettingsLink style={{ color: C.secondary }} />
           </nav>
         </div>

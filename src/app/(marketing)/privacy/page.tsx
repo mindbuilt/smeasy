@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/privacy/" },
 };
 
-const UPDATED = "14 November 2026";
+const UPDATED = "15 November 2026";
 
 const h2: CSSProperties = { fontSize: 22, margin: "34px 0 10px" };
 const h3: CSSProperties = { fontSize: 17, margin: "20px 0 8px" };
@@ -45,7 +45,7 @@ export default function Privacy() {
         <strong>Staff</strong> whose details an account holder adds so they can be rostered. If you&apos;re a staff member, your employer decides what is entered about you and is responsible for telling you about it.
         Questions about how your employer uses your roster information are best directed to them first, but you can also contact us.
       </p>
-      <p style={p}><strong>Visitors</strong> to our public website (the home page, guides and FAQ).</p>
+      <p style={p}><strong>Visitors</strong> to our public website (such as the home page, pricing, guides, FAQ and contact page).</p>
 
       <h2 style={h2}>What we collect</h2>
       <h3 style={h3}>From account holders</h3>
@@ -70,12 +70,13 @@ export default function Privacy() {
       </p>
       <h3 style={h3}>From website visitors</h3>
       <p style={p}>
-        On our public pages only (the home page, guides and FAQ), we use Google Tag Manager and Google Analytics to understand how people find and use the site, <strong>but only if you agree</strong> when we ask.
+        On our public pages only (such as the home page, pricing, guides, FAQ and contact page), we use Google Tag Manager and Google Analytics to understand how people find and use the site, <strong>but only if you agree</strong> when we ask.
         If you choose &ldquo;No thanks&rdquo;, these tools don&apos;t load. You can change your choice at any time with &ldquo;Cookie settings&rdquo; at the bottom of our public pages. Analytics never runs on rostering screens or roster links.
         If you agree, these tools may set cookies and collect information such as pages viewed, approximate location, and device and browser type.
       </p>
       <p style={p}>
         We store a few small items in your browser to make Smeasy work: your sign-in session (account holders), your cookie choice, and, on the team roster link, the name you picked. These stay on your device.
+        If you use our contact form, we receive your name, email address, optional business name and your message, and use them to reply to you.
         Our hosting provider keeps standard server logs (such as IP address, page requested and time) for security and troubleshooting.
       </p>
 
@@ -105,7 +106,9 @@ export default function Privacy() {
             <tr>{["Provider", "What for", "Where"].map((h) => <th key={h} style={{ ...td, borderTop: "none", textAlign: "left", color: C.dark, fontSize: 14 }}>{h}</th>)}</tr>
           </thead>
           <tbody>
-            <tr><td style={td}>Supabase</td><td style={td}>Database, sign-in and sign-in emails</td><td style={td}>Data stored in Sydney, Australia. Supabase Inc. is based in the United States and its staff may access data for support and operations.</td></tr>
+            <tr><td style={td}>Supabase</td><td style={td}>Database and sign-in</td><td style={td}>Data stored in Sydney, Australia. Supabase Inc. is based in the United States and its staff may access data for support and operations.</td></tr>
+            <tr><td style={td}>Resend</td><td style={td}>Sending sign-in emails</td><td style={td}>United States company; emails sent via Amazon Web Services (Tokyo region)</td></tr>
+            <tr><td style={td}>Formspree</td><td style={td}>Receiving contact form messages</td><td style={td}>United States</td></tr>
             <tr><td style={td}>Vercel</td><td style={td}>Website hosting</td><td style={td}>Global network; United States company</td></tr>
             <tr><td style={td}>Google (Tag Manager, Analytics)</td><td style={td}>Website analytics, public pages only, with consent</td><td style={td}>United States and other countries</td></tr>
           </tbody>
