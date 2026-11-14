@@ -87,7 +87,7 @@ function TeamPage() {
               <button onClick={() => setEditing(s)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", flex: 1, minWidth: 140 }}>
                 <div style={{ fontSize: 15, fontWeight: 600, color: C.dark }}>{s.name}</div>
                 <div style={{ fontSize: 12, color: C.muted }}>
-                  {[s.default_role, s.hourly_rate != null ? `$${s.hourly_rate}/hr` : null, s.mobile].filter(Boolean).join(" · ") || "Tap to add details"}
+                  {[s.default_role, s.mobile].filter(Boolean).join(" · ") || "Tap to add details"}
                 </div>
               </button>
               <a href={smsHref(s, business.name)} title="Their personal link: own shifts + time-off requests"
@@ -194,14 +194,14 @@ function StaffEditor({ staff, roles, onClose, onSaved }: {
             {roles.map((r) => <option key={r}>{r}</option>)}
           </select>
         </div>
-        <div><label style={label}>Hourly rate (optional — shows your weekly wage total)</label>
-          <input style={input} inputMode="decimal" value={f.hourly_rate} onChange={set("hourly_rate")} placeholder="e.g. 32.50" />
-        </div>
         <details>
-          <summary style={{ fontSize: 13, color: C.secondary, cursor: "pointer" }}>Payroll details</summary>
+          <summary style={{ fontSize: 13, color: C.secondary, cursor: "pointer" }}>Pay and payroll (optional)</summary>
           <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
             <div><label style={label}>Email</label><input style={input} type="email" value={f.email} onChange={set("email")} /></div>
             <div><label style={label}>Payroll / employee ID (Xero or MYOB)</label><input style={input} value={f.payroll_id} onChange={set("payroll_id")} /></div>
+            <div><label style={label}>Hourly rate — only if you want a rough weekly wage total</label>
+              <input style={input} inputMode="decimal" value={f.hourly_rate} onChange={set("hourly_rate")} placeholder="e.g. 32.50" />
+            </div>
           </div>
         </details>
         {error && <p style={{ color: C.danger, fontSize: 13, margin: 0 }}>{error}</p>}

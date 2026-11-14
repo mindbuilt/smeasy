@@ -33,8 +33,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "32px 28px", width: "100%", maxWidth: 380 }}>
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 24px 0" }}>
+      <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "32px 28px", width: "100%", maxWidth: 380, margin: "auto 0" }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, textDecoration: "none" }}>
           <span style={{ width: 24, height: 24, borderRadius: C.r1, background: C.accent, display: "block" }} />
           <span style={{ fontWeight: 700, fontSize: 17, color: C.dark }}>Smeasy</span>
@@ -68,7 +68,7 @@ export default function LoginPage() {
           </form>
         )}
       </div>
-      <footer style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "14px 20px", textAlign: "center", fontSize: 13, color: C.muted }}>
+      <footer style={{ padding: "24px 20px 16px", textAlign: "center", fontSize: 13, color: C.muted }}>
         <Link href="/" style={{ color: C.secondary }}>Home</Link>
         {" · "}
         <Link href="/guides/" style={{ color: C.secondary }}>Guides</Link>

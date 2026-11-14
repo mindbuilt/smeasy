@@ -59,39 +59,23 @@ input:focus, select:focus {
   outline-offset: -1px;
 }
 
-/* Interactive states for buttons and links styled as buttons */
+/* Interactive states */
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid #cdf564;
+  outline: 2px solid #211f1a;
   outline-offset: 2px;
-}
-button:hover:not(:disabled) {
-  filter: brightness(0.95);
-}
-button:active:not(:disabled) {
-  transform: scale(0.98);
-}
-/* Primary dark buttons get a lighter hover */
-button[style*="background: #211f1a"]:hover:not(:disabled),
-a[style*="background: #211f1a"]:hover {
-  filter: brightness(1.3);
-}
-/* Secondary/ghost buttons get a subtle bg shift */
-button:hover:not(:disabled):not([style*="background: #211f1a"]) {
-  filter: brightness(0.97);
-}
-/* Links in marketing pages */
-a:hover {
-  opacity: 0.85;
-}
-a:focus-visible {
   border-radius: 2px;
 }
+button:hover:not(:disabled) { filter: brightness(0.96); }
+button:active:not(:disabled) { transform: scale(0.98); }
+
+/* Three columns on desktop, one on phones */
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 760px) { .grid-3 { grid-template-columns: 1fr; } }
 
 /* Marketing header: hide mid-nav on mobile, keep logo + CTA */
 @media (max-width: 640px) {
   .mkt-nav { display: none !important; }
-  .mkt-login { display: none !important; }
 }
 
 /* Copy-last-week cascade entrance */
@@ -102,4 +86,8 @@ a:focus-visible {
 }
 .cascade-in {
   animation: cascade-pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

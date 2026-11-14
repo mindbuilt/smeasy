@@ -6,11 +6,11 @@
 - Managers sign in with an emailed login link (no password).
 - Build a weekly roster: tap a day to add a shift with start, finish, unpaid break and role. Split shifts and shifts past midnight are supported.
 - Copy last week's roster in one tap.
-- See paid hours per person and for the team, plus a wage estimate from base hourly rates (no penalty rates or super).
+- See paid hours per person and for the team; optionally a rough wage estimate if hourly rates are entered (base rates only, no penalty rates or super).
 - Publish when ready; drafts stay private.
 - Share with staff via one team roster link (for the staff group chat) or a printable A4 PDF. Staff need no app, account or password, and see only names, days, times and roles.
 - Staff request time off from a personal link; managers approve or decline on the roster.
-- Download paid hours as a CSV with payroll IDs for Xero, MYOB or a bookkeeper.
+- Download hours as a CSV, shift by shift with per-person totals (and payroll IDs if set), for Xero, MYOB or a bookkeeper.
 - Data is stored in Australia (Sydney).
 
 ## What Smeasy does not do (yet)

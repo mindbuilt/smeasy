@@ -4,7 +4,7 @@ import { C } from "@/lib/theme";
 import { SITE_URL } from "@/lib/site";
 import { guides } from "@/content/guides";
 import AuthHashForwarder from "@/components/AuthHashForwarder";
-import ScrollReveal, { Parallax } from "@/components/ScrollReveal";
+import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
   title: { absolute: "Smeasy — simple staff rostering for Australian small businesses" },
@@ -30,9 +30,9 @@ const steps = [
 const features = [
   { t: "Copy last week", d: "Most weeks look the same. Copy last week in one tap, then tweak what's different." },
   { t: "Real-world shifts", d: "Split shifts, unpaid breaks and late closes past midnight — all counted correctly." },
-  { t: "One link for the team", d: "Pin it in your group chat. Staff always see the latest published roster." },
-  { t: "Printable PDF", d: "A clean one-page A4 roster for the staff room noticeboard." },
-  { t: "Export hours to CSV", d: "Download everyone's hours at the end of the week. Edit actuals, then send it to your bookkeeper." },
+  { t: "One link, or a PDF", d: "Pin the team link in your group chat, or print a one-page A4 roster for the noticeboard." },
+  { t: "Time-off requests", d: "Staff ask for days off from their phone. Approve or decline right on the roster." },
+  { t: "Hours for payroll", d: "Download every shift's hours as a spreadsheet for your bookkeeper, Xero or MYOB." },
   { t: "Works on any device", d: "Day-by-day cards on mobile, a full week grid on desktop. Nothing to install." },
 ];
 
@@ -83,11 +83,7 @@ export default function Home() {
 
       {/* Roster preview */}
       <section style={{ ...wrap, marginBottom: 72 }}>
-        <Parallax speed={0.08}>
-          <ScrollReveal>
-            <RosterPreview />
-          </ScrollReveal>
-        </Parallax>
+        <RosterPreview />
       </section>
 
       {/* How it works */}
@@ -95,7 +91,7 @@ export default function Home() {
         <ScrollReveal>
           <h2 style={{ fontSize: 30, fontWeight: 700, textAlign: "center", margin: "0 0 32px" }}>How it works</h2>
         </ScrollReveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+        <div className="grid-3" style={{ gap: 16 }}>
           {steps.map((s, i) => (
             <ScrollReveal key={s.n} delay={i * 120}>
               <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 22 }}>
@@ -114,7 +110,7 @@ export default function Home() {
           <h2 style={{ fontSize: 30, fontWeight: 700, textAlign: "center", margin: "0 0 8px" }}>Everything you need to roster. Nothing you don&apos;t.</h2>
           <p style={{ textAlign: "center", color: C.secondary, margin: "0 0 32px", fontSize: 16 }}>Smeasy does one thing — rostering — and keeps it simple.</p>
         </ScrollReveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 14 }}>
+        <div className="grid-3" style={{ gap: 14 }}>
           {features.map((f, i) => (
             <ScrollReveal key={f.t} delay={i * 80}>
               <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 18 }}>
@@ -158,7 +154,7 @@ export default function Home() {
             <Link href="/guides/" style={{ color: C.secondary, fontSize: 15 }}>All guides →</Link>
           </div>
         </ScrollReveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
+        <div className="grid-3" style={{ gap: 14 }}>
           {featured.map((g, i) => (
             <ScrollReveal key={g.slug} delay={i * 100}>
               <Link href={`/guides/${g.slug}/`} style={{ display: "block", background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 18, textDecoration: "none", color: C.dark }}>
@@ -245,7 +241,8 @@ function RosterPreview() {
           <strong style={{ fontSize: 15 }}>17 Nov – 23 Nov</strong>
           <span style={{ fontSize: 13, color: "#1a6b2f", fontWeight: 600 }}>Published</span>
         </div>
-        {days.map((day, di) => {
+        {days.slice(3, 6).map((day, i) => {
+          const di = i + 3; // Thu–Sat: the busy end of the week
           const dayShifts = rows.flatMap((r) => r.shifts[di] ? [{ name: r.name, shift: r.shifts[di]! }] : []);
           return (
             <div key={day} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, overflow: "hidden" }}>
@@ -261,6 +258,7 @@ function RosterPreview() {
             </div>
           );
         })}
+        <div style={{ fontSize: 13, color: C.muted, textAlign: "center", padding: "4px 0" }}>+ the rest of the week</div>
       </div>
     </div>
   );

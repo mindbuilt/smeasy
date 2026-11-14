@@ -22,7 +22,7 @@ export const faqGroups: FaqGroup[] = [
       { q: "Can I copy last week's roster?", a: "Yes. On an empty week, tap Copy last week and every shift is copied to the same days, ready to adjust." },
       { q: "Does it handle split shifts and shifts past midnight?", a: "Yes. Add two shifts on the same day for a split shift. For a late close, set a finish time earlier than the start — for example 5pm to 2am — and Smeasy counts the hours correctly." },
       { q: "How are hours worked out?", a: "Paid hours are the finish time minus the start time minus any unpaid break you set on the shift. Smeasy shows each person's weekly hours and the team total." },
-      { q: "Can Smeasy estimate wages?", a: "Yes, if you add an hourly rate for each person. The estimate uses base rates only — it doesn't include penalty rates, overtime, allowances or super." },
+      { q: "Can Smeasy estimate wages?", a: "Yes, if you add an hourly rate for each person (it's optional, under Pay and payroll). The estimate uses base rates only — it doesn't include penalty rates, overtime, allowances or super." },
       { q: "Does Smeasy check my roster against my award?", a: "No. Smeasy doesn't check minimum engagement, breaks or penalty rates. Check your award on the Fair Work Ombudsman website, or ask your bookkeeper." },
       { q: "Can I change the shift roles?", a: "Yes. When you sign up you pick a starting set (café, retail or general), and you can add or remove roles any time on the Team page." },
     ],
@@ -43,7 +43,7 @@ export const faqGroups: FaqGroup[] = [
   {
     title: "Payroll",
     items: [
-      { q: "Does Smeasy work with Xero or MYOB?", a: "You can download the week's hours as a CSV, with payroll IDs, paid hours and roles, and use it in Xero, MYOB or send it to your bookkeeper. Ready-to-import Xero and MYOB timesheet files are on our roadmap." },
+      { q: "Does Smeasy work with Xero or MYOB?", a: "You can download the week's hours as a spreadsheet (CSV) — every shift with its day, times, breaks and hours, plus a total per person and payroll IDs if you've added them — and use it in Xero or MYOB or send it to your bookkeeper. Ready-to-import Xero and MYOB timesheet files are on our roadmap." },
       { q: "Does Smeasy run payroll?", a: "No. Smeasy handles the roster and the hours; your payroll software pays your staff." },
       { q: "Can I have more than one manager or location?", a: "Not yet — each business has one owner login and one location for now." },
     ],

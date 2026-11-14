@@ -22,7 +22,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <Link href="/faq/" style={{ color: C.secondary, textDecoration: "none" }}>FAQ</Link>
           </nav>
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
-            <Link className="mkt-login" href="/auth/login/" style={{ color: C.secondary, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Log in</Link>
+            <Link href="/auth/login/" style={{ color: C.secondary, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Log in</Link>
             <Link href="/auth/login/" style={{ background: C.dark, color: C.white, padding: "9px 16px", borderRadius: C.r1, textDecoration: "none", fontSize: 14, fontWeight: 600 }}>Get started</Link>
           </div>
         </div>
