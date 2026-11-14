@@ -1,4 +1,4 @@
-# Smeasy — product definition
+# SMEasy — product definition
 
 **One job:** the simplest possible rostering for Australian small businesses
 (cafés, restaurants, bars, shops; a handful to a few dozen staff, many casual).

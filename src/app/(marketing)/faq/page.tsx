@@ -4,10 +4,10 @@ import { C } from "@/lib/theme";
 import { faqGroups } from "@/content/faq";
 
 export const metadata: Metadata = {
-  title: "FAQ — questions about Smeasy rostering",
-  description: "Answers to common questions about Smeasy: pricing, how staff see the roster, time off, shifts past midnight, payroll exports and where your data is stored.",
+  title: "FAQ: rostering questions answered",
+  description: "Answers to common questions about SMEasy: pricing, how staff see the roster, time off, shifts past midnight, payroll exports and where your data is stored.",
   alternates: { canonical: "/faq/" },
-  openGraph: { url: "/faq/", title: "Smeasy FAQ" },
+  openGraph: { url: "/faq/", title: "SMEasy FAQ" },
 };
 
 const jsonLd = {

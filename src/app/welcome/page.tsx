@@ -44,7 +44,7 @@ export default function Welcome() {
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <form onSubmit={save} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "32px 28px", width: "100%", maxWidth: 420 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: C.dark, margin: "0 0 6px" }}>Welcome to Smeasy</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: C.dark, margin: "0 0 6px" }}>Welcome to SMEasy</h1>
         <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 20px" }}>Three quick questions, then you can add your team.</p>
 
         <label style={label} htmlFor="name">Business name</label>
@@ -78,7 +78,7 @@ export default function Welcome() {
         </button>
       </form>
       <footer style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "14px 20px", textAlign: "center", fontSize: 12, color: C.muted }}>
-        <Link href="/" style={{ color: C.secondary }}>Smeasy</Link>
+        <Link href="/" style={{ color: C.secondary }}>SMEasy</Link>
         {" · "}
         <Link href="/guides/" style={{ color: C.secondary }}>Guides</Link>
         {" · "}

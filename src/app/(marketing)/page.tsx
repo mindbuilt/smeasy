@@ -7,15 +7,15 @@ import AuthHashForwarder from "@/components/AuthHashForwarder";
 import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
-  title: { absolute: "Smeasy — simple staff rostering for Australian small businesses" },
+  title: { absolute: "SMEasy — simple staff rostering for Australian small businesses" },
   description:
     "Build the week's roster in minutes and share it with your team on one link or a printable PDF. Free during early access.",
   alternates: { canonical: "/" },
   openGraph: {
     url: "/",
-    title: "Smeasy — simple staff rostering",
+    title: "SMEasy — simple staff rostering",
     description: "Build the week's roster in minutes and share it with one link. Made for Australian small businesses.",
-    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "Smeasy — simple staff rostering" }],
+    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "SMEasy — simple staff rostering" }],
   },
 };
 
@@ -39,7 +39,7 @@ const features = [
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  name: "Smeasy",
+  name: "SMEasy",
   url: SITE_URL,
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web browser",
@@ -108,7 +108,7 @@ export default function Home() {
       <section style={{ ...wrap, marginBottom: 72 }}>
         <ScrollReveal>
           <h2 style={{ fontSize: 30, fontWeight: 700, textAlign: "center", margin: "0 0 8px" }}>Everything you need to roster. Nothing you don&apos;t.</h2>
-          <p style={{ textAlign: "center", color: C.secondary, margin: "0 0 32px", fontSize: 16 }}>Smeasy does one thing — rostering — and keeps it simple.</p>
+          <p style={{ textAlign: "center", color: C.secondary, margin: "0 0 32px", fontSize: 16 }}>SMEasy does one thing — rostering — and keeps it simple.</p>
         </ScrollReveal>
         <div className="grid-3" style={{ gap: 14 }}>
           {features.map((f, i) => (

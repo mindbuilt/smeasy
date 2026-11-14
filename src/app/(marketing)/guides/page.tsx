@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Rostering guides for small businesses",
   description: "Practical guides to staff rostering for Australian cafés, restaurants and shops — building a roster, sharing it, time off, swaps and payroll.",
   alternates: { canonical: "/guides/" },
-  openGraph: { url: "/guides/", title: "Rostering guides | Smeasy" },
+  openGraph: { url: "/guides/", title: "Rostering guides | SMEasy" },
 };
 
 const order: Guide["category"][] = ["Getting started", "Running your roster", "Payroll", "Advice"];
@@ -17,7 +17,7 @@ export default function GuidesIndex() {
     <div style={{ maxWidth: 860, margin: "0 auto", padding: "48px 20px 0" }}>
       <h1 style={{ fontSize: "clamp(28px, 5vw, 40px)", margin: "0 0 10px" }}>Rostering guides</h1>
       <p style={{ fontSize: 17, color: C.secondary, margin: "0 0 36px", lineHeight: 1.5 }}>
-        How to build, share and run a staff roster — with Smeasy, and good rostering habits in general.
+        How to build, share and run a staff roster — with SMEasy, and good rostering habits in general.
       </p>
       {order.map((cat) => {
         const list = guides.filter((g) => g.category === cat);

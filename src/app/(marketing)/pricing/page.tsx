@@ -3,7 +3,7 @@ import Link from "next/link";
 import { C } from "@/lib/theme";
 
 export const metadata: Metadata = {
-  title: "Pricing — Smeasy",
+  title: "Pricing",
   description:
     "Every feature is free for teams of up to 10. $19 a month plus GST for bigger teams. Free for everyone during early access.",
   alternates: { canonical: "/pricing/" },

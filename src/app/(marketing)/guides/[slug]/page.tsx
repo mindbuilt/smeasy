@@ -51,7 +51,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
     description: g.description,
     dateModified: g.updated,
     mainEntityOfPage: `${SITE_URL}/guides/${g.slug}/`,
-    publisher: { "@type": "Organization", name: "Smeasy", url: SITE_URL },
+    publisher: { "@type": "Organization", name: "SMEasy", url: SITE_URL },
   };
 
   return (
@@ -66,7 +66,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       {g.body.map(render)}
 
       <div style={{ background: C.dark, color: C.white, borderRadius: C.r2, padding: "24px 22px", margin: "40px 0" }}>
-        <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Try Smeasy free</div>
+        <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Try SMEasy free</div>
         <p style={{ margin: "0 0 16px", color: "#d9d6cc", fontSize: 15 }}>Simple rostering for Australian small businesses. Free during early access.</p>
         <Link href="/auth/login/" style={{ background: C.accent, color: C.dark, padding: "11px 20px", borderRadius: C.r1, textDecoration: "none", fontWeight: 700, fontSize: 15 }}>Get started</Link>
       </div>

@@ -1,8 +1,8 @@
-# Smeasy
+# SMEasy
 
 > Simple staff rostering for Australian small businesses — cafés, restaurants, bars, shops and other small teams. Free during early access; afterwards free for up to 10 staff, $19/month + GST for bigger teams.
 
-## What Smeasy does
+## What SMEasy does
 - Managers sign in with an emailed login link (no password).
 - Build a weekly roster: tap a day to add a shift with start, finish, unpaid break and role. Split shifts and shifts past midnight are supported.
 - Copy last week's roster in one tap.
@@ -16,7 +16,7 @@
 - Download hours as a CSV, shift by shift with per-person totals, for Xero, MYOB or a bookkeeper.
 - Data is stored in Australia (Sydney).
 
-## What Smeasy does not do (yet)
+## What SMEasy does not do (yet)
 - No automatic notifications (SMS, email or push); calendar subscriptions update automatically.
 - No in-app shift swaps.
 - No award interpretation, penalty-rate calculation or payroll processing.

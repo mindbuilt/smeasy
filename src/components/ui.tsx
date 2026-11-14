@@ -48,7 +48,7 @@ export function AppShell({ businessName, email, children }: {
       }}>
         <Link href="/week" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
           <span style={{ width: 22, height: 22, borderRadius: C.r1, background: C.accent, display: "block" }} />
-          <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>Smeasy</span>
+          <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>SMEasy</span>
         </Link>
         <nav style={{ display: "flex", gap: 4 }}>
           {NAV.map((n) => {
@@ -80,7 +80,7 @@ export function AppShell({ businessName, email, children }: {
       </header>
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 16px 64px" }}>{children}</main>
       <footer style={{ borderTop: `1px solid ${C.border}`, padding: "16px 20px", textAlign: "center", fontSize: 12, color: C.muted }}>
-        <Link href="/" style={{ color: C.secondary }}>Smeasy</Link>
+        <Link href="/" style={{ color: C.secondary }}>SMEasy</Link>
         {" · "}
         <Link href="/guides/" style={{ color: C.secondary }}>Guides</Link>
         {" · "}

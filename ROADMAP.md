@@ -1,10 +1,10 @@
-# Smeasy roadmap
+# SMEasy roadmap
 
 Ordered by priority. Items marked ★ were promised by earlier marketing copy and
 have been removed from the site until built.
 
 ## 1. Before inviting real businesses
-- [ ] **Branded login emails** — Resend as Supabase SMTP, sending from `hello@smeasy.au` (DNS records on smeasy.au); Smeasy-styled "Magic link" and "Confirm signup" templates. Removes Supabase's few-per-hour email limit.
+- [ ] **Branded login emails** — Resend as Supabase SMTP, sending from `hello@smeasy.au` (DNS records on smeasy.au); SMEasy-styled "Magic link" and "Confirm signup" templates. Removes Supabase's few-per-hour email limit.
 - [x] **Privacy policy** — published at /privacy (Open County Pty Ltd). Get a professional review when convenient.
 - [ ] **Terms of service**.
 - [x] **Contact address** — `hello@smeasy.au` in footer, FAQ and privacy policy. **Make sure this mailbox receives mail.**

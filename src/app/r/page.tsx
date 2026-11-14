@@ -129,7 +129,7 @@ export default function TeamRoster() {
       </p>
       <p style={{ fontSize: 12, color: C.muted, marginTop: 12 }}>Bookmark this page or add it to your home screen — it always shows the latest published roster.</p>
       <p style={{ fontSize: 12, color: C.muted, marginTop: 8 }}>
-        <Link href="/" style={{ color: C.secondary }}>Smeasy</Link>
+        <Link href="/" style={{ color: C.secondary }}>SMEasy</Link>
         {" · "}
         <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>
       </p>
@@ -147,7 +147,7 @@ function Shell({ business, children }: { business?: string; children: React.Reac
       <header style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "14px 16px", display: "flex", alignItems: "center", gap: 8 }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
           <span style={{ width: 20, height: 20, borderRadius: C.r1, background: C.accent, display: "block" }} />
-          <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>{business ? `${business} roster` : "Smeasy"}</span>
+          <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>{business ? `${business} roster` : "SMEasy"}</span>
         </Link>
       </header>
       <main style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 48px" }}>{children}</main>

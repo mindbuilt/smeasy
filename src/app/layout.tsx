@@ -19,13 +19,13 @@ const plex = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Smeasy — simple rostering for Australian small businesses",
-    template: "%s | Smeasy",
+    default: "SMEasy — simple rostering for Australian small businesses",
+    template: "%s | SMEasy",
   },
   description:
     "Build your weekly staff roster in minutes, share it with one link or a PDF, handle time-off requests and download hours for payroll. Free during early access.",
   openGraph: {
-    siteName: "Smeasy",
+    siteName: "SMEasy",
     locale: "en_AU",
     type: "website",
   },

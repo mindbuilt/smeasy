@@ -5,8 +5,8 @@ import { CONTACT_EMAIL } from "@/lib/site";
 import ContactForm from "./ContactForm";
 
 export const metadata: Metadata = {
-  title: "Contact Smeasy",
-  description: "Questions about rostering with Smeasy, help with your account, or a feature you'd like to see? Send us a message.",
+  title: "Contact us",
+  description: "Questions about rostering with SMEasy, help with your account, or a feature you'd like to see? Send us a message.",
   alternates: { canonical: "/contact/" },
 };
 
@@ -15,7 +15,7 @@ export default function ContactPage() {
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "48px 20px 0" }}>
       <h1 style={{ fontSize: "clamp(28px, 5vw, 40px)", margin: "0 0 10px" }}>Get in touch</h1>
       <p style={{ fontSize: 17, lineHeight: 1.55, color: C.secondary, margin: "0 0 28px" }}>
-        A question about Smeasy, help with your account, or something you&apos;d like it to do? Send us a message and we&apos;ll reply by email, usually within one business day.
+        A question about SMEasy, help with your account, or something you&apos;d like it to do? Send us a message and we&apos;ll reply by email, usually within one business day.
         You might find a quick answer in the <Link href="/faq/" style={{ color: C.dark }}>FAQ</Link>.
       </p>
       <ContactForm />

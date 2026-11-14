@@ -72,7 +72,7 @@ export default function ContactForm() {
       </div>
       {/* Spam trap: hidden from people, bots fill it in and Formspree discards the submission. */}
       <input type="text" name="_gotcha" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ display: "none" }} />
-      <input type="hidden" name="_subject" value="Smeasy contact form" />
+      <input type="hidden" name="_subject" value="SMEasy contact form" />
       {status.kind === "error" && (
         <p role="alert" style={{ margin: 0, color: C.danger, fontSize: 15 }}>{status.message}</p>
       )}

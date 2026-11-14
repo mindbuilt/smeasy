@@ -5,7 +5,7 @@ import { ABN, CONTACT_EMAIL, LEGAL_ENTITY } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Privacy policy",
-  description: "How Smeasy collects, uses, stores and shares personal information about account holders, staff and website visitors.",
+  description: "How SMEasy collects, uses, stores and shares personal information about account holders, staff and website visitors.",
   alternates: { canonical: "/privacy/" },
 };
 
@@ -27,20 +27,20 @@ export default function Privacy() {
       <p style={{ ...p, color: C.muted, fontSize: 14 }}>Last updated {UPDATED}</p>
 
       <p style={p}>
-        This policy explains how Smeasy handles personal information. &ldquo;Smeasy&rdquo;, &ldquo;we&rdquo; and &ldquo;us&rdquo; means {LEGAL_ENTITY} (ABN {ABN}), the operator of smeasy.au.
+        This policy explains how SMEasy handles personal information. &ldquo;SMEasy&rdquo;, &ldquo;we&rdquo; and &ldquo;us&rdquo; means {LEGAL_ENTITY} (ABN {ABN}), the operator of smeasy.au.
         We aim to handle personal information in line with the Australian Privacy Principles in the <em>Privacy Act 1988</em> (Cth).
       </p>
 
       <h2 style={h2}>The short version</h2>
       <ul style={ul}>
-        <L>Smeasy is a rostering tool. We collect what&apos;s needed to build and share rosters, and nothing more.</L>
-        <L>Businesses that use Smeasy enter their staff&apos;s details. We hold that information on the business&apos;s behalf and only use it to run Smeasy for them.</L>
+        <L>SMEasy is a rostering tool. We collect what&apos;s needed to build and share rosters, and nothing more.</L>
+        <L>Businesses that use SMEasy enter their staff&apos;s details. We hold that information on the business&apos;s behalf and only use it to run SMEasy for them.</L>
         <L>Our database is in Sydney, Australia. Some services we use are run by companies based overseas (see &ldquo;Who we share information with&rdquo;).</L>
         <L>We don&apos;t sell personal information, and we don&apos;t use staff information for marketing.</L>
       </ul>
 
       <h2 style={h2}>Whose information we handle</h2>
-      <p style={p}><strong>Managers and owners</strong> who create a Smeasy account (&ldquo;account holders&rdquo;).</p>
+      <p style={p}><strong>Managers and owners</strong> who create a SMEasy account (&ldquo;account holders&rdquo;).</p>
       <p style={p}>
         <strong>Staff</strong> whose details an account holder adds so they can be rostered. If you&apos;re a staff member, your employer decides what is entered about you and is responsible for telling you about it.
         Questions about how your employer uses your roster information are best directed to them first, but you can also contact us.
@@ -75,18 +75,18 @@ export default function Privacy() {
         If you agree, these tools may set cookies and collect information such as pages viewed, approximate location, and device and browser type.
       </p>
       <p style={p}>
-        We store a few small items in your browser to make Smeasy work: your sign-in session (account holders), your cookie choice, and, on the team roster link, the name you picked. These stay on your device.
+        We store a few small items in your browser to make SMEasy work: your sign-in session (account holders), your cookie choice, and, on the team roster link, the name you picked. These stay on your device.
         If you use our contact form, we receive your name, email address, optional business name and your message, and use them to reply to you.
         Our hosting provider keeps standard server logs (such as IP address, page requested and time) for security and troubleshooting.
       </p>
 
       <h2 style={h2}>How we use information</h2>
       <ul style={ul}>
-        <L>To provide Smeasy: signing in, building, publishing and sharing rosters, calculating hours and wage estimates, and handling time-off requests.</L>
+        <L>To provide SMEasy: signing in, building, publishing and sharing rosters, calculating hours and wage estimates, and handling time-off requests.</L>
         <L>To send sign-in emails.</L>
-        <L>To keep Smeasy secure and fix problems.</L>
+        <L>To keep SMEasy secure and fix problems.</L>
         <L>To improve our public website, using analytics from public pages only, where you&apos;ve agreed to it.</L>
-        <L>To contact account holders about their account or important changes to Smeasy.</L>
+        <L>To contact account holders about their account or important changes to SMEasy.</L>
       </ul>
       <p style={p}>We don&apos;t use staff information to contact staff ourselves, and we don&apos;t sell personal information or use it for advertising.</p>
 
@@ -99,7 +99,7 @@ export default function Privacy() {
       </ul>
 
       <h2 style={h2}>Who we share information with</h2>
-      <p style={p}>We use these service providers to run Smeasy. They process information on our behalf:</p>
+      <p style={p}>We use these service providers to run SMEasy. They process information on our behalf:</p>
       <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, overflowX: "auto", margin: "0 0 14px" }}>
         <table style={{ borderCollapse: "collapse", width: "100%", minWidth: 520 }}>
           <thead>
@@ -134,13 +134,13 @@ export default function Privacy() {
 
       <h2 style={h2}>Access, correction and deletion</h2>
       <ul style={ul}>
-        <L><strong>Account holders</strong> can view and correct their business and staff information in Smeasy at any time, or email us to request a copy or deletion.</L>
+        <L><strong>Account holders</strong> can view and correct their business and staff information in SMEasy at any time, or email us to request a copy or deletion.</L>
         <L><strong>Staff</strong> can ask their employer to correct or remove their details, or contact us. If we hold your information on behalf of an employer, we may need to refer your request to them.</L>
       </ul>
       <p style={p}>We&apos;ll respond within 30 days and won&apos;t charge for a request.</p>
 
       <h2 style={h2}>Children</h2>
-      <p style={p}>Smeasy accounts are for businesses. Businesses may roster staff under 18, such as junior employees. Their information is handled the same way as other staff information, and the business is responsible for its use.</p>
+      <p style={p}>SMEasy accounts are for businesses. Businesses may roster staff under 18, such as junior employees. Their information is handled the same way as other staff information, and the business is responsible for its use.</p>
 
       <h2 style={h2}>Complaints</h2>
       <p style={p}>
@@ -149,7 +149,7 @@ export default function Privacy() {
       </p>
 
       <h2 style={h2}>Changes to this policy</h2>
-      <p style={p}>We may update this policy as Smeasy changes. We&apos;ll post the new version here with a new &ldquo;last updated&rdquo; date and tell account holders by email about significant changes.</p>
+      <p style={p}>We may update this policy as SMEasy changes. We&apos;ll post the new version here with a new &ldquo;last updated&rdquo; date and tell account holders by email about significant changes.</p>
 
       <h2 style={h2}>Contact</h2>
       <p style={p}>{LEGAL_ENTITY} (ABN {ABN})<br />Email: <Mail /></p>

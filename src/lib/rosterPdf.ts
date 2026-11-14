@@ -93,7 +93,7 @@ export async function downloadRosterPdf(opts: {
 
   doc.setFontSize(8);
   doc.setTextColor(130);
-  const footer = opts.teamLink ? `Live roster: ${opts.teamLink}` : "Made with Smeasy";
+  const footer = opts.teamLink ? `Live roster: ${opts.teamLink}` : "Made with SMEasy";
   doc.text(footer, 12, doc.internal.pageSize.getHeight() - 8);
 
   doc.save(`${opts.business.replace(/[^\w]+/g, "-").toLowerCase()}-roster-${opts.weekStart}.pdf`);

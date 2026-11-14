@@ -167,7 +167,7 @@ export default function StaffRoster() {
 
       <p style={{ fontSize: 12, color: C.muted, marginTop: 32 }}>Bookmark this page — it&apos;s your personal link and stays the same every week.</p>
       <p style={{ fontSize: 12, color: C.muted, marginTop: 8 }}>
-        <Link href="/" style={{ color: C.secondary }}>Smeasy</Link>
+        <Link href="/" style={{ color: C.secondary }}>SMEasy</Link>
         {" · "}
         <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>
       </p>
@@ -219,7 +219,7 @@ function Shell({ business, children, accentHue }: { business?: string; children:
       <header style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "14px 16px", display: "flex", alignItems: "center", gap: 8 }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
           <span style={{ width: 20, height: 20, borderRadius: C.r1, background: C.accent, display: "block" }} />
-          <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>{business ?? "Smeasy"}</span>
+          <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>{business ?? "SMEasy"}</span>
         </Link>
       </header>
       {accentHue != null && <div style={{ height: 3, background: `hsl(${accentHue} 65% 60%)` }} />}
