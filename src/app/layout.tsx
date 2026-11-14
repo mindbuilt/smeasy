@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/site";
-import { IBM_Plex_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-// Downloaded at build time and served from our own domain — visitors'
-// browsers never contact Google Fonts.
-const plex = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+// IBM Plex Sans (SIL Open Font License, src/fonts/OFL-LICENSE.txt), bundled
+// with the site: no Google Fonts requests at build time or in the browser.
+const plex = localFont({
+  src: [
+    { path: "../fonts/ibm-plex-sans-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/ibm-plex-sans-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../fonts/ibm-plex-sans-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../fonts/ibm-plex-sans-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   display: "swap",
   variable: "--font-plex",
 });
