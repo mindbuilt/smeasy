@@ -470,7 +470,7 @@ function CoverageText({ c }: { c: ReturnType<typeof coverage> }) {
 function DayHeaderExtras({ info }: { info: { holiday: string | null; note: string | null } }) {
   return (
     <>
-      {info.holiday && <span style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#8a2350", textTransform: "none" }}>🎉 {info.holiday}</span>}
+      {info.holiday && <span style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#8a2350", textTransform: "none" }}>Public holiday · {info.holiday}</span>}
       {info.note && <span style={{ display: "block", fontSize: 11, fontWeight: 500, color: C.secondary, textTransform: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={info.note}>{info.note}</span>}
     </>
   );
@@ -593,7 +593,7 @@ function DayNoteEditor({ date, holiday, note, onClose, onSave }: {
   return (
     <Modal title={fmtDay(date)} onClose={onClose}>
       <form onSubmit={async (e) => { e.preventDefault(); setSaving(true); await onSave(text); setSaving(false); }} style={{ display: "grid", gap: 12 }}>
-        {holiday && <p style={{ margin: 0, fontSize: 14, color: "#8a2350", fontWeight: 600 }}>🎉 Public holiday: {holiday}</p>}
+        {holiday && <p style={{ margin: 0, fontSize: 14, color: "#8a2350", fontWeight: 600 }}>Public holiday: {holiday}</p>}
         <div>
           <label style={label} htmlFor="daynote">Note for this day (your team sees it once published)</label>
           <input id="daynote" style={input} maxLength={200} value={text} autoFocus onChange={(e) => setText(e.target.value)} placeholder="e.g. Function — 40 people from 6pm" />

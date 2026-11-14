@@ -22,7 +22,7 @@ export function DayExtras({ date, state, dayNotes }: { date: string; state: stri
   if (!holiday && !note) return null;
   return (
     <div style={{ fontSize: 12, margin: "2px 0 4px" }}>
-      {holiday && <div style={{ color: "#8a2350", fontWeight: 600 }}>🎉 {holiday} (public holiday)</div>}
+      {holiday && <div style={{ color: "#8a2350", fontWeight: 600 }}>Public holiday · {holiday}</div>}
       {note && <div style={{ color: C.secondary, fontStyle: "italic" }}>{note}</div>}
     </div>
   );
