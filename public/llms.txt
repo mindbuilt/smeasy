@@ -10,7 +10,7 @@
 - Publish when ready; drafts stay private.
 - Share with staff via one team roster link (for the staff group chat) or a printable A4 PDF. Staff need no app, account or password, and see only names, days, times and roles.
 - Staff request time off from a personal link; managers approve or decline on the roster.
-- Download hours as a CSV, shift by shift with per-person totals (and payroll IDs if set), for Xero, MYOB or a bookkeeper.
+- Download hours as a CSV, shift by shift with per-person totals, for Xero, MYOB or a bookkeeper.
 - Data is stored in Australia (Sydney).
 
 ## What Smeasy does not do (yet)

@@ -165,7 +165,6 @@ function StaffEditor({ staff, roles, onClose, onSaved }: {
   const [f, setF] = useState({
     name: staff.name, mobile: staff.mobile ?? "", email: staff.email ?? "",
     default_role: staff.default_role ?? "", hourly_rate: staff.hourly_rate?.toString() ?? "",
-    payroll_id: staff.payroll_id ?? "",
   });
   const [error, setError] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
@@ -176,10 +175,10 @@ function StaffEditor({ staff, roles, onClose, onSaved }: {
     if (rate != null && (Number.isNaN(rate) || rate < 0)) { setError("Hourly rate should be a number."); return; }
     const { data, error } = await supabase().from("staff").update({
       name: f.name.trim(), mobile: f.mobile.trim() || null, email: f.email.trim() || null,
-      default_role: f.default_role || null, hourly_rate: rate, payroll_id: f.payroll_id.trim() || null,
+      default_role: f.default_role || null, hourly_rate: rate,
       ...patch,
     }).eq("id", staff.id).select().single();
-    if (error) setError(error.code === "23505" ? "That payroll ID is already used by someone else." : "Couldn't save. Please try again.");
+    if (error) setError("Couldn't save. Please try again.");
     else if (data) onSaved(data);
   }
 
@@ -195,10 +194,9 @@ function StaffEditor({ staff, roles, onClose, onSaved }: {
           </select>
         </div>
         <details>
-          <summary style={{ fontSize: 13, color: C.secondary, cursor: "pointer" }}>Pay and payroll (optional)</summary>
+          <summary style={{ fontSize: 13, color: C.secondary, cursor: "pointer" }}>More details (optional)</summary>
           <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
             <div><label style={label}>Email</label><input style={input} type="email" value={f.email} onChange={set("email")} /></div>
-            <div><label style={label}>Payroll / employee ID (Xero or MYOB)</label><input style={input} value={f.payroll_id} onChange={set("payroll_id")} /></div>
             <div><label style={label}>Hourly rate — only if you want a rough weekly wage total</label>
               <input style={input} inputMode="decimal" value={f.hourly_rate} onChange={set("hourly_rate")} placeholder="e.g. 32.50" />
             </div>

@@ -22,7 +22,7 @@ export const faqGroups: FaqGroup[] = [
       { q: "Can I copy last week's roster?", a: "Yes. On an empty week, tap Copy last week and every shift is copied to the same days, ready to adjust." },
       { q: "Does it handle split shifts and shifts past midnight?", a: "Yes. Add two shifts on the same day for a split shift. For a late close, set a finish time earlier than the start — for example 5pm to 2am — and Smeasy counts the hours correctly." },
       { q: "How are hours worked out?", a: "Paid hours are the finish time minus the start time minus any unpaid break you set on the shift. Smeasy shows each person's weekly hours and the team total." },
-      { q: "Can Smeasy estimate wages?", a: "Yes, if you add an hourly rate for each person (it's optional, under Pay and payroll). The estimate uses base rates only — it doesn't include penalty rates, overtime, allowances or super." },
+      { q: "Can Smeasy estimate wages?", a: "Yes, if you add an hourly rate for each person (it's optional, under More details). The estimate uses base rates only — it doesn't include penalty rates, overtime, allowances or super." },
       { q: "Does Smeasy check my roster against my award?", a: "No. Smeasy doesn't check minimum engagement, breaks or penalty rates. Check your award on the Fair Work Ombudsman website, or ask your bookkeeper." },
       { q: "Can I change the shift roles?", a: "Yes. When you sign up you pick a starting set (café, retail or general), and you can add or remove roles any time on the Team page." },
     ],
@@ -33,7 +33,7 @@ export const faqGroups: FaqGroup[] = [
       { q: "Do my staff need an app or an account?", a: "No. Staff view the roster on a link in their browser — no app, no sign-up, no password." },
       { q: "How do staff see the roster?", a: "Share your team roster link in your staff group chat once. It always shows the latest published roster. Staff pick their name to highlight their shifts and can download a PDF. You can also download the PDF yourself to print or send." },
       { q: "Can staff see the roster before it's finished?", a: "No. Rosters stay as private drafts until you tap Publish to team." },
-      { q: "What can staff see?", a: "Names, days, shift times and roles on published rosters. They never see pay rates, phone numbers, emails or payroll IDs." },
+      { q: "What can staff see?", a: "Names, days, shift times and roles on published rosters. They never see pay rates, phone numbers or emails." },
       { q: "Someone left — how do I stop them seeing the roster?", a: "Remove them on the Team page, and tap Reset the link on the team roster link card. The old link stops working straight away; share the new one with your team." },
       { q: "How do staff request time off?", a: "Each person has a personal link, which you send from the Team page. They tap Request time off and pick the dates. Requests appear on your roster screen with Approve and Decline." },
       { q: "Does Smeasy send notifications?", a: "Not yet. When you publish, let your team know in your group chat — the team link will already show the new week. Automatic notifications are on our roadmap." },
@@ -43,7 +43,7 @@ export const faqGroups: FaqGroup[] = [
   {
     title: "Payroll",
     items: [
-      { q: "Does Smeasy work with Xero or MYOB?", a: "You can download the week's hours as a spreadsheet (CSV) — every shift with its day, times, breaks and hours, plus a total per person and payroll IDs if you've added them — and use it in Xero or MYOB or send it to your bookkeeper. Ready-to-import Xero and MYOB timesheet files are on our roadmap." },
+      { q: "Does Smeasy work with Xero or MYOB?", a: "You can download the week's hours as a spreadsheet (CSV) — every shift with its day, times, breaks and hours, plus a total per person — and use it in Xero or MYOB or send it to your bookkeeper. Ready-to-import Xero and MYOB timesheet files are on our roadmap." },
       { q: "Does Smeasy run payroll?", a: "No. Smeasy handles the roster and the hours; your payroll software pays your staff." },
       { q: "Can I have more than one manager or location?", a: "Not yet — each business has one owner login and one location for now." },
     ],

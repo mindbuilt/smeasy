@@ -221,9 +221,7 @@ function WeekPage() {
     // One row per shift (bookkeepers need the day and times for weekend and
     // public-holiday rates), then a per-person summary. "Actual hours" starts
     // equal to rostered hours so the manager can adjust it before sending.
-    // The Payroll ID column only appears if someone has one set.
-    const withId = (staff ?? []).some((p) => p.payroll_id);
-    const head = ["Name", ...(withId ? ["Payroll ID"] : []), "Date", "Day", "Start", "Finish", "Unpaid break (min)", "Rostered hours", "Actual hours", "Role"];
+    const head = ["Name", "Date", "Day", "Start", "Finish", "Unpaid break (min)", "Rostered hours", "Actual hours", "Role"];
     const rows: string[][] = [head];
     const sorted = [...shifts].sort((a, b) =>
       (staffById.get(a.staff_id)?.name ?? "").localeCompare(staffById.get(b.staff_id)?.name ?? "") ||
@@ -231,14 +229,14 @@ function WeekPage() {
     for (const s of sorted) {
       const p = staffById.get(s.staff_id);
       const hrs = shiftHours(s.start_time, s.end_time, s.break_minutes).toFixed(2);
-      rows.push([p?.name ?? "", ...(withId ? [p?.payroll_id ?? ""] : []), s.date, fmtDay(s.date).split(" ")[0],
+      rows.push([p?.name ?? "", s.date, fmtDay(s.date).split(" ")[0],
         hhmm(s.start_time), hhmm(s.end_time), String(s.break_minutes), hrs, hrs, s.role ?? ""]);
     }
-    rows.push([], ["Totals by person"], ["Name", ...(withId ? ["Payroll ID"] : []), "Rostered hours", "Actual hours"]);
+    rows.push([], ["Totals by person"], ["Name", "Rostered hours", "Actual hours"]);
     for (const p of [...(staff ?? [])].sort((a, b) => a.name.localeCompare(b.name))) {
       const h = hoursByStaff.get(p.id);
       if (!h) continue;
-      rows.push([p.name, ...(withId ? [p.payroll_id ?? ""] : []), h.toFixed(2), h.toFixed(2)]);
+      rows.push([p.name, h.toFixed(2), h.toFixed(2)]);
     }
     const csv = rows.map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
     const a = document.createElement("a");

@@ -36,7 +36,7 @@ export const guides: Guide[] = [
       { ul: [
         "Usual role — new shifts for that person default to it.",
         "Mobile — handy for texting them their link.",
-        "Under Pay and payroll (optional): email, payroll ID, and an hourly rate if you'd like a rough weekly wage total. Skip these if you don't need them.",
+        "Under More details (optional): email, and an hourly rate if you'd like a rough weekly wage total. Skip these if you don't need them.",
       ] },
       { h2: "3. Add shifts" },
       { p: "Open This week. You'll see your team down the side and Monday to Sunday across the top. Tap any cell to add a shift: pick a start and finish time, an unpaid break and a role, then save." },
@@ -80,7 +80,7 @@ export const guides: Guide[] = [
       { ul: [
         "They see published weeks only. Drafts stay private until you publish.",
         "They see names, days, shift times and roles.",
-        "They never see pay rates, phone numbers, emails or payroll IDs.",
+        "They never see pay rates, phone numbers or emails.",
       ] },
       { p: "Anyone with the team link can view the roster, so if someone leaves on bad terms, tap Reset the link on the Team page and share the new one. The old link stops working immediately." },
       { h2: "Personal links for time-off requests" },
@@ -122,7 +122,7 @@ export const guides: Guide[] = [
     slug: "export-to-payroll",
     title: "Getting roster hours into Xero or MYOB",
     description:
-      "How to download paid hours from Smeasy as a CSV for Xero, MYOB or your bookkeeper, and how to set payroll IDs so names match.",
+      "How to download paid hours from Smeasy as a CSV for Xero, MYOB or your bookkeeper, shift by shift with a total for each person.",
     category: "Payroll",
     updated: "2026-11-14",
     body: [
@@ -133,10 +133,9 @@ export const guides: Guide[] = [
         "Tap Hours CSV.",
         "Open the file in Excel, Numbers or Google Sheets, or send it to your bookkeeper.",
       ] },
-      { p: "Each row is one shift: name, date, day, start, finish, unpaid break, rostered hours, actual hours and role. Underneath is a total for each person. If you've added payroll IDs, they get their own column." },
+      { p: "Each row is one shift: name, date, day, start, finish, unpaid break, rostered hours, actual hours and role. Underneath is a total for each person." },
       { p: "Actual hours start out the same as rostered hours. If someone stayed late or left early, change the number in the spreadsheet before you send it." },
-      { h2: "Match staff to your payroll system" },
-      { p: "Add each person's employee or payroll ID from Xero or MYOB on the Team page (tap their name → Pay and payroll). It's included in the export so hours line up with the right person." },
+      { tip: "Use the same names in Smeasy as in your payroll software, so your bookkeeper can match people at a glance." },
       { h2: "What the export doesn't do (yet)" },
       { ul: [
         "It's a general CSV, not a ready-to-import Xero or MYOB timesheet file. Direct Xero and MYOB formats are on our roadmap.",
