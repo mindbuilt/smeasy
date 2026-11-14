@@ -4,6 +4,7 @@ import { C } from "@/lib/theme";
 import { SITE_URL } from "@/lib/site";
 import { guides } from "@/content/guides";
 import AuthHashForwarder from "@/components/AuthHashForwarder";
+import ScrollReveal, { Parallax } from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
   title: { absolute: "Smeasy — simple staff rostering for Australian small businesses" },
@@ -75,39 +76,52 @@ export default function Home() {
 
       {/* Roster preview */}
       <section style={{ ...wrap, marginBottom: 72 }}>
-        <RosterPreview />
+        <Parallax speed={0.08}>
+          <ScrollReveal>
+            <RosterPreview />
+          </ScrollReveal>
+        </Parallax>
       </section>
 
       {/* How it works */}
       <section id="how-it-works" style={{ ...wrap, marginBottom: 72 }}>
-        <h2 style={{ fontSize: 30, fontWeight: 700, textAlign: "center", margin: "0 0 32px" }}>How it works</h2>
+        <ScrollReveal>
+          <h2 style={{ fontSize: 30, fontWeight: 700, textAlign: "center", margin: "0 0 32px" }}>How it works</h2>
+        </ScrollReveal>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
-          {steps.map((s) => (
-            <div key={s.n} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 22 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 999, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginBottom: 12 }}>{s.n}</div>
-              <h3 style={{ fontSize: 18, margin: "0 0 6px" }}>{s.t}</h3>
-              <p style={{ fontSize: 15, color: C.secondary, margin: 0, lineHeight: 1.5 }}>{s.d}</p>
-            </div>
+          {steps.map((s, i) => (
+            <ScrollReveal key={s.n} delay={i * 120}>
+              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 22 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 999, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, marginBottom: 12 }}>{s.n}</div>
+                <h3 style={{ fontSize: 18, margin: "0 0 6px" }}>{s.t}</h3>
+                <p style={{ fontSize: 15, color: C.secondary, margin: 0, lineHeight: 1.5 }}>{s.d}</p>
+              </div>
+            </ScrollReveal>
           ))}
         </div>
       </section>
 
       {/* Features */}
       <section style={{ ...wrap, marginBottom: 72 }}>
-        <h2 style={{ fontSize: 30, fontWeight: 700, textAlign: "center", margin: "0 0 8px" }}>Everything you need to roster. Nothing you don&apos;t.</h2>
-        <p style={{ textAlign: "center", color: C.secondary, margin: "0 0 32px", fontSize: 16 }}>Smeasy does one thing — rostering — and keeps it simple.</p>
+        <ScrollReveal>
+          <h2 style={{ fontSize: 30, fontWeight: 700, textAlign: "center", margin: "0 0 8px" }}>Everything you need to roster. Nothing you don&apos;t.</h2>
+          <p style={{ textAlign: "center", color: C.secondary, margin: "0 0 32px", fontSize: 16 }}>Smeasy does one thing — rostering — and keeps it simple.</p>
+        </ScrollReveal>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 14 }}>
-          {features.map((f) => (
-            <div key={f.t} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 18 }}>
-              <h3 style={{ fontSize: 16, margin: "0 0 6px" }}>{f.t}</h3>
-              <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.5 }}>{f.d}</p>
-            </div>
+          {features.map((f, i) => (
+            <ScrollReveal key={f.t} delay={i * 80}>
+              <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 18 }}>
+                <h3 style={{ fontSize: 16, margin: "0 0 6px" }}>{f.t}</h3>
+                <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.5 }}>{f.d}</p>
+              </div>
+            </ScrollReveal>
           ))}
         </div>
       </section>
 
       {/* For staff */}
       <section style={{ ...wrap, marginBottom: 72 }}>
+        <ScrollReveal>
         <div style={{ background: C.dark, color: C.white, borderRadius: C.r2, padding: "36px 28px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24, alignItems: "center" }}>
           <div>
             <h2 style={{ fontSize: 26, margin: "0 0 10px" }}>Your staff will actually use it</h2>
@@ -122,32 +136,39 @@ export default function Home() {
             <li>Data stored in Australia (Sydney)</li>
           </ul>
         </div>
+        </ScrollReveal>
       </section>
 
       {/* Guides */}
       <section style={{ ...wrap, marginBottom: 72 }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
-          <h2 style={{ fontSize: 26, fontWeight: 700, margin: 0 }}>Rostering guides</h2>
-          <Link href="/guides/" style={{ color: C.secondary, fontSize: 15 }}>All guides →</Link>
-        </div>
+        <ScrollReveal>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
+            <h2 style={{ fontSize: 26, fontWeight: 700, margin: 0 }}>Rostering guides</h2>
+            <Link href="/guides/" style={{ color: C.secondary, fontSize: 15 }}>All guides →</Link>
+          </div>
+        </ScrollReveal>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
-          {featured.map((g) => (
-            <Link key={g.slug} href={`/guides/${g.slug}/`} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 18, textDecoration: "none", color: C.dark }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>{g.category}</div>
-              <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>{g.title}</div>
-              <div style={{ fontSize: 14, color: C.secondary, lineHeight: 1.5 }}>{g.description}</div>
-            </Link>
+          {featured.map((g, i) => (
+            <ScrollReveal key={g.slug} delay={i * 100}>
+              <Link href={`/guides/${g.slug}/`} style={{ display: "block", background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 18, textDecoration: "none", color: C.dark }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>{g.category}</div>
+                <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>{g.title}</div>
+                <div style={{ fontSize: 14, color: C.secondary, lineHeight: 1.5 }}>{g.description}</div>
+              </Link>
+            </ScrollReveal>
           ))}
         </div>
       </section>
 
       {/* CTA */}
+      <ScrollReveal>
       <section style={{ ...wrap, textAlign: "center" }}>
         <h2 style={{ fontSize: 30, fontWeight: 700, margin: "0 0 10px" }}>Ready to ditch the spreadsheet?</h2>
         <p style={{ color: C.secondary, fontSize: 16, margin: "0 0 22px" }}>Free during early access. Your first roster is about five minutes away.</p>
         <Link href="/auth/login/" style={{ background: C.dark, color: C.white, padding: "14px 28px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>Get started free</Link>
         <p style={{ fontSize: 14, color: C.muted, marginTop: 18 }}>Questions? Read the <Link href="/faq/" style={{ color: C.secondary }}>FAQ</Link>.</p>
       </section>
+      </ScrollReveal>
     </>
   );
 }

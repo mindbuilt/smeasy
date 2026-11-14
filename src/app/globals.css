@@ -87,3 +87,13 @@ a:hover {
 a:focus-visible {
   border-radius: 2px;
 }
+
+/* Copy-last-week cascade entrance */
+@keyframes cascade-pop {
+  0% { opacity: 0; transform: translateY(8px) scale(0.92); }
+  60% { opacity: 1; transform: translateY(-2px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.cascade-in {
+  animation: cascade-pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}

@@ -5,6 +5,12 @@ import { supabase } from "@/lib/supabase";
 import { addDays, fmtDay, fmtTime, fmtWeek, shiftHours, thisMonday, toISO, weekDates } from "@/lib/dates";
 import { C, btn, input, label } from "@/components/ui";
 
+function nameHue(name: string): number {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
+  return h % 360;
+}
+
 type StaffShift = {
   id: string; date: string; start_time: string; end_time: string;
   break_minutes: number; role: string | null; staff_name: string; mine: boolean;
@@ -62,8 +68,10 @@ export default function StaffRoster() {
   const myHours = mine.reduce((h, s) => h + shiftHours(s.start_time, s.end_time, s.break_minutes), 0);
   const first = view.staff_name.split(" ")[0];
 
+  const hue = nameHue(view.staff_name);
+
   return (
-    <Shell business={view.business}>
+    <Shell business={view.business} accentHue={hue}>
       <h1 style={{ fontSize: 22, fontWeight: 700, color: C.dark, margin: "0 0 2px" }}>Hi {first}</h1>
       <div style={{ display: "flex", alignItems: "center", gap: 6, margin: "12px 0 16px" }}>
         <button onClick={() => setWeek(addDays(week, -7))} style={{ ...btn(), padding: "8px 12px" }} aria-label="Previous week">‹</button>
@@ -75,9 +83,19 @@ export default function StaffRoster() {
       </div>
 
       {!view.published ? (
-        <Card><p style={{ margin: 0, color: C.secondary, fontSize: 15 }}>This week&apos;s roster hasn&apos;t been published yet.</p></Card>
+        <Card>
+          <div style={{ textAlign: "center", padding: "12px 0" }}>
+            <div style={{ fontSize: 24, marginBottom: 8 }} aria-hidden>&#9203;</div>
+            <p style={{ margin: 0, color: C.secondary, fontSize: 15 }}>This week&apos;s roster isn&apos;t out yet. Check back soon.</p>
+          </div>
+        </Card>
       ) : mine.length === 0 ? (
-        <Card><p style={{ margin: 0, color: C.secondary, fontSize: 15 }}>You&apos;re not rostered on this week.</p></Card>
+        <Card>
+          <div style={{ textAlign: "center", padding: "12px 0" }}>
+            <div style={{ fontSize: 24, marginBottom: 8 }} aria-hidden>&#127774;</div>
+            <p style={{ margin: 0, color: C.secondary, fontSize: 15 }}>You&apos;re not rostered on this week. Enjoy the time off!</p>
+          </div>
+        </Card>
       ) : (
         <Card>
           <div style={{ fontSize: 13, color: C.muted, marginBottom: 8 }}>Your shifts · {myHours.toFixed(1).replace(/\.0$/, "")} hours</div>
@@ -176,13 +194,14 @@ function Card({ children }: { children: React.ReactNode }) {
   return <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "12px 16px" }}>{children}</div>;
 }
 
-function Shell({ business, children }: { business?: string; children: React.ReactNode }) {
+function Shell({ business, children, accentHue }: { business?: string; children: React.ReactNode; accentHue?: number }) {
   return (
     <div style={{ minHeight: "100vh", background: C.bg }}>
       <header style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "14px 16px", display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{ width: 20, height: 20, borderRadius: C.r1, background: C.accent, display: "block" }} />
         <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>{business ?? "Smeasy"}</span>
       </header>
+      {accentHue != null && <div style={{ height: 3, background: `hsl(${accentHue} 65% 60%)` }} />}
       <main style={{ maxWidth: 520, margin: "0 auto", padding: "20px 16px 48px" }}>{children}</main>
     </div>
   );

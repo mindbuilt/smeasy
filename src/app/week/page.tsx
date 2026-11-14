@@ -63,6 +63,7 @@ function WeekPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [justPublished, setJustPublished] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [cascadeIds, setCascadeIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!business) return;
@@ -103,6 +104,7 @@ function WeekPage() {
   const missingRate = [...hoursByStaff.keys()].filter((id) => staffById.get(id)?.hourly_rate == null).length;
   const pending = timeOff.filter((t) => t.status === "pending");
   const published = roster?.status === "published";
+  const isPast = monday < thisMonday();
 
   const offOn = (staffId: string, date: string) =>
     timeOff.find((t) => t.staff_id === staffId && t.status === "approved" && t.start_date <= date && t.end_date >= date);
@@ -168,6 +170,9 @@ function WeekPage() {
         start_time: s.start_time, end_time: s.end_time, break_minutes: s.break_minutes, role: s.role,
       }))).select();
       setShifts(data ?? []);
+      const ids = new Set((data ?? []).map((s) => s.id));
+      setCascadeIds(ids);
+      setTimeout(() => setCascadeIds(new Set()), 1200);
       const clashes = (data ?? []).filter((s) => offOn(s.staff_id, s.date)).length;
       setNotice(`Copied ${data?.length ?? 0} shifts from last week.` + (clashes ? ` ${clashes} clash with approved time off — check the orange days.` : ""));
     }
@@ -246,7 +251,9 @@ function WeekPage() {
           <div style={{ fontSize: 13, color: C.muted }}>
             {monday === thisMonday() ? "This week" : <Link href="/week" style={{ color: C.secondary }}>Back to this week</Link>}
             {" · "}
-            <span style={{ fontWeight: 600, color: published ? "#1a6b2f" : C.offText }}>{published ? "Published" : "Draft"}</span>
+            <span style={{ fontWeight: 600, color: published ? "#1a6b2f" : C.offText, transition: "color 0.4s ease" }}>
+              {isPast && published ? <><span aria-hidden>&#10003;</span> Done</> : published ? "Published" : "Draft"}
+            </span>
           </div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -258,7 +265,11 @@ function WeekPage() {
           {shifts.length > 0 && <button onClick={downloadCSV} style={btn()}>Hours CSV</button>}
           {published
             ? <button onClick={unpublish} style={btn("ghost")}>Unpublish</button>
-            : <button onClick={publish} disabled={busy || shifts.length === 0} style={{ ...btn("primary"), opacity: shifts.length ? 1 : 0.5 }}>Publish to team</button>}
+            : <button onClick={publish} disabled={busy || shifts.length === 0} style={{
+                ...btn("primary"), opacity: shifts.length ? 1 : 0.5,
+                transition: "all 0.3s ease",
+                ...(busy ? { background: "#1a6b2f", borderColor: "#1a6b2f" } : {}),
+              }}>{busy ? "Publishing…" : "Publish to team"}</button>}
         </div>
       </div>
 
@@ -300,14 +311,16 @@ function WeekPage() {
       )}
 
       {staff.length === 0 ? (
-        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 32, textAlign: "center" }}>
-          <p style={{ fontSize: 15, color: C.dark, margin: "0 0 12px" }}>Add your team first, then build the week here.</p>
+        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "40px 32px", textAlign: "center" }}>
+          <div style={{ fontSize: 28, marginBottom: 12 }} aria-hidden>&#128197;</div>
+          <p style={{ fontSize: 16, fontWeight: 600, color: C.dark, margin: "0 0 6px" }}>Your roster starts with your team</p>
+          <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 16px", lineHeight: 1.5 }}>Add the people you roster, then come back here to build the week.</p>
           <Link href="/team" style={{ ...btn("primary"), textDecoration: "none", display: "inline-block" }}>Add team members</Link>
         </div>
       ) : isMobile ? (
-        <DayCards days={days} staff={staff} shifts={shifts} offOn={offOn} onAdd={newShift} onEdit={editShift} />
+        <DayCards days={days} staff={staff} shifts={shifts} offOn={offOn} onAdd={newShift} onEdit={editShift} cascadeIds={cascadeIds} />
       ) : (
-        <Grid days={days} staff={staff} shifts={shifts} hours={hoursByStaff} offOn={offOn} onAdd={newShift} onEdit={editShift} />
+        <Grid days={days} staff={staff} shifts={shifts} hours={hoursByStaff} offOn={offOn} onAdd={newShift} onEdit={editShift} cascadeIds={cascadeIds} />
       )}
 
       {draft && (
@@ -316,10 +329,13 @@ function WeekPage() {
       )}
 
       {justPublished && (
-        <Modal title="Roster published" onClose={() => setJustPublished(false)}>
+        <Modal title="Done — roster published" onClose={() => setJustPublished(false)}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, padding: "10px 14px", background: "#e8f5e9", borderRadius: C.r2 }}>
+            <span style={{ fontSize: 20 }} role="img" aria-label="checkmark">&#x2714;</span>
+            <span style={{ fontSize: 14, color: "#1a6b2f", fontWeight: 600 }}>Your team can see this week&apos;s roster now.</span>
+          </div>
           <p style={{ fontSize: 14, color: C.secondary, lineHeight: 1.5, marginTop: 0 }}>
-            Let your team know — paste the team link in your staff group chat, or send the PDF.
-            The link stays the same every week and always shows the latest roster.
+            Paste the team link in your group chat, or send the PDF. The link stays the same every week.
           </p>
           <div style={{ display: "grid", gap: 8 }}>
             <button onClick={copyTeamLink} style={btn("primary")}>{linkCopied ? "Link copied ✓ — paste it in your group chat" : "Copy team link"}</button>
@@ -343,11 +359,12 @@ function Banner({ children, onClose }: { children: React.ReactNode; onClose?: ()
 
 type OffOn = (staffId: string, date: string) => TimeOff | undefined;
 
-function Chip({ s, onClick }: { s: Shift; onClick: () => void }) {
+function Chip({ s, onClick, cascade, cascadeDelay = 0 }: { s: Shift; onClick: () => void; cascade?: boolean; cascadeDelay?: number }) {
   return (
-    <button onClick={(e) => { e.stopPropagation(); onClick(); }} style={{
+    <button onClick={(e) => { e.stopPropagation(); onClick(); }} className={cascade ? "cascade-in" : undefined} style={{
       display: "block", width: "100%", textAlign: "left", background: C.shiftBg, border: `1px solid ${C.shiftBorder}`,
       color: C.shiftText, borderRadius: C.r1, padding: "4px 6px", fontSize: 12, fontWeight: 700, cursor: "pointer", lineHeight: 1.3,
+      ...(cascade ? { animationDelay: `${cascadeDelay}ms` } : {}),
     }}>
       {fmtTime(s.start_time)}–{fmtTime(s.end_time)}
       {s.role && <span style={{ display: "block", fontWeight: 500, opacity: 0.8 }}>{s.role}</span>}
@@ -363,11 +380,12 @@ function OffChip({ t }: { t: TimeOff }) {
   );
 }
 
-function Grid({ days, staff, shifts, hours, offOn, onAdd, onEdit }: {
+function Grid({ days, staff, shifts, hours, offOn, onAdd, onEdit, cascadeIds }: {
   days: string[]; staff: Staff[]; shifts: Shift[]; hours: Map<string, number>; offOn: OffOn;
-  onAdd: (staffId: string, date: string) => void; onEdit: (s: Shift) => void;
+  onAdd: (staffId: string, date: string) => void; onEdit: (s: Shift) => void; cascadeIds: Set<string>;
 }) {
   const cols = "160px repeat(7, minmax(90px, 1fr)) 60px";
+  let cascadeIdx = 0;
   return (
     <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, overflowX: "auto" }}>
       <div style={{ display: "grid", gridTemplateColumns: cols, background: C.bg, borderBottom: `1px solid ${C.border}`, minWidth: 860 }}>
@@ -389,7 +407,7 @@ function Grid({ days, staff, shifts, hours, offOn, onAdd, onEdit }: {
               <div key={d} onClick={() => onAdd(p.id, d)} title="Add shift"
                 style={{ padding: 4, minHeight: 52, borderLeft: `1px solid ${C.divider}`, cursor: "pointer", display: "flex", flexDirection: "column", gap: 3, justifyContent: "center" }}>
                 {off && <OffChip t={off} />}
-                {mine.map((s) => <Chip key={s.id} s={s} onClick={() => onEdit(s)} />)}
+                {mine.map((s) => { const isCascade = cascadeIds.has(s.id); const delay = isCascade ? cascadeIdx++ * 40 : 0; return <Chip key={s.id} s={s} onClick={() => onEdit(s)} cascade={isCascade} cascadeDelay={delay} />; })}
                 {!off && mine.length === 0 && <div style={{ textAlign: "center", color: C.faint, fontSize: 16 }}>+</div>}
               </div>
             );
@@ -403,9 +421,9 @@ function Grid({ days, staff, shifts, hours, offOn, onAdd, onEdit }: {
   );
 }
 
-function DayCards({ days, staff, shifts, offOn, onAdd, onEdit }: {
+function DayCards({ days, staff, shifts, offOn, onAdd, onEdit, cascadeIds }: {
   days: string[]; staff: Staff[]; shifts: Shift[]; offOn: OffOn;
-  onAdd: (staffId: string, date: string) => void; onEdit: (s: Shift) => void;
+  onAdd: (staffId: string, date: string) => void; onEdit: (s: Shift) => void; cascadeIds: Set<string>;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -418,9 +436,9 @@ function DayCards({ days, staff, shifts, offOn, onAdd, onEdit }: {
               <span style={{ fontSize: 13, fontWeight: 700, color: C.dark }}>{fmtDay(d)}</span>
               <button onClick={() => onAdd(staff[0].id, d)} style={{ ...btn("ghost"), marginLeft: "auto", padding: "4px 8px", fontSize: 13 }}>+ Add shift</button>
             </div>
-            {dayShifts.length === 0 && offs.length === 0 && <div style={{ padding: "10px 14px", fontSize: 13, color: C.faint }}>No shifts</div>}
+            {dayShifts.length === 0 && offs.length === 0 && <div style={{ padding: "10px 14px", fontSize: 13, color: C.faint }}>Nothing yet — tap + to add a shift</div>}
             {dayShifts.map((s) => (
-              <button key={s.id} onClick={() => onEdit(s)} style={{ display: "flex", width: "100%", gap: 10, alignItems: "center", padding: "10px 14px", background: "none", border: "none", borderTop: `1px solid ${C.divider}`, cursor: "pointer", textAlign: "left" }}>
+              <button key={s.id} onClick={() => onEdit(s)} className={cascadeIds.has(s.id) ? "cascade-in" : undefined} style={{ display: "flex", width: "100%", gap: 10, alignItems: "center", padding: "10px 14px", background: "none", border: "none", borderTop: `1px solid ${C.divider}`, cursor: "pointer", textAlign: "left" }}>
                 <span style={{ fontSize: 14, fontWeight: 600, color: C.dark, flex: 1 }}>{staff.find((p) => p.id === s.staff_id)?.name}</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: C.shiftText, background: C.shiftBg, border: `1px solid ${C.shiftBorder}`, borderRadius: C.r1, padding: "3px 8px" }}>
                   {fmtTime(s.start_time)}–{fmtTime(s.end_time)}{s.role ? ` · ${s.role}` : ""}

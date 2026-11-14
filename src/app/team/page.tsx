@@ -76,7 +76,11 @@ function TeamPage() {
 
         <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, overflow: "hidden" }}>
           {active.length === 0 && (
-            <p style={{ padding: 24, margin: 0, textAlign: "center", color: C.muted, fontSize: 14 }}>No one yet — add your first team member above.</p>
+            <div style={{ padding: "32px 24px", margin: 0, textAlign: "center" }}>
+              <div style={{ fontSize: 28, marginBottom: 8 }} aria-hidden>&#128075;</div>
+              <p style={{ fontSize: 15, fontWeight: 600, color: C.dark, margin: "0 0 4px" }}>No one here yet</p>
+              <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Type a name above to add your first team member.</p>
+            </div>
           )}
           {active.map((s, i) => (
             <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderTop: i ? `1px solid ${C.divider}` : "none", flexWrap: "wrap" }}>
