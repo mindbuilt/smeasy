@@ -78,10 +78,8 @@ export default function Home() {
 
       {/* Hero image */}
       <section style={{ ...wrap, marginBottom: 48 }}>
-        <ScrollReveal>
-          <Image src="/hero.jpg" alt="A café owner building a staff roster on their laptop" width={1400} height={782}
-            style={{ width: "100%", height: "auto", borderRadius: C.r2, display: "block" }} priority />
-        </ScrollReveal>
+        <Image src="/hero.jpg" alt="A café owner building a staff roster on their laptop" width={1400} height={782}
+          style={{ width: "100%", height: "auto", borderRadius: C.r2, display: "block" }} priority />
       </section>
 
       {/* Roster preview */}
