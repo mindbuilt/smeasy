@@ -6,9 +6,13 @@ import { addDays, fmtDay, fmtTime, fmtWeek, shiftHours, thisMonday, weekDates } 
 import { downloadRosterPdf, PdfShift } from "@/lib/rosterPdf";
 import Link from "next/link";
 import { C, btn, input } from "@/components/ui";
+import { DayExtras, RolePill } from "@/components/StaffBits";
 
 type TeamShift = PdfShift & { id: string };
-type View = { business: string; week_start: string; published: boolean; staff: string[]; shifts: TeamShift[] };
+type View = {
+  business: string; week_start: string; published: boolean; staff: string[]; shifts: TeamShift[];
+  state: string | null; roles: string[]; day_notes: { date: string; note: string }[];
+};
 
 const ME_KEY = "smeasy_me";
 
@@ -72,7 +76,7 @@ export default function TeamRoster() {
               <option value="">Highlight my shifts…</option>
               {view.staff.map((n) => <option key={n}>{n}</option>)}
             </select>
-            <button onClick={() => downloadRosterPdf({ business: view.business, weekStart: view.week_start, shifts: view.shifts, teamLink: window.location.href })}
+            <button onClick={() => downloadRosterPdf({ business: view.business, weekStart: view.week_start, shifts: view.shifts, roles: view.roles ?? [], state: view.state, dayNotes: view.day_notes ?? [], teamLink: window.location.href })}
               style={btn()}>Download PDF</button>
           </div>
 
@@ -80,10 +84,13 @@ export default function TeamRoster() {
             <Card>
               <div style={{ fontSize: 13, color: C.muted, marginBottom: 4 }}>{me}&apos;s shifts · {myHours.toFixed(1).replace(/\.0$/, "")} hours</div>
               {mine.length === 0 ? <div style={{ fontSize: 15, color: C.secondary }}>Not rostered on this week.</div> : mine.map((s) => (
-                <div key={s.id} style={{ display: "flex", gap: 10, padding: "6px 0", fontSize: 15 }}>
-                  <strong style={{ width: 96, color: C.dark }}>{fmtDay(s.date)}</strong>
-                  <span style={{ fontWeight: 700, color: C.shiftText }}>{fmtTime(s.start_time)} – {fmtTime(s.end_time)}</span>
-                  <span style={{ marginLeft: "auto", fontSize: 13, color: C.muted }}>{s.role}</span>
+                <div key={s.id} style={{ padding: "6px 0", fontSize: 15 }}>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <strong style={{ width: 96, color: C.dark }}>{fmtDay(s.date)}</strong>
+                    <span style={{ fontWeight: 700, color: C.dark }}>{fmtTime(s.start_time)} – {fmtTime(s.end_time)}</span>
+                    <span style={{ marginLeft: "auto" }}><RolePill role={s.role} roles={view.roles ?? []} /></span>
+                  </div>
+                  {s.notes && <div style={{ fontSize: 13, color: C.secondary, marginTop: 2 }}>📝 {s.notes}</div>}
                 </div>
               ))}
             </Card>
@@ -94,15 +101,19 @@ export default function TeamRoster() {
               const day = view.shifts.filter((s) => s.date === d);
               return (
                 <Card key={d}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: C.dark, marginBottom: day.length ? 6 : 0 }}>{fmtDay(d)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.dark, marginBottom: 2 }}>{fmtDay(d)}</div>
+                  <DayExtras date={d} state={view.state} dayNotes={view.day_notes ?? []} />
                   {day.length === 0 && <div style={{ fontSize: 13, color: C.faint }}>No shifts</div>}
                   {day.map((s) => {
                     const isMe = s.staff_name === me;
                     return (
-                      <div key={s.id} style={{ display: "flex", gap: 10, padding: "4px 0", fontSize: 14, color: isMe ? C.shiftText : C.secondary, fontWeight: isMe ? 700 : 400 }}>
-                        <span style={{ flex: 1 }}>{s.staff_name}</span>
-                        <span>{fmtTime(s.start_time)}–{fmtTime(s.end_time)}</span>
-                        {s.role && <span style={{ color: C.muted, fontWeight: 400, minWidth: 64, textAlign: "right" }}>{s.role}</span>}
+                      <div key={s.id} style={{ padding: "4px 0", fontSize: 14, color: isMe ? C.dark : C.secondary, fontWeight: isMe ? 700 : 400 }}>
+                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                          <span style={{ flex: 1 }}>{s.staff_name}</span>
+                          <span>{fmtTime(s.start_time)}–{fmtTime(s.end_time)}</span>
+                          <RolePill role={s.role} roles={view.roles ?? []} />
+                        </div>
+                        {s.notes && <div style={{ fontSize: 12, fontWeight: 400, color: C.secondary }}>📝 {s.notes}</div>}
                       </div>
                     );
                   })}
@@ -113,7 +124,10 @@ export default function TeamRoster() {
         </>
       )}
 
-      <p style={{ fontSize: 12, color: C.muted, marginTop: 28 }}>Bookmark this page or add it to your home screen — it always shows the latest published roster.</p>
+      <p style={{ fontSize: 13, color: C.secondary, marginTop: 24 }}>
+        Want your shifts in your phone&apos;s calendar? Ask your manager for your personal link.
+      </p>
+      <p style={{ fontSize: 12, color: C.muted, marginTop: 12 }}>Bookmark this page or add it to your home screen — it always shows the latest published roster.</p>
       <p style={{ fontSize: 12, color: C.muted, marginTop: 8 }}>
         <Link href="/" style={{ color: C.secondary }}>Smeasy</Link>
         {" · "}

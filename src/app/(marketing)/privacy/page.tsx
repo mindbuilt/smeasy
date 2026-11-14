@@ -66,6 +66,7 @@ export default function Privacy() {
       <p style={p}>
         Staff view published rosters through a link, without an account. If a staff member picks their name on the team roster link to highlight their shifts, that choice is saved only in their own browser. It isn&apos;t sent to us.
         Requesting time off through a personal link sends us the dates and optional reason entered.
+        If a staff member subscribes to their shift calendar, their calendar app (such as Apple, Google or Microsoft) regularly fetches their published shifts from us using their personal link.
       </p>
       <h3 style={h3}>From website visitors</h3>
       <p style={p}>

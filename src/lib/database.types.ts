@@ -47,6 +47,7 @@ export type Database = {
           owner_id: string
           payroll_settings: Json | null
           roles: string[]
+          state: string | null
           team_token: string
           timezone: string
         }
@@ -57,6 +58,7 @@ export type Database = {
           owner_id?: string
           payroll_settings?: Json | null
           roles?: string[]
+          state?: string | null
           team_token?: string
           timezone?: string
         }
@@ -67,10 +69,43 @@ export type Database = {
           owner_id?: string
           payroll_settings?: Json | null
           roles?: string[]
+          state?: string | null
           team_token?: string
           timezone?: string
         }
         Relationships: []
+      }
+      day_notes: {
+        Row: {
+          business_id: string
+          created_at: string
+          date: string
+          id: string
+          note: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          date: string
+          id?: string
+          note: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "day_notes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rosters: {
         Row: {
@@ -115,9 +150,10 @@ export type Database = {
           date: string
           end_time: string
           id: string
+          notes: string | null
           role: string | null
           roster_id: string
-          staff_id: string
+          staff_id: string | null
           start_time: string
         }
         Insert: {
@@ -127,9 +163,10 @@ export type Database = {
           date: string
           end_time: string
           id?: string
+          notes?: string | null
           role?: string | null
           roster_id: string
-          staff_id: string
+          staff_id?: string | null
           start_time: string
         }
         Update: {
@@ -139,9 +176,10 @@ export type Database = {
           date?: string
           end_time?: string
           id?: string
+          notes?: string | null
           role?: string | null
           roster_id?: string
-          staff_id?: string
+          staff_id?: string | null
           start_time?: string
         }
         Relationships: [
@@ -271,6 +309,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_staff_calendar: { Args: { p_token: string }; Returns: Json }
       get_staff_roster: {
         Args: { p_token: string; p_week?: string }
         Returns: Json

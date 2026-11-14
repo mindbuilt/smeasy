@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { STATES, STATE_TIMEZONE, type State } from "@/lib/holidays";
 import Link from "next/link";
 import { C, btn, input, label } from "@/components/ui";
 
@@ -16,6 +17,7 @@ export default function Welcome() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [kind, setKind] = useState("Café / restaurant");
+  const [state, setState] = useState<State | "">("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +35,7 @@ export default function Welcome() {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    const { error } = await supabase().from("businesses").insert({ name: name.trim(), roles: PRESETS[kind] });
+    const { error } = await supabase().from("businesses").insert({ name: name.trim(), roles: PRESETS[kind], state: state || null, timezone: state ? STATE_TIMEZONE[state] : "Australia/Sydney" });
     setSaving(false);
     if (error) setError("Couldn't save that. Please try again.");
     else router.replace("/team?new=1");
@@ -43,7 +45,7 @@ export default function Welcome() {
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <form onSubmit={save} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "32px 28px", width: "100%", maxWidth: 420 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, color: C.dark, margin: "0 0 6px" }}>Welcome to Smeasy</h1>
-        <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 20px" }}>Two quick questions, then you can add your team.</p>
+        <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 20px" }}>Three quick questions, then you can add your team.</p>
 
         <label style={label} htmlFor="name">Business name</label>
         <input id="name" required autoFocus value={name} onChange={(e) => setName(e.target.value)}
@@ -62,6 +64,13 @@ export default function Welcome() {
           ))}
         </div>
         <p style={{ fontSize: 12, color: C.muted, margin: "8px 0 0" }}>These are your shift roles. You can change them any time.</p>
+
+        <label style={{ ...label, marginTop: 18 }} htmlFor="state">State or territory</label>
+        <select id="state" style={input} value={state} onChange={(e) => setState(e.target.value as State | "")}>
+          <option value="">Choose…</option>
+          {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0" }}>So we can mark your public holidays on the roster.</p>
 
         {error && <p style={{ color: C.danger, fontSize: 13 }}>{error}</p>}
         <button type="submit" disabled={saving || !name.trim()} style={{ ...btn("primary"), width: "100%", marginTop: 20, opacity: saving || !name.trim() ? 0.6 : 1 }}>

@@ -1,4 +1,6 @@
 import { fmtDay, fmtTime, fmtWeek, shiftHours, weekDates } from "./dates";
+import { roleSwatch } from "./roleColors";
+import { holidayOn } from "./holidays";
 
 export interface PdfShift {
   date: string;
@@ -6,7 +8,8 @@ export interface PdfShift {
   end_time: string;
   break_minutes: number;
   role: string | null;
-  staff_name: string;
+  notes?: string | null;
+  staff_name: string; // "" = unfilled
 }
 
 /**
@@ -18,27 +21,38 @@ export async function downloadRosterPdf(opts: {
   weekStart: string;
   shifts: PdfShift[];
   people?: string[]; // include people with no shifts (manager view)
+  roles?: string[];
+  state?: string | null;
+  dayNotes?: { date: string; note: string }[];
   teamLink?: string;
 }) {
+  const roles = opts.roles ?? [];
   const [{ jsPDF }, { autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   const days = weekDates(opts.weekStart);
-  const names = Array.from(new Set([...(opts.people ?? []), ...opts.shifts.map((s) => s.staff_name)]))
+  const named = opts.shifts.filter((s) => s.staff_name);
+  const names = Array.from(new Set([...(opts.people ?? []), ...named.map((s) => s.staff_name)]))
     .sort((a, b) => a.localeCompare(b));
+  const hasUnfilled = opts.shifts.some((s) => !s.staff_name);
+  const rowNames = hasUnfilled ? ["", ...names] : names;
+  const cellRole: (string | null)[][] = [];
 
-  const body = names.map((name) => {
+  const body = rowNames.map((name) => {
     const mine = opts.shifts.filter((s) => s.staff_name === name);
-    const hours = mine.reduce((h, s) => h + shiftHours(s.start_time, s.end_time, s.break_minutes), 0);
-    return [
-      name,
-      ...days.map((d) =>
-        mine
-          .filter((s) => s.date === d)
-          .sort((a, b) => a.start_time.localeCompare(b.start_time))
-          .map((s) => `${fmtTime(s.start_time)}–${fmtTime(s.end_time)}${s.role ? `\n${s.role}` : ""}`)
-          .join("\n\n"),
-      ),
-      hours ? hours.toFixed(1).replace(/\.0$/, "") : "",
-    ];
+    const hours = name ? mine.reduce((h, s) => h + shiftHours(s.start_time, s.end_time, s.break_minutes), 0) : 0;
+    const roleRow: (string | null)[] = [];
+    const cells = days.map((d) => {
+      const day = mine.filter((s) => s.date === d).sort((a, b) => a.start_time.localeCompare(b.start_time));
+      roleRow.push(day.length ? day[0].role ?? "" : null);
+      return day
+        .map((s) => `${fmtTime(s.start_time)}–${fmtTime(s.end_time)}${s.role ? `\n${s.role}` : ""}${s.notes ? `\n${s.notes}` : ""}`)
+        .join("\n\n");
+    });
+    cellRole.push(roleRow);
+    return [name || "Unfilled", ...cells, hours ? hours.toFixed(1).replace(/\.0$/, "") : ""];
+  });
+  const header = days.map((d) => {
+    const extra = [holidayOn(d, opts.state), opts.dayNotes?.find((n) => n.date === d)?.note].filter(Boolean);
+    return [fmtDay(d).replace(/ \w+$/, ""), ...extra].join("\n");
   });
 
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
@@ -55,7 +69,7 @@ export async function downloadRosterPdf(opts: {
   autoTable(doc, {
     startY: 25,
     margin: { left: 12, right: 12 },
-    head: [["", ...days.map((d) => fmtDay(d).replace(/ \w+$/, "")), "Hrs"]],
+    head: [["", ...header, "Hrs"]],
     body,
     theme: "grid",
     styles: { fontSize: 9, cellPadding: 2, valign: "top", lineColor: [220, 216, 205], textColor: [33, 31, 26] },
@@ -67,7 +81,12 @@ export async function downloadRosterPdf(opts: {
     },
     didParseCell: (data) => {
       if (data.section === "body" && data.column.index > 0 && data.column.index < 8 && data.cell.raw) {
-        data.cell.styles.fillColor = [234, 249, 200];
+        const unfilledRow = hasUnfilled && data.row.index === 0;
+        const role = cellRole[data.row.index]?.[data.column.index - 1];
+        data.cell.styles.fillColor = unfilledRow ? [255, 240, 238] : roleSwatch(role || null, roles).pdf;
+      }
+      if (data.section === "head" && data.column.index > 0 && data.column.index < 8) {
+        data.cell.styles.fontSize = 8;
       }
     },
   });

@@ -14,10 +14,11 @@ have been removed from the site until built.
 - [ ] **Open Graph image** for link previews.
 
 ## 2. Core value — next
+- [x] Role colours, shift notes, day notes, daily cover line, unfilled shifts, staff calendar subscription (Nov 2026).
 - [ ] ★ **Xero and MYOB timesheet exports** — ready-to-import files; ask for payroll settings (platform, pay items) at first export, not at signup.
 - [ ] ★ **Notify staff on publish** — email first (Resend, near-free), SMS later (ClickSend/MessageMedia, ~5–8c each; likely a paid feature). Include "roster changed" notices for published weeks.
 - [ ] ★ **Staff availability** — staff mark days/times they can't work; shown on the grid.
-- [ ] **Public holidays** — highlight AU public holidays by state on the grid.
+- [x] **Public holidays** — marked by state (Nager.Date calendar, fetched at build).
 - [ ] **Smarter wage estimate** — optional weekend / public-holiday multipliers per business (still an estimate, not award interpretation).
 - [ ] **Roster checks (guidance only)** — flag very short shifts and short breaks between shifts; link to Fair Work rather than claiming compliance.
 - [ ] **Multiple managers per business** (old "Can manage" permission).

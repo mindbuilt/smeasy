@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { addDays, fmtDay, fmtTime, fmtWeek, shiftHours, thisMonday, toISO, weekDates } from "@/lib/dates";
 import Link from "next/link";
 import { C, btn, input, label } from "@/components/ui";
+import { CalendarButtons, DayExtras, RolePill } from "@/components/StaffBits";
 
 function nameHue(name: string): number {
   let h = 0;
@@ -14,11 +15,12 @@ function nameHue(name: string): number {
 
 type StaffShift = {
   id: string; date: string; start_time: string; end_time: string;
-  break_minutes: number; role: string | null; staff_name: string; mine: boolean;
+  break_minutes: number; role: string | null; notes: string | null; staff_name: string; mine: boolean;
 };
 type StaffTimeOff = { id: string; start_date: string; end_date: string; reason: string; status: string };
 type View = {
   business: string; staff_name: string; week_start: string; published: boolean;
+  state: string | null; roles: string[]; day_notes: { date: string; note: string }[];
   shifts: StaffShift[]; time_off: StaffTimeOff[];
 };
 
@@ -101,10 +103,17 @@ export default function StaffRoster() {
         <Card>
           <div style={{ fontSize: 13, color: C.muted, marginBottom: 8 }}>Your shifts · {myHours.toFixed(1).replace(/\.0$/, "")} hours</div>
           {mine.map((s) => (
-            <div key={s.id} style={{ display: "flex", alignItems: "baseline", gap: 10, padding: "10px 0", borderTop: `1px solid ${C.divider}` }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: C.dark, width: 96 }}>{fmtDay(s.date)}</span>
-              <span style={{ fontSize: 16, fontWeight: 700, color: C.shiftText }}>{fmtTime(s.start_time)} – {fmtTime(s.end_time)}</span>
-              <span style={{ fontSize: 13, color: C.muted, marginLeft: "auto" }}>{s.role}{s.break_minutes ? ` · ${s.break_minutes}m break` : ""}</span>
+            <div key={s.id} style={{ padding: "10px 0", borderTop: `1px solid ${C.divider}` }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: C.dark, width: 96 }}>{fmtDay(s.date)}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: C.dark }}>{fmtTime(s.start_time)} – {fmtTime(s.end_time)}</span>
+                <span style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
+                  <RolePill role={s.role} roles={view.roles ?? []} />
+                  {s.break_minutes ? <span style={{ fontSize: 12, color: C.muted }}>{s.break_minutes}m break</span> : null}
+                </span>
+              </div>
+              <DayExtras date={s.date} state={view.state} dayNotes={view.day_notes ?? []} />
+              {s.notes && <div style={{ fontSize: 13, color: C.secondary, marginTop: 2 }}>📝 {s.notes}</div>}
             </div>
           ))}
         </Card>
@@ -122,10 +131,12 @@ export default function StaffRoster() {
                 if (!day.length) return null;
                 return (
                   <div key={d} style={{ padding: "8px 0", borderTop: `1px solid ${C.divider}` }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: C.dark, marginBottom: 4 }}>{fmtDay(d)}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.dark, marginBottom: 2 }}>{fmtDay(d)}</div>
+                    <DayExtras date={d} state={view.state} dayNotes={view.day_notes ?? []} />
                     {day.map((s) => (
-                      <div key={s.id} style={{ fontSize: 14, color: s.mine ? C.shiftText : C.secondary, fontWeight: s.mine ? 700 : 400 }}>
-                        {s.mine ? "You" : s.staff_name} · {fmtTime(s.start_time)}–{fmtTime(s.end_time)}{s.role ? ` · ${s.role}` : ""}
+                      <div key={s.id} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14, padding: "2px 0", color: s.mine ? C.dark : C.secondary, fontWeight: s.mine ? 700 : 400 }}>
+                        <span style={{ flex: 1 }}>{s.mine ? "You" : s.staff_name} · {fmtTime(s.start_time)}–{fmtTime(s.end_time)}</span>
+                        <RolePill role={s.role} roles={view.roles ?? []} />
                       </div>
                     ))}
                   </div>
@@ -151,6 +162,8 @@ export default function StaffRoster() {
           ? <TimeOffForm token={token!} onDone={() => { setAsking(false); load(); }} onCancel={() => setAsking(false)} />
           : <button onClick={() => setAsking(true)} style={{ ...btn(), marginTop: 8 }}>Request time off</button>}
       </div>
+
+      <CalendarButtons token={token!} />
 
       <p style={{ fontSize: 12, color: C.muted, marginTop: 32 }}>Bookmark this page — it&apos;s your personal link and stays the same every week.</p>
       <p style={{ fontSize: 12, color: C.muted, marginTop: 8 }}>

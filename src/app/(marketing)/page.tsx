@@ -29,11 +29,11 @@ const steps = [
 
 const features = [
   { t: "Copy last week", d: "Most weeks look the same. Copy last week in one tap, then tweak what's different." },
-  { t: "Real-world shifts", d: "Split shifts, unpaid breaks and late closes past midnight — all counted correctly." },
+  { t: "See the week at a glance", d: "Shifts colour-coded by role, public holidays marked, and a daily count of who's on and any unfilled shifts." },
   { t: "One link, or a PDF", d: "Pin the team link in your group chat, or print a one-page A4 roster for the noticeboard." },
   { t: "Time-off requests", d: "Staff ask for days off from their phone. Approve or decline right on the roster." },
   { t: "Hours for payroll", d: "Download every shift's hours as a spreadsheet for your bookkeeper, Xero or MYOB." },
-  { t: "Works on any device", d: "Day-by-day cards on mobile, a full week grid on desktop. Nothing to install." },
+  { t: "In their calendar", d: "Staff subscribe once and their shifts appear in their phone's calendar — updated when you change the roster." },
 ];
 
 const jsonLd = {

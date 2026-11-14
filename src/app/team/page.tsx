@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useManager } from "@/lib/useManager";
 import type { Staff } from "@/lib/types";
+import { STATES, STATE_TIMEZONE, type State } from "@/lib/holidays";
 import { AppShell, C, Loading, Modal, btn, input, label } from "@/components/ui";
 
 function staffLink(s: Staff) {
@@ -12,7 +13,7 @@ function staffLink(s: Staff) {
 }
 
 function smsHref(s: Staff, business: string) {
-  const body = `Hi ${s.name.split(" ")[0]}, here's your ${business} roster link — bookmark it: ${staffLink(s)}`;
+  const body = `Hi ${s.name.split(" ")[0]}, here's your personal ${business} roster link. Bookmark it to see your shifts, request time off, and add your shifts to your phone's calendar: ${staffLink(s)}`;
   return `sms:${s.mobile ?? ""}?&body=${encodeURIComponent(body)}`;
 }
 
@@ -112,6 +113,21 @@ function TeamPage() {
             ))}
           </div>
         )}
+
+        <div id="settings" style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: C.dark, margin: "0 0 4px" }}>Business settings</h2>
+          <label style={{ ...label, marginTop: 12 }} htmlFor="state">State or territory (for public holidays on your roster)</label>
+          <select id="state" style={{ ...input, maxWidth: 360 }} value={business.state ?? ""} onChange={async (e) => {
+            const state = (e.target.value || null) as State | null;
+            const { data } = await supabase().from("businesses")
+              .update({ state, timezone: state ? STATE_TIMEZONE[state] : "Australia/Sydney" })
+              .eq("id", business.id).select().single();
+            if (data) setBusiness(data);
+          }}>
+            <option value="">Not set</option>
+            {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
 
         <RolesEditor key={business.roles.join("|")} roles={business.roles} onSave={async (roles) => {
           const { data } = await supabase().from("businesses").update({ roles }).eq("id", business.id).select().single();
@@ -221,9 +237,9 @@ function RolesEditor({ roles, onSave }: { roles: string[]; onSave: (r: string[])
   const [next, setNext] = useState("");
   const dirty = list.join("|") !== roles.join("|");
   return (
-    <div style={{ marginTop: 32 }}>
-      <h2 style={{ fontSize: 16, fontWeight: 700, color: C.dark, margin: "0 0 4px" }}>Shift roles</h2>
-      <p style={{ fontSize: 13, color: C.muted, margin: "0 0 10px" }}>The jobs people can be rostered on.</p>
+    <div style={{ marginTop: 24 }}>
+      <h2 style={{ fontSize: 15, fontWeight: 700, color: C.dark, margin: "0 0 4px" }}>Shift roles</h2>
+      <p style={{ fontSize: 13, color: C.muted, margin: "0 0 10px" }}>The jobs people can be rostered on. Each role gets its own colour on the roster, in this order.</p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
         {list.map((r) => (
           <span key={r} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 999, background: C.white, border: `1px solid ${C.border}`, fontSize: 13 }}>
