@@ -30,6 +30,7 @@ have been removed from the site until built.
 - [ ] ★ **Drag-and-drop** shifts on desktop.
 - [ ] **Multiple locations** per business.
 - [ ] **Installable app (PWA)** and offline viewing of the published roster.
+- [ ] **Pay details as a Pro feature?** — Settings → Pay details (hourly rates, payroll IDs, base-rate estimate, pay columns in CSV) is built and free for now. Decide whether it moves to Pro when billing exists.
 - [ ] **Pricing and billing** — tiers decided (Free ≤10 staff with every feature; Pro $19/month + GST for more staff + priority email support). Build: staff-limit check, Stripe billing, advance email before charging.
 
 ## SEO and content

@@ -58,7 +58,7 @@ export default function Privacy() {
       <h3 style={h3}>About staff (entered by the account holder)</h3>
       <ul style={ul}>
         <L>Name. This is the only required field.</L>
-        <L>Optional: mobile number, email address, usual role and hourly rate.</L>
+        <L>Optional: mobile number, email address and usual role. If the account holder turns on Pay details, also hourly rate and payroll ID.</L>
         <L>Roster information: shifts (dates, times, breaks and roles) and whether a roster has been published.</L>
         <L>Time-off requests: dates, the optional reason given, and whether the request was approved or declined.</L>
       </ul>
@@ -83,7 +83,7 @@ export default function Privacy() {
 
       <h2 style={h2}>How we use information</h2>
       <ul style={ul}>
-        <L>To provide SMEasy: signing in, building, publishing and sharing rosters, calculating hours and wage estimates, and handling time-off requests.</L>
+        <L>To provide SMEasy: signing in, building, publishing and sharing rosters, calculating hours and (if turned on) wage estimates, and handling time-off requests.</L>
         <L>To send sign-in emails.</L>
         <L>To keep SMEasy secure and fix problems.</L>
         <L>To improve our public website, using analytics from public pages only, where you&apos;ve agreed to it.</L>

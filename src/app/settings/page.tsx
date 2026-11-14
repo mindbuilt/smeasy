@@ -7,6 +7,7 @@ import { useManager } from "@/lib/useManager";
 import SetPassword from "@/components/SetPassword";
 import { STATES, STATE_TIMEZONE, type State } from "@/lib/holidays";
 import { roleSwatch } from "@/lib/roleColors";
+import { payDetailsOn, withPayDetails } from "@/lib/pay";
 import { AppShell, C, Loading, btn, input, label } from "@/components/ui";
 
 const card = { background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "18px 18px 20px", marginBottom: 16 } as const;
@@ -45,6 +46,23 @@ export default function SettingsPage() {
 
         <section style={card}>
           <RolesEditor key={business.roles.join("|")} roles={business.roles} onSave={(roles) => update({ roles })} />
+        </section>
+
+        <section id="pay" style={card}>
+          <h2 style={h2}>Pay details <span style={{ fontSize: 12, fontWeight: 500, color: C.muted }}>(optional)</span></h2>
+          <p style={help}>
+            Turn this on to add each person&apos;s hourly rate and payroll ID on the Team page. SMEasy then shows a base-rate wage estimate on the roster,
+            and adds payroll ID, hourly rate and base pay to your hours CSV.
+          </p>
+          <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: C.dark, cursor: "pointer" }}>
+            <input type="checkbox" checked={payDetailsOn(business)} style={{ width: 18, height: 18, marginTop: 1, accentColor: C.dark }}
+              onChange={(e) => update({ payroll_settings: withPayDetails(business, e.target.checked) })} />
+            <span>Use pay details</span>
+          </label>
+          <p style={{ fontSize: 12, color: C.muted, margin: "10px 0 0", lineHeight: 1.5 }}>
+            The estimate is hours × the rate you enter. It doesn&apos;t include penalty rates, overtime, allowances or super, and it isn&apos;t award advice.
+            Only you see pay details. They never appear on the team link, personal links or the PDF.
+          </p>
         </section>
 
         <section id="login" style={card}>

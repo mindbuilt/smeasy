@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useManager } from "@/lib/useManager";
 import type { Staff } from "@/lib/types";
+import { payDetailsOn } from "@/lib/pay";
 import { AppShell, C, Loading, Modal, btn, input, label } from "@/components/ui";
 
 function staffLink(s: Staff) {
@@ -123,7 +124,7 @@ function TeamPage() {
       </div>
 
       {editing && (
-        <StaffEditor staff={editing} roles={business.roles} onClose={() => setEditing(null)}
+        <StaffEditor staff={editing} roles={business.roles} pay={payDetailsOn(business)} onClose={() => setEditing(null)}
           onSaved={(s) => { setStaff((all) => all!.map((x) => (x.id === s.id ? s : x))); setEditing(null); }} />
       )}
     </AppShell>
@@ -162,12 +163,13 @@ function TeamLinkCard({ token, onReset }: { token: string; onReset: () => Promis
   );
 }
 
-function StaffEditor({ staff, roles, onClose, onSaved }: {
-  staff: Staff; roles: string[]; onClose: () => void; onSaved: (s: Staff) => void;
+function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
+  staff: Staff; roles: string[]; pay: boolean; onClose: () => void; onSaved: (s: Staff) => void;
 }) {
   const [f, setF] = useState({
     name: staff.name, mobile: staff.mobile ?? "", email: staff.email ?? "",
     default_role: staff.default_role ?? "", hourly_rate: staff.hourly_rate?.toString() ?? "",
+    payroll_id: staff.payroll_id ?? "",
   });
   const [error, setError] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
@@ -178,10 +180,12 @@ function StaffEditor({ staff, roles, onClose, onSaved }: {
     if (rate != null && (Number.isNaN(rate) || rate < 0)) { setError("Hourly rate should be a number."); return; }
     const { data, error } = await supabase().from("staff").update({
       name: f.name.trim(), mobile: f.mobile.trim() || null, email: f.email.trim() || null,
-      default_role: f.default_role || null, hourly_rate: rate,
+      default_role: f.default_role || null,
+      // Pay fields are only edited (and so only saved) when Pay details is on.
+      ...(pay ? { hourly_rate: rate, payroll_id: f.payroll_id.trim() || null } : {}),
       ...patch,
     }).eq("id", staff.id).select().single();
-    if (error) setError("Couldn't save. Please try again.");
+    if (error) setError(error.code === "23505" ? "Someone else already has that payroll ID." : "Couldn't save. Please try again.");
     else if (data) onSaved(data);
   }
 
@@ -196,15 +200,17 @@ function StaffEditor({ staff, roles, onClose, onSaved }: {
             {roles.map((r) => <option key={r}>{r}</option>)}
           </select>
         </div>
-        <details>
-          <summary style={{ fontSize: 13, color: C.secondary, cursor: "pointer" }}>More details (optional)</summary>
-          <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-            <div><label style={label}>Email</label><input style={input} type="email" value={f.email} onChange={set("email")} /></div>
-            <div><label style={label}>Hourly rate — only if you want a rough weekly wage total</label>
+        <div><label style={label}>Email (optional)</label><input style={input} type="email" value={f.email} onChange={set("email")} /></div>
+        {pay && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div><label style={label}>Hourly rate ($)</label>
               <input style={input} inputMode="decimal" value={f.hourly_rate} onChange={set("hourly_rate")} placeholder="e.g. 32.50" />
             </div>
+            <div><label style={label}>Payroll ID</label>
+              <input style={input} value={f.payroll_id} onChange={set("payroll_id")} maxLength={40} placeholder="From Xero, MYOB…" />
+            </div>
           </div>
-        </details>
+        )}
         {error && <p style={{ color: C.danger, fontSize: 13, margin: 0 }}>{error}</p>}
         <button onClick={() => save()} disabled={!f.name.trim()} style={btn("primary")}>Save</button>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
