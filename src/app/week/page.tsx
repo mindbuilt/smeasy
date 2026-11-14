@@ -72,6 +72,8 @@ function WeekPage() {
   const [cascadeIds, setCascadeIds] = useState<Set<string>>(new Set());
   const [dayNotes, setDayNotes] = useState<DayNote[]>([]);
   const [editingDay, setEditingDay] = useState<string | null>(null);
+  const [hideStateTip, setHideStateTip] = useState(() => typeof window !== "undefined" && localStorage.getItem("smeasy-hide-state-tip") === "1");
+  const [wagesHelp, setWagesHelp] = useState(false);
 
   useEffect(() => {
     if (!business) return;
@@ -154,6 +156,15 @@ function WeekPage() {
     setDraft(null);
   }
 
+  async function addStaff(name: string) {
+    if (!business) return false;
+    const { data } = await supabase().from("staff")
+      .insert({ business_id: business.id, name, default_role: business.roles[0] ?? null }).select().single();
+    if (!data) return false;
+    setStaff((all) => [...(all ?? []), data].sort((a, b) => a.name.localeCompare(b.name)));
+    return true;
+  }
+
   async function deleteShift(id: string) {
     await supabase().from("shifts").delete().eq("id", id);
     setShifts((all) => all.filter((s) => s.id !== id));
@@ -170,9 +181,12 @@ function WeekPage() {
       ? await sb.from("shifts").select("*").eq("roster_id", prev.id)
       : { data: [] as Shift[] };
     const activeIds = new Set(staff.map((s) => s.id));
-    const toCopy = (prevShifts ?? []).filter((s) => !s.staff_id || activeIds.has(s.staff_id));
+    const key = (staffId: string | null, date: string, start: string, end: string) => `${staffId ?? ""}|${date}|${hhmm(start)}|${hhmm(end)}`;
+    const already = new Set(shifts.map((s) => key(s.staff_id, s.date, s.start_time, s.end_time)));
+    const fromLastWeek = (prevShifts ?? []).filter((s) => !s.staff_id || activeIds.has(s.staff_id));
+    const toCopy = fromLastWeek.filter((s) => !already.has(key(s.staff_id, addDays(s.date, 7), s.start_time, s.end_time)));
     if (toCopy.length === 0) {
-      setNotice("Last week has no shifts to copy.");
+      setNotice(fromLastWeek.length ? "Everything from last week is already on this week." : "Last week has no shifts to copy.");
       setBusy(false);
       return;
     }
@@ -182,12 +196,14 @@ function WeekPage() {
         business_id: business.id, roster_id: r.id, staff_id: s.staff_id, date: addDays(s.date, 7),
         start_time: s.start_time, end_time: s.end_time, break_minutes: s.break_minutes, role: s.role, notes: s.notes,
       }))).select();
-      setShifts(data ?? []);
+      setShifts((all) => [...all, ...(data ?? [])]);
       const ids = new Set((data ?? []).map((s) => s.id));
       setCascadeIds(ids);
       setTimeout(() => setCascadeIds(new Set()), 1200);
       const clashes = (data ?? []).filter((s) => s.staff_id && offOn(s.staff_id, s.date)).length;
-      setNotice(`Copied ${data?.length ?? 0} shifts from last week.` + (clashes ? ` ${clashes} clash with approved time off — check the orange days.` : ""));
+      const n = data?.length ?? 0;
+      const skipped = fromLastWeek.length - toCopy.length;
+      setNotice(`Copied ${n} ${n === 1 ? "shift" : "shifts"} from last week.` + (skipped ? ` Skipped ${skipped} already on this week.` : "") + (clashes ? ` ${clashes} clash with approved time off — check the orange days.` : ""));
     }
     setBusy(false);
   }
@@ -298,15 +314,15 @@ function WeekPage() {
             <span style={{ fontWeight: 600, color: published ? "#1a6b2f" : C.offText, transition: "color 0.4s ease" }}>
               {isPast && published ? <><span aria-hidden>&#10003;</span> Done</> : published ? "Published" : "Draft"}
             </span>
+            {!published && <span> — your team can&apos;t see this week until you publish</span>}
           </div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {shifts.length === 0 && staff.length > 0 && (
-            <button onClick={copyLastWeek} disabled={busy} style={btn()}>Copy last week</button>
+          {staff.length > 0 && !isPast && (
+            <button onClick={copyLastWeek} disabled={busy} style={btn()} title="Adds last week's shifts to this week. Shifts already here aren't doubled up.">Copy last week</button>
           )}
           {published && <button onClick={copyTeamLink} style={btn()}>{linkCopied ? "Link copied ✓" : "Copy team link"}</button>}
           {shifts.length > 0 && <button onClick={downloadPdf} style={btn()}>PDF</button>}
-          {shifts.length > 0 && <button onClick={downloadCSV} style={btn()}>Hours CSV</button>}
           {published
             ? <button onClick={unpublish} style={btn("ghost")}>Unpublish</button>
             : <button onClick={publish} disabled={busy || shifts.length === 0} style={{
@@ -321,7 +337,7 @@ function WeekPage() {
       {shifts.length > 0 && (
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap", fontSize: 14, color: C.secondary, marginBottom: 14 }}>
           <span><strong style={{ color: C.dark }}>{totalHours.toFixed(1)}</strong> paid hours</span>
-          <span><strong style={{ color: C.dark }}>{shifts.length - unfilled.length}</strong> shifts</span>
+          <span><strong style={{ color: C.dark }}>{shifts.length - unfilled.length}</strong> {shifts.length - unfilled.length === 1 ? "shift" : "shifts"}</span>
           {unfilled.length > 0 && (
             <span style={{ color: UNFILLED.text, fontWeight: 600 }}>{unfilled.length} unfilled</span>
           )}
@@ -329,9 +345,19 @@ function WeekPage() {
             <span>
               Wages <strong style={{ color: C.dark }}>≈ {fmtAUD(wages)}</strong>
               {missingRate > 0 && <span style={{ color: C.muted }}> (excludes {missingRate} without a rate)</span>}
+              {" "}<button onClick={() => setWagesHelp((v) => !v)} aria-expanded={wagesHelp} aria-label="How wages are worked out"
+                style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 999, width: 18, height: 18, padding: 0, fontSize: 11, fontWeight: 700, color: C.muted, cursor: "pointer", lineHeight: "16px", fontFamily: "inherit" }}>?</button>
             </span>
           )}
+          <button onClick={downloadCSV} style={{ background: "none", border: "none", padding: 0, marginLeft: "auto", color: C.secondary, textDecoration: "underline", cursor: "pointer", fontSize: 14, fontFamily: "inherit" }}
+            title="One row per shift, plus totals by person. Open in Excel or send to your bookkeeper.">Download hours for payroll (CSV)</button>
         </div>
+      )}
+      {wagesHelp && wages > 0 && (
+        <Banner onClose={() => setWagesHelp(false)}>
+          <strong style={{ color: C.dark }}>How wages are worked out:</strong> each person&apos;s paid hours this week × the hourly rate you entered for them (Team → Edit → More details).
+          It&apos;s a rough guide at base rates only. It doesn&apos;t include penalty rates, overtime, allowances or super, and people without a rate aren&apos;t counted.
+        </Banner>
       )}
 
       {published && (
@@ -357,8 +383,16 @@ function WeekPage() {
         </div>
       )}
 
-      {!business.state && staff.length > 0 && (
-        <Banner>Want public holidays marked on your roster? <Link href="/team#settings" style={{ color: C.dark }}>Set your state</Link> on the Team page.</Banner>
+      {!business.state && staff.length > 0 && !hideStateTip && (
+        <Banner onClose={() => { localStorage.setItem("smeasy-hide-state-tip", "1"); setHideStateTip(true); }}>
+          Want public holidays marked on your roster? <Link href="/settings" style={{ color: C.dark }}>Set your state</Link> in Settings.
+        </Banner>
+      )}
+      {staff.length > 0 && shifts.length === 0 && (
+        <Banner>
+          {isMobile ? <>Tap <strong style={{ color: C.dark }}>+ Add shift</strong> on a day</> : <>Click <strong style={{ color: C.dark }}>+</strong> in a person&apos;s row</>} to give them a shift
+          {!isPast && <>, or use <strong style={{ color: C.dark }}>Copy last week</strong></>}.
+        </Banner>
       )}
 
       {staff.length === 0 ? (
@@ -369,11 +403,14 @@ function WeekPage() {
           <Link href="/team" style={{ ...btn("primary"), textDecoration: "none", display: "inline-block" }}>Add team members</Link>
         </div>
       ) : isMobile ? (
-        <DayCards days={days} staff={staff} shifts={shifts} offOn={offOn} onAdd={newShift} onEdit={editShift} cascadeIds={cascadeIds}
-          roles={roles} dayInfo={dayInfo} onDay={setEditingDay} />
+        <>
+          <DayCards days={days} staff={staff} shifts={shifts} offOn={offOn} onAdd={newShift} onEdit={editShift} cascadeIds={cascadeIds}
+            roles={roles} dayInfo={dayInfo} onDay={setEditingDay} />
+          <div style={{ marginTop: 10, background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2 }}><AddStaff onAdd={addStaff} /></div>
+        </>
       ) : (
         <Grid days={days} staff={staff} shifts={shifts} hours={hoursByStaff} offOn={offOn} onAdd={newShift} onEdit={editShift} cascadeIds={cascadeIds}
-          roles={roles} dayInfo={dayInfo} onDay={setEditingDay} />
+          roles={roles} dayInfo={dayInfo} onDay={setEditingDay} addStaff={<AddStaff onAdd={addStaff} />} />
       )}
 
       {editingDay && (
@@ -408,6 +445,35 @@ function WeekPage() {
         </Modal>
       )}
     </AppShell>
+  );
+}
+
+function AddStaff({ onAdd }: { onAdd: (name: string) => Promise<boolean> }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [saving, setSaving] = useState(false);
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} style={{ background: "none", border: "none", padding: "10px 12px", fontSize: 13, fontWeight: 600, color: C.secondary, cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "left" }}>
+        + Add someone to the team
+      </button>
+    );
+  }
+  return (
+    <form onSubmit={async (e) => {
+      e.preventDefault();
+      if (!name.trim()) return;
+      setSaving(true);
+      const ok = await onAdd(name.trim());
+      setSaving(false);
+      if (ok) { setName(""); setOpen(false); }
+    }} style={{ display: "flex", gap: 8, padding: 8, alignItems: "center", flexWrap: "wrap" }}>
+      <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Name, e.g. Sam Nguyen" aria-label="New team member name"
+        style={{ ...input, maxWidth: 280 }} />
+      <button type="submit" disabled={saving || !name.trim()} style={{ ...btn("primary"), opacity: name.trim() ? 1 : 0.5 }}>{saving ? "Adding…" : "Add"}</button>
+      <button type="button" onClick={() => { setOpen(false); setName(""); }} style={btn("ghost")}>Cancel</button>
+      <span style={{ fontSize: 12, color: C.muted }}>Add their mobile and role later on the Team page.</span>
+    </form>
   );
 }
 
@@ -476,10 +542,10 @@ function DayHeaderExtras({ info }: { info: { holiday: string | null; note: strin
   );
 }
 
-function Grid({ days, staff, shifts, hours, offOn, onAdd, onEdit, cascadeIds, roles, dayInfo, onDay }: {
+function Grid({ days, staff, shifts, hours, offOn, onAdd, onEdit, cascadeIds, roles, dayInfo, onDay, addStaff }: {
   days: string[]; staff: Staff[]; shifts: Shift[]; hours: Map<string, number>; offOn: OffOn;
   onAdd: (staffId: string, date: string) => void; onEdit: (s: Shift) => void; cascadeIds: Set<string>;
-  roles: string[]; dayInfo: DayInfo; onDay: (d: string) => void;
+  roles: string[]; dayInfo: DayInfo; onDay: (d: string) => void; addStaff: React.ReactNode;
 }) {
   const cols = "160px repeat(7, minmax(90px, 1fr)) 60px";
   const hasUnfilled = shifts.some((s) => !s.staff_id);
@@ -506,7 +572,7 @@ function Grid({ days, staff, shifts, hours, offOn, onAdd, onEdit, cascadeIds, ro
   return (
     <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, overflowX: "auto" }}>
       <div style={{ display: "grid", gridTemplateColumns: cols, background: C.bg, borderBottom: `1px solid ${C.border}`, minWidth: 860 }}>
-        <div style={{ padding: "8px 12px", fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase" }}>Team</div>
+        <div style={{ padding: "8px 12px", fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase" }}>Staff</div>
         {days.map((d) => {
           const info = dayInfo(d);
           return (
@@ -521,6 +587,7 @@ function Grid({ days, staff, shifts, hours, offOn, onAdd, onEdit, cascadeIds, ro
       </div>
       {hasUnfilled && row("unfilled", <span style={{ color: UNFILLED.text }}>Unfilled</span>, "", "", "#fffaf9")}
       {staff.map((p) => row(p.id, p.name, p.id, hours.get(p.id) ? hours.get(p.id)!.toFixed(1) : "—"))}
+      <div style={{ borderBottom: `1px solid ${C.divider}`, minWidth: 860 }}>{addStaff}</div>
       <div style={{ display: "grid", gridTemplateColumns: cols, minWidth: 860, background: C.bg }}>
         <div style={{ padding: "8px 12px", fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase" }}>Cover</div>
         {days.map((d) => (

@@ -13,7 +13,7 @@ does **today**. Anything not built goes in `ROADMAP.md`, never in marketing.
 ## What's built (v1)
 | Area | Today |
 |---|---|
-| Sign-in | Email + password (Supabase), or magic link (implicit flow, works across devices). Forgot password → /auth/reset. Set/change password in Team → Your login. Welcome step sets business name + role preset (café / retail / other). |
+| Sign-in | Email + password (Supabase), or magic link (implicit flow, works across devices). Forgot password → /auth/reset. Set/change password in Settings → Your login. Nav: Roster · Team · Settings. Welcome step sets business name + role preset (café / retail / other). |
 | Team | Add/edit people: usual role, hourly rate, mobile, email, payroll ID. Remove/bring back. Editable shift roles. |
 | This week | Grid (desktop) / day cards (mobile). Shifts with start, finish, unpaid break, role. Split shifts and past-midnight shifts. Copy last week. Paid hours per person + total. Wage estimate (base rates only). Publish / unpublish. Approve/decline time off. |
 | Sharing | One **team roster link** per business (`/r/#token`, published weeks only, names/times/roles only, resettable). **PDF** (A4 landscape). |

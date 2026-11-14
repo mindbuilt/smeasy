@@ -18,16 +18,16 @@ export const faqGroups: FaqGroup[] = [
   {
     title: "Building the roster",
     items: [
-      { q: "How do I sign in?", a: "With your email and a password, or with a login link we email you. Choose whichever suits. You can set or change your password any time under Team → Your login. You stay signed in on each device until you log out." },
+      { q: "How do I sign in?", a: "With your email and a password, or with a login link we email you. Choose whichever suits. You can set or change your password any time under Settings → Your login. You stay signed in on each device until you log out." },
       { q: "Can I copy last week's roster?", a: "Yes. On an empty week, tap Copy last week and every shift is copied to the same days, ready to adjust." },
       { q: "Does it handle split shifts and shifts past midnight?", a: "Yes. Add two shifts on the same day for a split shift. For a late close, set a finish time earlier than the start — for example 5pm to 2am — and SMEasy counts the hours correctly." },
       { q: "How are hours worked out?", a: "Paid hours are the finish time minus the start time minus any unpaid break you set on the shift. SMEasy shows each person's weekly hours and the team total." },
       { q: "Can SMEasy estimate wages?", a: "Yes, if you add an hourly rate for each person (it's optional, under More details). The estimate uses base rates only — it doesn't include penalty rates, overtime, allowances or super." },
       { q: "Does SMEasy check my roster against my award?", a: "No. SMEasy doesn't check minimum engagement, breaks or penalty rates. Check your award on the Fair Work Ombudsman website, or ask your bookkeeper." },
-      { q: "Does SMEasy show public holidays?", a: "Yes. Set your state on the Team page and public holidays are marked on your roster, the team link and the PDF. They come from a published Australian holiday calendar, so check your state's official list if anything looks off — and you can add your own note to any day." },
+      { q: "Does SMEasy show public holidays?", a: "Yes. Set your state under Settings and public holidays are marked on your roster, the team link and the PDF. They come from a published Australian holiday calendar, so check your state's official list if anything looks off — and you can add your own note to any day." },
       { q: "Can I add a shift before I know who's working it?", a: "Yes. Choose \"No one yet\" when you add a shift and it shows as unfilled, so you can see the gaps. Staff don't see unfilled shifts. Assign someone when you know." },
       { q: "Can I leave notes for staff?", a: "Yes. Add a note to a shift (like \"Open up — keys in the safe\") or to a whole day (like \"Function from 6pm\"). Staff see them once the roster is published." },
-      { q: "Can I change the shift roles?", a: "Yes. When you sign up you pick a starting set (café, retail or general), and you can add or remove roles any time on the Team page." },
+      { q: "Can I change the shift roles?", a: "Yes. When you sign up you pick a starting set (café, retail or general), and you can add or remove roles any time under Settings." },
     ],
   },
   {

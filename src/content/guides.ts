@@ -48,7 +48,7 @@ export const guides: Guide[] = [
       { tip: "SMEasy remembers each person's last shift times, so adding the same shift across several days is quick." },
       { p: "Each role has its own colour, so you can see the mix at a glance. Add a note to a shift if there's something the person needs to know, or tap a day's heading to add a note for the whole day." },
       { p: "Not sure who'll work a shift yet? Choose \"No one yet\" and it shows as unfilled. The Cover line under each day shows how many people are on, their hours and any unfilled shifts." },
-      { tip: "Set your state on the Team page and public holidays are marked on the roster." },
+      { tip: "Set your state under Settings and public holidays are marked on the roster." },
       { h2: "4. Copy last week" },
       { p: "Most rosters look a lot like last week's. On an empty week, tap Copy last week and every shift is copied across to the same days. Then just adjust what's different." },
       { h2: "5. Check hours and wages" },
@@ -169,7 +169,7 @@ export const guides: Guide[] = [
       { h2: "4. Share from your phone" },
       { p: "After you publish, tap Copy team link and paste it into your group chat, or download the PDF and share it straight from your phone." },
       { h2: "5. Stay signed in" },
-      { p: "SMEasy keeps you signed in on your phone, so you won't need to log in every time. If you do get signed out, log in with your email and password, or request a login link and open it on the same phone. You can set a password under Team → Your login." },
+      { p: "SMEasy keeps you signed in on your phone, so you won't need to log in every time. If you do get signed out, log in with your email and password, or request a login link and open it on the same phone. You can set a password under Settings → Your login." },
     ],
   },
   {

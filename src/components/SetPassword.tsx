@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { MIN_PASSWORD } from "@/lib/auth";
 import { C, btn, input, label } from "@/components/ui";
 
-/** New-password form for the logged-in user. Used on /auth/reset and in Team → Your login. */
+/** New-password form for the logged-in user. Used on /auth/reset and in Settings → Your login. */
 export default function SetPassword({ cta = "Save password", onDone }: { cta?: string; onDone?: () => void }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");

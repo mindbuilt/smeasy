@@ -30,8 +30,9 @@ export function btn(kind: "primary" | "secondary" | "ghost" | "danger" = "second
 }
 
 const NAV = [
-  { href: "/week", label: "This week" },
+  { href: "/week", label: "Roster" },
   { href: "/team", label: "Team" },
+  { href: "/settings", label: "Settings" },
 ];
 
 export function AppShell({ businessName, email, children }: {
@@ -50,12 +51,12 @@ export function AppShell({ businessName, email, children }: {
           <span style={{ width: 22, height: 22, borderRadius: C.r1, background: C.accent, display: "block" }} />
           <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>SMEasy</span>
         </Link>
-        <nav style={{ display: "flex", gap: 4 }}>
+        <nav style={{ display: "flex", gap: 2 }}>
           {NAV.map((n) => {
             const active = path?.startsWith(n.href);
             return (
               <Link key={n.href} href={n.href} style={{
-                padding: "6px 12px", borderRadius: C.r1, fontSize: 14, fontWeight: 600,
+                padding: "6px 10px", borderRadius: C.r1, fontSize: 14, fontWeight: 600,
                 textDecoration: "none", color: active ? C.white : C.secondary,
                 background: active ? C.dark : "transparent",
               }}>{n.label}</Link>
@@ -63,7 +64,7 @@ export function AppShell({ businessName, email, children }: {
           })}
         </nav>
         <div style={{ marginLeft: "auto", position: "relative" }}>
-          <button onClick={() => setMenu((m) => !m)} style={{ ...btn("ghost"), padding: "6px 10px" }}>
+          <button onClick={() => setMenu((m) => !m)} style={{ ...btn("ghost"), padding: "6px 10px", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {businessName ?? "Account"} ▾
           </button>
           {menu && (

@@ -4,9 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useManager } from "@/lib/useManager";
-import SetPassword from "@/components/SetPassword";
 import type { Staff } from "@/lib/types";
-import { STATES, STATE_TIMEZONE, type State } from "@/lib/holidays";
 import { AppShell, C, Loading, Modal, btn, input, label } from "@/components/ui";
 
 function staffLink(s: Staff) {
@@ -54,94 +52,74 @@ function TeamPage() {
 
   const active = staff.filter((s) => s.active);
   const former = staff.filter((s) => !s.active);
+  const small = { ...btn(), padding: "7px 12px", fontSize: 13, textDecoration: "none" } as const;
 
   return (
     <AppShell businessName={business.name} email={email}>
-      <div style={{ maxWidth: 680 }}>
+      <div style={{ maxWidth: 680, margin: "0 auto" }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, color: C.dark, margin: "0 0 4px" }}>Team</h1>
-        <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 20px" }}>
-          {isNew && active.length === 0
-            ? "Add the people you roster. Your team sees published rosters on one shared link — no app or password."
-            : "The people you roster, and the link your team uses to see published rosters."}
+        <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 20px", lineHeight: 1.5 }}>
+          Everyone you add here gets a row on your roster. Staff don&apos;t need an app or a password.
         </p>
+
+        <section style={{ marginBottom: 28 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: C.dark, margin: "0 0 10px" }}>
+            Staff {active.length > 0 && <span style={{ color: C.muted, fontWeight: 500 }}>({active.length})</span>}
+          </h2>
+          <form onSubmit={add} style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Add a person, e.g. Sam Nguyen"
+              style={input} aria-label="New team member name" autoFocus={isNew} />
+            <button type="submit" disabled={!newName.trim()} style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: newName.trim() ? 1 : 0.5 }}>Add to team</button>
+          </form>
+
+          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, overflow: "hidden" }}>
+            {active.length === 0 && (
+              <div style={{ padding: "32px 24px", margin: 0, textAlign: "center" }}>
+                <p style={{ fontSize: 15, fontWeight: 600, color: C.dark, margin: "0 0 4px" }}>No one here yet</p>
+                <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Type a name above to add your first team member. Just a name is enough to start.</p>
+              </div>
+            )}
+            {active.map((s, i) => (
+              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", borderTop: i ? `1px solid ${C.divider}` : "none", flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: 140 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: C.dark }}>{s.name}</div>
+                  <div style={{ fontSize: 12, color: C.muted }}>
+                    {[s.default_role, s.mobile].filter(Boolean).join(" · ") || "No role or mobile yet"}
+                  </div>
+                </div>
+                <button onClick={() => setEditing(s)} style={small}>Edit</button>
+                <a href={smsHref(s, business.name)} title="Text them their personal link: their shifts, time-off requests and calendar" style={small}>Text personal link</a>
+                <button onClick={() => copyLink(s)} title="Copy their personal link: their shifts, time-off requests and calendar" style={small}>
+                  {copied === s.id ? "Copied ✓" : "Copy link"}
+                </button>
+              </div>
+            ))}
+          </div>
+          {active.length > 0 && (
+            <p style={{ fontSize: 12, color: C.muted, margin: "8px 0 0", lineHeight: 1.5 }}>
+              Each person&apos;s personal link shows their own shifts and lets them request time off and add shifts to their phone calendar.
+            </p>
+          )}
+
+          {former.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <button onClick={() => setShowFormer((v) => !v)} style={{ ...btn("ghost"), padding: "4px 0", fontSize: 13 }}>
+                {showFormer ? "Hide" : "Show"} former staff ({former.length})
+              </button>
+              {showFormer && former.map((s) => (
+                <div key={s.id} style={{ display: "flex", alignItems: "center", padding: "8px 0", fontSize: 14, color: C.muted }}>
+                  {s.name}
+                  <button onClick={() => setEditing(s)} style={{ ...btn("ghost"), marginLeft: "auto", fontSize: 13 }}>Edit</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         <TeamLinkCard token={business.team_token} onReset={async () => {
           const { data } = await supabase().from("businesses").update({ team_token: crypto.randomUUID() }).eq("id", business.id).select().single();
           if (data) setBusiness(data);
         }} />
-
-        <form onSubmit={add} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Name, e.g. Sam Nguyen"
-            style={input} aria-label="New team member name" />
-          <button type="submit" disabled={!newName.trim()} style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: newName.trim() ? 1 : 0.5 }}>Add</button>
-        </form>
-
-        <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, overflow: "hidden" }}>
-          {active.length === 0 && (
-            <div style={{ padding: "32px 24px", margin: 0, textAlign: "center" }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }} aria-hidden>&#128075;</div>
-              <p style={{ fontSize: 15, fontWeight: 600, color: C.dark, margin: "0 0 4px" }}>No one here yet</p>
-              <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Type a name above to add your first team member.</p>
-            </div>
-          )}
-          {active.map((s, i) => (
-            <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderTop: i ? `1px solid ${C.divider}` : "none", flexWrap: "wrap" }}>
-              <button onClick={() => setEditing(s)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", flex: 1, minWidth: 140 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: C.dark }}>{s.name}</div>
-                <div style={{ fontSize: 12, color: C.muted }}>
-                  {[s.default_role, s.mobile].filter(Boolean).join(" · ") || "Tap to add details"}
-                </div>
-              </button>
-              <a href={smsHref(s, business.name)} title="Their personal link: own shifts + time-off requests"
-                style={{ ...btn(), padding: "7px 12px", fontSize: 13, textDecoration: "none" }}>Text personal link</a>
-              <button onClick={() => copyLink(s)} title="Their personal link: own shifts + time-off requests" style={{ ...btn(), padding: "7px 12px", fontSize: 13 }}>
-                {copied === s.id ? "Copied ✓" : "Copy"}
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {former.length > 0 && (
-          <div style={{ marginTop: 16 }}>
-            <button onClick={() => setShowFormer((v) => !v)} style={{ ...btn("ghost"), padding: "4px 0", fontSize: 13 }}>
-              {showFormer ? "Hide" : "Show"} former staff ({former.length})
-            </button>
-            {showFormer && former.map((s) => (
-              <div key={s.id} style={{ display: "flex", alignItems: "center", padding: "8px 0", fontSize: 14, color: C.muted }}>
-                {s.name}
-                <button onClick={() => setEditing(s)} style={{ ...btn("ghost"), marginLeft: "auto", fontSize: 13 }}>Edit</button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div id="settings" style={{ marginTop: 32 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: C.dark, margin: "0 0 4px" }}>Business settings</h2>
-          <label style={{ ...label, marginTop: 12 }} htmlFor="state">State or territory (for public holidays on your roster)</label>
-          <select id="state" style={{ ...input, maxWidth: 360 }} value={business.state ?? ""} onChange={async (e) => {
-            const state = (e.target.value || null) as State | null;
-            const { data } = await supabase().from("businesses")
-              .update({ state, timezone: state ? STATE_TIMEZONE[state] : "Australia/Sydney" })
-              .eq("id", business.id).select().single();
-            if (data) setBusiness(data);
-          }}>
-            <option value="">Not set</option>
-            {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-
-        <RolesEditor key={business.roles.join("|")} roles={business.roles} onSave={async (roles) => {
-          const { data } = await supabase().from("businesses").update({ roles }).eq("id", business.id).select().single();
-          if (data) setBusiness(data);
-        }} />
-
-        <div id="login" style={{ marginTop: 32 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: C.dark, margin: "0 0 4px" }}>Your login</h2>
-          <p style={{ fontSize: 13, color: C.secondary, margin: "0 0 12px", lineHeight: 1.5 }}>
-            You&apos;re logged in as <strong>{email}</strong>. Set a password to log in with your email and password, without waiting for a login link. You can still use a link any time.
-          </p>
-          <SetPassword />
-        </div>
       </div>
 
       {editing && (
@@ -157,8 +135,8 @@ function TeamLinkCard({ token, onReset }: { token: string; onReset: () => Promis
   const [confirmReset, setConfirmReset] = useState(false);
   const link = typeof window === "undefined" ? "" : `${window.location.origin}/r/#${token}`;
   return (
-    <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 16, marginBottom: 20 }}>
-      <div style={{ fontSize: 15, fontWeight: 700, color: C.dark }}>Team roster link</div>
+    <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: 16 }}>
+      <h2 style={{ fontSize: 16, fontWeight: 700, color: C.dark, margin: 0 }}>Team roster link</h2>
       <p style={{ fontSize: 13, color: C.secondary, margin: "4px 0 12px" }}>
         Pin this in your staff group chat. It always shows the latest published roster, and staff can download it as a PDF.
       </p>
@@ -238,33 +216,6 @@ function StaffEditor({ staff, roles, onClose, onSaved }: {
         </div>
       </div>
     </Modal>
-  );
-}
-
-function RolesEditor({ roles, onSave }: { roles: string[]; onSave: (r: string[]) => Promise<void> }) {
-  const [list, setList] = useState(roles);
-  const [next, setNext] = useState("");
-  const dirty = list.join("|") !== roles.join("|");
-  return (
-    <div style={{ marginTop: 24 }}>
-      <h2 style={{ fontSize: 15, fontWeight: 700, color: C.dark, margin: "0 0 4px" }}>Shift roles</h2>
-      <p style={{ fontSize: 13, color: C.muted, margin: "0 0 10px" }}>The jobs people can be rostered on. Each role gets its own colour on the roster, in this order.</p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-        {list.map((r) => (
-          <span key={r} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 999, background: C.white, border: `1px solid ${C.border}`, fontSize: 13 }}>
-            {r}
-            <button onClick={() => setList(list.filter((x) => x !== r))} aria-label={`Remove ${r}`}
-              style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 0 }}>✕</button>
-          </span>
-        ))}
-      </div>
-      <form onSubmit={(e) => { e.preventDefault(); const v = next.trim(); if (v && !list.includes(v)) setList([...list, v]); setNext(""); }}
-        style={{ display: "flex", gap: 8, maxWidth: 360 }}>
-        <input value={next} onChange={(e) => setNext(e.target.value)} placeholder="Add a role" style={input} />
-        <button type="submit" style={btn()}>Add</button>
-      </form>
-      {dirty && <button onClick={() => onSave(list)} style={{ ...btn("primary"), marginTop: 10 }}>Save roles</button>}
-    </div>
   );
 }
 

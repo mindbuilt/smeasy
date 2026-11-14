@@ -6,7 +6,7 @@ export const dynamic = "force-static";
 // App screens and private roster links are not for search engines.
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: { userAgent: "*", allow: "/", disallow: ["/week/", "/team/", "/welcome/", "/auth/", "/s/", "/r/"] },
+    rules: { userAgent: "*", allow: "/", disallow: ["/week/", "/team/", "/settings/", "/welcome/", "/auth/", "/s/", "/r/"] },
     sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }
