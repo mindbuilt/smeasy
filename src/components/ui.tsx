@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { CalendarDays, ChevronDown, LogOut, Settings, Users, X } from "lucide-react";
 import { signOut } from "@/lib/useManager";
 import { APP } from "@/lib/theme";
@@ -202,7 +203,8 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
     document.body.style.overflow = "hidden";
     return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
   }, []);
-  return (
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div onClick={close} className={`sheet-scrim app${closing ? " is-closing" : ""}`} style={{
       position: "fixed", inset: 0, background: "rgba(17,24,39,0.38)", zIndex: 60,
       display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
@@ -220,7 +222,8 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -450,8 +451,8 @@ function WeekPage() {
           )}
           <div style={{ height: 88 }} aria-hidden />
           {/* Bottom dock: publish (drafts with shifts) + add shift */}
-          {(!isPast || (!published && shifts.length > 0)) && (
-            <div style={{ position: "fixed", left: 16, right: 16, bottom: "calc(84px + env(safe-area-inset-bottom))", zIndex: 44, display: "flex", gap: 10, alignItems: "center", justifyContent: "flex-end", pointerEvents: "none" }}>
+          {(!isPast || (!published && shifts.length > 0)) && typeof document !== "undefined" && createPortal(
+            <div className="app" style={{ background: "transparent", position: "fixed", left: 16, right: 16, bottom: "calc(84px + env(safe-area-inset-bottom))", zIndex: 44, display: "flex", gap: 10, alignItems: "center", justifyContent: "flex-end", pointerEvents: "none" }}>
               {!published && shifts.length > 0 && (
                 <button onClick={publish} disabled={busy} className="app-press" style={{ ...btn("accent"), flex: 1, minHeight: 56, borderRadius: 999, fontSize: 16, pointerEvents: "auto", boxShadow: "0 6px 16px rgba(101,163,13,0.35), 0 2px 4px rgba(17,24,39,0.12)" }}>
                   {busy ? "Publishing…" : "Publish to team"}
@@ -465,7 +466,8 @@ function WeekPage() {
                   boxShadow: "0 6px 16px rgba(17,24,39,0.22), 0 2px 4px rgba(17,24,39,0.12)",
                 }}><Plus size={28} strokeWidth={2.6} /></button>
               )}
-            </div>
+            </div>,
+            document.body,
           )}
         </>
       ) : (
