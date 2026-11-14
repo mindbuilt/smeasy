@@ -23,10 +23,10 @@ body {
 
 /* Roster preview: grid on desktop, day-cards on mobile */
 .roster-grid { display: block; }
-.roster-cards { display: none; }
+.roster-cards { display: none !important; }
 @media (max-width: 640px) {
-  .roster-grid { display: none; }
-  .roster-cards { display: block; }
+  .roster-grid { display: none !important; }
+  .roster-cards { display: flex !important; }
 }
 
 input[type=range] {

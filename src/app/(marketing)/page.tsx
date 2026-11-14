@@ -229,7 +229,7 @@ function RosterPreview() {
       </div>
 
       {/* Mobile day-cards */}
-      <div className="roster-cards" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="roster-cards" style={{ flexDirection: "column", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 2px", marginBottom: 4 }}>
           <strong style={{ fontSize: 15 }}>17 Nov – 23 Nov</strong>
           <span style={{ fontSize: 13, color: "#1a6b2f", fontWeight: 600 }}>Published</span>
