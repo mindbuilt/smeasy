@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 import { C, btn, input, label } from "@/components/ui";
 
 export default function LoginPage() {
@@ -34,10 +35,10 @@ export default function LoginPage() {
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "32px 28px", width: "100%", maxWidth: 380 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, textDecoration: "none" }}>
           <span style={{ width: 24, height: 24, borderRadius: C.r1, background: C.accent, display: "block" }} />
           <span style={{ fontWeight: 700, fontSize: 17, color: C.dark }}>Smeasy</span>
-        </div>
+        </Link>
 
         {sent ? (
           <>
@@ -67,6 +68,15 @@ export default function LoginPage() {
           </form>
         )}
       </div>
+      <footer style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "14px 20px", textAlign: "center", fontSize: 13, color: C.muted }}>
+        <Link href="/" style={{ color: C.secondary }}>Home</Link>
+        {" · "}
+        <Link href="/guides/" style={{ color: C.secondary }}>Guides</Link>
+        {" · "}
+        <Link href="/faq/" style={{ color: C.secondary }}>FAQ</Link>
+        {" · "}
+        <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>
+      </footer>
     </div>
   );
 }

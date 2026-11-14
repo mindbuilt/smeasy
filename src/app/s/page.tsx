@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { addDays, fmtDay, fmtTime, fmtWeek, shiftHours, thisMonday, toISO, weekDates } from "@/lib/dates";
+import Link from "next/link";
 import { C, btn, input, label } from "@/components/ui";
 
 function nameHue(name: string): number {
@@ -151,7 +152,12 @@ export default function StaffRoster() {
           : <button onClick={() => setAsking(true)} style={{ ...btn(), marginTop: 8 }}>Request time off</button>}
       </div>
 
-      <p style={{ fontSize: 12, color: C.muted, marginTop: 32 }}>Bookmark this page — it&apos;s your personal link and stays the same every week. <a href="/privacy/" style={{ color: C.muted }}>Privacy</a></p>
+      <p style={{ fontSize: 12, color: C.muted, marginTop: 32 }}>Bookmark this page — it&apos;s your personal link and stays the same every week.</p>
+      <p style={{ fontSize: 12, color: C.muted, marginTop: 8 }}>
+        <Link href="/" style={{ color: C.secondary }}>Smeasy</Link>
+        {" · "}
+        <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>
+      </p>
     </Shell>
   );
 }
@@ -198,8 +204,10 @@ function Shell({ business, children, accentHue }: { business?: string; children:
   return (
     <div style={{ minHeight: "100vh", background: C.bg }}>
       <header style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "14px 16px", display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ width: 20, height: 20, borderRadius: C.r1, background: C.accent, display: "block" }} />
-        <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>{business ?? "Smeasy"}</span>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+          <span style={{ width: 20, height: 20, borderRadius: C.r1, background: C.accent, display: "block" }} />
+          <span style={{ fontWeight: 700, fontSize: 15, color: C.dark }}>{business ?? "Smeasy"}</span>
+        </Link>
       </header>
       {accentHue != null && <div style={{ height: 3, background: `hsl(${accentHue} 65% 60%)` }} />}
       <main style={{ maxWidth: 520, margin: "0 auto", padding: "20px 16px 48px" }}>{children}</main>
