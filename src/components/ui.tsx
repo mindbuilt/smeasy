@@ -40,11 +40,31 @@ export function btn(kind: BtnKind = "secondary"): CSSProperties {
   return { ...base, background: C.white, color: C.dark, borderColor: C.border };
 }
 
-/** Small haptic tick on phones that support it (Android). iPhone browsers ignore it. */
+/**
+ * Small haptic tick. Android: the Vibration API. iPhone (iOS 18+ Safari): toggling a
+ * native switch input gives a system haptic, so we flip a hidden one. Elsewhere, nothing.
+ */
+let iosSwitch: HTMLLabelElement | null = null;
 export function haptic(pattern: number | number[] = 8) {
-  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-    try { navigator.vibrate(pattern); } catch { /* not allowed */ }
+  if (typeof window === "undefined") return;
+  if ("vibrate" in navigator && typeof navigator.vibrate === "function") {
+    try { if (navigator.vibrate(pattern)) return; } catch { /* not allowed */ }
   }
+  if (!/iPhone|iPad|iPod/.test(navigator.userAgent)) return;
+  try {
+    if (!iosSwitch) {
+      iosSwitch = document.createElement("label");
+      iosSwitch.setAttribute("aria-hidden", "true");
+      iosSwitch.style.cssText = "position:fixed;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;left:-9px;top:0";
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.setAttribute("switch", "");
+      box.tabIndex = -1;
+      iosSwitch.appendChild(box);
+      document.body.appendChild(iosSwitch);
+    }
+    iosSwitch.click();
+  } catch { /* no haptics */ }
 }
 
 export function Avatar({ name, size = 36, tone }: { name: string; size?: number; tone?: { bg: string; text: string } }) {
@@ -130,7 +150,7 @@ export function AppShell({ businessName, email, children }: {
         </div>
       </header>
 
-      <main className="app-main" style={{ maxWidth: 1180, margin: "0 auto", padding: "20px 16px 64px" }}>{children}</main>
+      <main key={path} className="app-main route-in" style={{ maxWidth: 1180, margin: "0 auto", padding: "20px 16px 64px" }}>{children}</main>
 
       <nav className="app-tabbar" aria-label="Main" style={{
         position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 45, background: "rgba(255,255,255,0.96)",
@@ -166,26 +186,35 @@ export function AppShell({ businessName, email, children }: {
 
 /** Dialog on desktop, bottom sheet on phones. */
 export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  const [closing, setClosing] = useState(false);
+  const close = () => {
+    if (closing) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { onClose(); return; }
+    setClosing(true);
+    setTimeout(onClose, 220);
+  };
+  const closeRef = useRef(close);
+  useEffect(() => { closeRef.current = close; });
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeRef.current(); };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
-  }, [onClose]);
+  }, []);
   return (
-    <div onClick={onClose} className="sheet-scrim app" style={{
+    <div onClick={close} className={`sheet-scrim app${closing ? " is-closing" : ""}`} style={{
       position: "fixed", inset: 0, background: "rgba(17,24,39,0.38)", zIndex: 60,
       display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
     }}>
-      <div role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()} className="sheet" style={{
+      <div role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()} className={`sheet${closing ? " is-closing" : ""}`} style={{
         background: C.white, width: "100%", maxWidth: 460, borderRadius: 20, boxShadow: C.shadowLift,
         padding: "8px 20px 20px", maxHeight: "92dvh", overflowY: "auto",
       }}>
         <div aria-hidden style={{ width: 40, height: 4, borderRadius: 4, background: C.border, margin: "4px auto 8px" }} />
         <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
           <h2 style={{ fontSize: 19, fontWeight: 750, color: C.dark, margin: 0, letterSpacing: "-0.01em" }}>{title}</h2>
-          <button onClick={onClose} aria-label="Close" className="app-press" style={{ ...btn("ghost"), marginLeft: "auto", width: 40, minHeight: 40, padding: 0, borderRadius: 999, background: "#f3f4f6" }}>
+          <button onClick={close} aria-label="Close" className="app-press" style={{ ...btn("ghost"), marginLeft: "auto", width: 40, minHeight: 40, padding: 0, borderRadius: 999, background: "#f3f4f6" }}>
             <X size={18} strokeWidth={2.2} />
           </button>
         </div>

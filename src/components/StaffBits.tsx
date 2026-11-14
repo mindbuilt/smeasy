@@ -104,26 +104,26 @@ export function NextShift({ shifts, roles, totalHours, count, name }: {
   const next = shifts.find((s) => s.date > today || (s.date === today && (s.end_time > nowHm || s.end_time < s.start_time)));
   const sw = next?.role ? roleSwatch(next.role, roles) : null;
   return (
-    <section aria-label="Next shift" style={{ borderRadius: 20, padding: "18px 18px 16px", background: C.dark, color: C.white, boxShadow: "0 10px 30px rgba(17,24,39,0.18)", marginBottom: 14 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 650, color: "#d1d5db" }}>
-        {name && <Avatar name={name} size={28} tone={{ bg: C.accent, text: C.dark }} />}
-        {next ? (name ? `${name.split(" ")[0]}'s next shift` : "Your next shift") : "This week"}
-      </div>
+    <section aria-label={name ? `${name}'s next shift` : "Your next shift"} style={{ borderRadius: 20, padding: "18px 18px 16px", background: C.dark, color: C.white, boxShadow: "0 10px 30px rgba(17,24,39,0.18)", marginBottom: 14 }}>
       {next ? (
         <>
-          <div style={{ fontSize: 15, fontWeight: 750, color: C.accent, marginTop: 12 }}>{when(next.date, next.start_time)}</div>
-          <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.1, marginTop: 2 }}>
+          <h2 style={{ fontSize: 34, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.1, margin: 0, display: "flex", alignItems: "center", gap: 12 }}>
+            {name && <Avatar name={name} size={36} tone={{ bg: C.accent, text: C.dark }} />}
             {fmtTime(next.start_time)} – {fmtTime(next.end_time)}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap", fontSize: 15, color: "#e5e7eb" }}>
-            <span>{fmtDay(next.date)}</span>
+          </h2>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, flexWrap: "wrap", fontSize: 15, color: "#e5e7eb" }}>
+            <strong style={{ color: C.accent, fontWeight: 750 }}>{when(next.date, next.start_time)}</strong>
+            {when(next.date, next.start_time) !== fmtDay(next.date) && <span>{fmtDay(next.date)}</span>}
             {sw && <span style={{ fontSize: 13, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: sw.bg, color: sw.text }}>{next.role}</span>}
             {next.break_minutes ? <span style={{ color: "#9ca3af" }}>{next.break_minutes}m break</span> : null}
           </div>
           {next.notes && <div style={{ marginTop: 10, fontSize: 14, color: "#e5e7eb", background: "rgba(255,255,255,0.08)", borderRadius: 12, padding: "8px 12px" }}>{next.notes}</div>}
         </>
       ) : (
-        <div style={{ fontSize: 22, fontWeight: 800, marginTop: 10 }}>{count ? "All done for this week" : "Not rostered on this week"}</div>
+        <h2 style={{ fontSize: 24, fontWeight: 800, margin: 0, display: "flex", alignItems: "center", gap: 12, letterSpacing: "-0.01em" }}>
+          {name && <Avatar name={name} size={36} tone={{ bg: C.accent, text: C.dark }} />}
+          {count ? "All done for this week" : "Not rostered on this week"}
+        </h2>
       )}
       <div style={{ display: "flex", gap: 18, marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.12)", fontSize: 14, color: "#d1d5db" }}>
         <span><strong style={{ color: C.white, fontSize: 17 }}>{count}</strong> {count === 1 ? "shift" : "shifts"} this week</span>

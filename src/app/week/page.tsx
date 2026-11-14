@@ -8,7 +8,7 @@ import { useManager } from "@/lib/useManager";
 import type { Business, Roster, Shift, Staff, TimeOff } from "@/lib/types";
 import { DAY_NAMES, addDays, fmtAUD, fmtDay, fmtTime, fmtWeek, mondayOf, shiftHours, thisMonday, toISO, weekDates } from "@/lib/dates";
 import { AppShell, Avatar, C, Loading, Modal, btn, card, haptic, input, label } from "@/components/ui";
-import { CalendarPlus, Check, ChevronLeft, ChevronRight, Copy, Download, FileText, Info, Link2, Plus, StickyNote, UserPlus, X } from "lucide-react";
+import { CalendarPlus, Check, ChevronLeft, ChevronRight, Copy, Download, FileText, Info, Link2, MoreHorizontal, Plus, StickyNote, Undo2, UserPlus, X } from "lucide-react";
 import { downloadRosterPdf } from "@/lib/rosterPdf";
 import { roleSwatch, UNFILLED } from "@/lib/roleColors";
 import { holidayOn } from "@/lib/holidays";
@@ -78,6 +78,7 @@ function WeekPage() {
   const [wagesHelp, setWagesHelp] = useState(false);
   const [selDay, setSelDay] = useState<string | null>(null);
   const [slide, setSlide] = useState<"left" | "right">("right");
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (!business) return;
@@ -343,11 +344,13 @@ function WeekPage() {
           </h1>
           <div style={{ fontSize: isMobile ? 13 : 14, color: C.muted, marginTop: 2 }}>
             {monday === thisMonday() ? "This week" : <Link href="/week" style={{ color: C.secondary }}>Back to this week</Link>}
+            {isMobile && shifts.length > 0 && <> · {totalHours.toFixed(1).replace(/\.0$/, "")}h · {filled} {filled === 1 ? "shift" : "shifts"}{unfilled.length > 0 && <span style={{ color: UNFILLED.text, fontWeight: 700 }}> · {unfilled.length} unfilled</span>}</>}
             {!isMobile && !published && <> · your team can&apos;t see this week until you publish</>}
             {!isMobile && published && !isPast && <> · your team can see this week, and changes show straight away</>}
           </div>
         </div>
         {isMobile && <button onClick={() => goWeek(1)} className="app-press" style={{ ...btn(), width: 42, padding: 0, borderRadius: 999, flex: "none" }} aria-label="Next week"><ChevronRight size={20} /></button>}
+        {isMobile && <button onClick={() => setMoreOpen(true)} className="app-press" style={{ ...btn("ghost"), width: 42, padding: 0, borderRadius: 999, flex: "none", background: "#eef0f3", color: C.dark }} aria-label="More: copy last week, PDF, hours"><MoreHorizontal size={20} /></button>}
         {!isMobile && (
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
             {staff.length > 0 && !isPast && (
@@ -365,28 +368,8 @@ function WeekPage() {
           </div>
         )}
       </div>
-      {isMobile && (
-        <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
-          {!published && shifts.length > 0 && (
-            <button onClick={publish} disabled={busy} className="app-press" style={{ ...btn("accent"), minHeight: 48, fontSize: 16 }}>
-              {busy ? "Publishing…" : "Publish to team"}
-            </button>
-          )}
-          <div className="no-scrollbar" style={{ display: "flex", gap: 8, overflowX: "auto", margin: "0 -16px", padding: "2px 16px" }}>
-            {staff.length > 0 && !isPast && <button onClick={copyLastWeek} disabled={busy} className="app-press" style={{ ...btn(), flex: "none" }}><Copy size={17} /> Copy last week</button>}
-            {published && <button onClick={copyTeamLink} className="app-press" style={{ ...btn(), flex: "none" }}><Link2 size={17} />{linkCopied ? "Copied" : "Team link"}</button>}
-            {shifts.length > 0 && <button onClick={downloadPdf} className="app-press" style={{ ...btn(), flex: "none" }}><FileText size={17} /> PDF</button>}
-            {shifts.length > 0 && <button onClick={downloadCSV} className="app-press" style={{ ...btn(), flex: "none" }}><Download size={17} /> Hours CSV</button>}
-            {published && <button onClick={unpublish} className="app-press" style={{ ...btn("ghost"), flex: "none" }}>Unpublish</button>}
-          </div>
-          <div style={{ fontSize: 13, color: C.muted, textAlign: "center" }}>
-            {published ? (isPast ? "This week is done." : "Your team can see this week. Changes show straight away.") : "Your team can't see this week until you publish."}
-          </div>
-        </div>
-      )}
-
       {/* Summary */}
-      {shifts.length > 0 && (
+      {!isMobile && shifts.length > 0 && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
           <Stat value={totalHours.toFixed(1)} label="paid hours" />
           <Stat value={String(filled)} label={filled === 1 ? "shift" : "shifts"} />
@@ -432,7 +415,7 @@ function WeekPage() {
         </section>
       )}
 
-      {!business.state && staff.length > 0 && !hideStateTip && (
+      {!isMobile && !business.state && staff.length > 0 && !hideStateTip && (
         <Banner onClose={() => { localStorage.setItem("smeasy-hide-state-tip", "1"); setHideStateTip(true); }}>
           Want public holidays marked on your roster? <Link href="/settings" style={{ color: C.dark, fontWeight: 600 }}>Set your state</Link> in Settings.
         </Banner>
@@ -450,14 +433,39 @@ function WeekPage() {
           <WeekStrip days={days} day={day} today={today} shifts={shifts} dayInfo={dayInfo} onPick={pickDay} />
           <DayView key={day} slide={slide} d={day} staff={staff} shifts={shifts} roles={roles} offOn={offOn} info={dayInfo(day)}
             onEdit={editShift} onDay={() => setEditingDay(day)} onSwipe={stepDay} cascadeIds={cascadeIds}
-            emptyHint={!isPast ? "Tap + to add a shift, or use Copy last week." : "No shifts this day."} />
-          <div style={{ ...card, marginTop: 12, marginBottom: 72 }}><AddStaff onAdd={addStaff} /></div>
-          {!isPast && (
-            <button onClick={() => { haptic(6); newShift(staff[0].id, day); }} aria-label={`Add a shift on ${fmtDay(day)}`} className="app-press" style={{
-              position: "fixed", right: 18, bottom: "calc(92px + env(safe-area-inset-bottom))", zIndex: 44, width: 60, height: 60, borderRadius: 20,
-              background: C.accent, color: C.dark, border: "none", display: "grid", placeItems: "center", cursor: "pointer",
-              boxShadow: "0 6px 16px rgba(101,163,13,0.35), 0 2px 4px rgba(17,24,39,0.12)",
-            }}><Plus size={28} strokeWidth={2.6} /></button>
+            atStart={day === days[0]} atEnd={day === days[6]}
+            empty={isPast ? <div>No shifts this day.</div> : (
+              <>
+                <div style={{ marginBottom: 12 }}>Tap + to add a shift.</div>
+                {shifts.length === 0 && <button onClick={copyLastWeek} disabled={busy} className="app-press" style={btn()}><Copy size={17} /> Copy last week</button>}
+              </>
+            )} />
+          <div style={{ ...card, marginTop: 12 }}><AddStaff onAdd={addStaff} /></div>
+          {!business.state && !hideStateTip && (
+            <div style={{ marginTop: 12 }}>
+              <Banner onClose={() => { localStorage.setItem("smeasy-hide-state-tip", "1"); setHideStateTip(true); }}>
+                Want public holidays marked on your roster? <Link href="/settings" style={{ color: C.dark, fontWeight: 600 }}>Set your state</Link> in Settings.
+              </Banner>
+            </div>
+          )}
+          <div style={{ height: 88 }} aria-hidden />
+          {/* Bottom dock: publish (drafts with shifts) + add shift */}
+          {(!isPast || (!published && shifts.length > 0)) && (
+            <div style={{ position: "fixed", left: 16, right: 16, bottom: "calc(84px + env(safe-area-inset-bottom))", zIndex: 44, display: "flex", gap: 10, alignItems: "center", justifyContent: "flex-end", pointerEvents: "none" }}>
+              {!published && shifts.length > 0 && (
+                <button onClick={publish} disabled={busy} className="app-press" style={{ ...btn("accent"), flex: 1, minHeight: 56, borderRadius: 999, fontSize: 16, pointerEvents: "auto", boxShadow: "0 6px 16px rgba(101,163,13,0.35), 0 2px 4px rgba(17,24,39,0.12)" }}>
+                  {busy ? "Publishing…" : "Publish to team"}
+                </button>
+              )}
+              {!isPast && (
+                <button onClick={() => { haptic(6); newShift(staff[0].id, day); }} aria-label={`Add a shift on ${fmtDay(day)}`} className="app-press" style={{
+                  width: 58, height: 58, borderRadius: 999, flex: "none", pointerEvents: "auto",
+                  background: !published && shifts.length > 0 ? C.dark : C.accent, color: !published && shifts.length > 0 ? C.white : C.dark,
+                  border: "none", display: "grid", placeItems: "center", cursor: "pointer",
+                  boxShadow: "0 6px 16px rgba(17,24,39,0.22), 0 2px 4px rgba(17,24,39,0.12)",
+                }}><Plus size={28} strokeWidth={2.6} /></button>
+              )}
+            </div>
           )}
         </>
       ) : (
@@ -470,6 +478,29 @@ function WeekPage() {
           <Grid days={days} today={today} staff={staff} shifts={shifts} hours={hoursByStaff} offOn={offOn} onAdd={newShift} onEdit={editShift} cascadeIds={cascadeIds}
             roles={roles} dayInfo={dayInfo} onDay={setEditingDay} addStaff={<AddStaff onAdd={addStaff} />} />
         </>
+      )}
+
+      {moreOpen && (
+        <Modal title={fmtWeek(monday)} onClose={() => setMoreOpen(false)}>
+          {shifts.length > 0 && (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+              <Stat value={totalHours.toFixed(1)} label="paid hours" />
+              <Stat value={String(filled)} label={filled === 1 ? "shift" : "shifts"} />
+              {unfilled.length > 0 && <Stat value={String(unfilled.length)} label="unfilled" tone="danger" />}
+              {pay && wages > 0 && <Stat value={`≈ ${fmtAUD(wages)}`} label="base wages" />}
+            </div>
+          )}
+          {pay && wages > 0 && (
+            <p style={{ fontSize: 13, color: C.muted, margin: "0 0 14px", lineHeight: 1.5 }}>Base wages are paid hours × each person&apos;s hourly rate. No penalty rates, overtime, allowances or super.{missingRate > 0 && ` Excludes ${missingRate} without a rate.`}</p>
+          )}
+          <div style={{ display: "grid", gap: 8 }}>
+            {staff.length > 0 && !isPast && <SheetAction icon={<Copy size={19} />} label="Copy last week" hint="Adds last week's shifts. Nothing is doubled up." onClick={() => { setMoreOpen(false); copyLastWeek(); }} />}
+            {published && <SheetAction icon={linkCopied ? <Check size={19} /> : <Link2 size={19} />} label={linkCopied ? "Team link copied" : "Copy team link"} hint="Paste it in your staff group chat." onClick={copyTeamLink} />}
+            {shifts.length > 0 && <SheetAction icon={<FileText size={19} />} label="Download PDF" hint="A4 roster to print or send." onClick={downloadPdf} />}
+            {shifts.length > 0 && <SheetAction icon={<Download size={19} />} label="Hours for payroll (CSV)" hint="One row per shift, plus totals by person." onClick={downloadCSV} />}
+            {published && <SheetAction icon={<Undo2 size={19} />} label="Unpublish" hint="Your team stops seeing this week." onClick={() => { setMoreOpen(false); unpublish(); }} />}
+          </div>
+        </Modal>
       )}
 
       {editingDay && (
@@ -504,6 +535,15 @@ function WeekPage() {
         </Modal>
       )}
     </AppShell>
+  );
+}
+
+function SheetAction({ icon, label, hint, onClick }: { icon: React.ReactNode; label: string; hint: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="app-press" style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", padding: "12px 14px", borderRadius: 14, border: "none", background: "#f3f4f6", cursor: "pointer", fontFamily: "inherit", color: C.dark }}>
+      <span style={{ display: "grid", placeItems: "center", width: 38, height: 38, borderRadius: 12, background: C.white, flex: "none" }}>{icon}</span>
+      <span><span style={{ display: "block", fontSize: 16, fontWeight: 700 }}>{label}</span><span style={{ display: "block", fontSize: 13, color: C.muted }}>{hint}</span></span>
+    </button>
   );
 }
 
@@ -608,55 +648,75 @@ function WeekStrip({ days, day, today, shifts, dayInfo, onPick }: {
   );
 }
 
-function DayView({ d, slide, staff, shifts, roles, offOn, info, onEdit, onDay, onSwipe, cascadeIds, emptyHint }: {
+function DayView({ d, slide, staff, shifts, roles, offOn, info, onEdit, onDay, onSwipe, cascadeIds, empty, atStart, atEnd }: {
   d: string; slide: "left" | "right"; staff: Staff[]; shifts: Shift[]; roles: string[]; offOn: OffOn;
   info: { holiday: string | null; note: string | null }; onEdit: (s: Shift) => void; onDay: () => void; onSwipe: (n: number) => void;
-  cascadeIds: Set<string>; emptyHint: string;
+  cascadeIds: Set<string>; empty: React.ReactNode; atStart: boolean; atEnd: boolean;
 }) {
-  const start = useRef<{ x: number; y: number } | null>(null);
+  // The day follows your thumb; let go past the threshold to move a day, otherwise it settles back.
+  const start = useRef<{ x: number; y: number; lock: "x" | "y" | null } | null>(null);
+  const [dx, setDx] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const dayShifts = shifts.filter((s) => s.date === d)
     .sort((a, b) => Number(!!a.staff_id) - Number(!!b.staff_id) || a.start_time.localeCompare(b.start_time));
   const offs = staff.map((p) => ({ p, t: offOn(p.id, d) })).filter((x) => x.t);
   return (
     <section aria-label={fmtDay(d)}
-      onTouchStart={(e) => { start.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }}
-      onTouchEnd={(e) => {
-        if (!start.current) return;
-        const dx = e.changedTouches[0].clientX - start.current.x;
-        const dy = e.changedTouches[0].clientY - start.current.y;
-        start.current = null;
-        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) onSwipe(dx < 0 ? 1 : -1);
+      onTouchStart={(e) => { start.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, lock: null }; }}
+      onTouchMove={(e) => {
+        const st = start.current;
+        if (!st) return;
+        const mx = e.touches[0].clientX - st.x;
+        const my = e.touches[0].clientY - st.y;
+        if (!st.lock && (Math.abs(mx) > 10 || Math.abs(my) > 10)) st.lock = Math.abs(mx) > Math.abs(my) ? "x" : "y";
+        if (st.lock !== "x") return;
+        const edge = (mx > 0 && atStart) || (mx < 0 && atEnd);
+        setDragging(true);
+        setDx(edge ? mx * 0.35 : mx);
       }}
-      className={slide === "right" ? "day-in-right" : "day-in-left"} style={{ display: "grid", gap: 10, alignContent: "start" }}>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.01em" }}>{fmtDay(d)}</h2>
-          <div style={{ fontSize: 14, color: C.secondary }}><CoverageText c={coverage(shifts, d)} /></div>
+      onTouchEnd={() => {
+        const st = start.current;
+        start.current = null;
+        setDragging(false);
+        if (st?.lock === "x" && Math.abs(dx) > 70) { haptic(6); onSwipe(dx < 0 ? 1 : -1); return; }
+        setDx(0);
+      }}
+      style={{ touchAction: "pan-y" }}>
+      <div className={slide === "right" ? "day-in-right" : "day-in-left"} style={{
+        display: "grid", gap: 10, alignContent: "start",
+        transform: dx ? `translateX(${dx}px)` : undefined, opacity: dx ? Math.max(0.55, 1 - Math.abs(dx) / 500) : undefined,
+        transition: dragging ? "none" : "transform 320ms cubic-bezier(.16,1,.3,1), opacity 320ms cubic-bezier(.16,1,.3,1)",
+      }}>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.01em" }}>{fmtDay(d)}</h2>
+            <div style={{ fontSize: 14, color: C.secondary }}><CoverageText c={coverage(shifts, d)} /></div>
+          </div>
+          <button onClick={onDay} className="app-press" style={{ ...btn("ghost"), padding: "8px 10px", minHeight: 38, color: C.dark }}>
+            <StickyNote size={17} /> {info.note ? "Edit note" : "Day note"}
+          </button>
         </div>
-        <button onClick={onDay} className="app-press" style={{ ...btn("ghost"), padding: "8px 10px", minHeight: 38, color: C.dark }}>
-          <StickyNote size={17} /> {info.note ? "Edit note" : "Day note"}
-        </button>
+        {(info.holiday || info.note) && (
+          <div style={{ ...card, boxShadow: "none", background: info.holiday ? HOLIDAY.bg : "#f3f4f6", padding: "10px 14px", fontSize: 14, lineHeight: 1.45 }}>
+            {info.holiday && <div style={{ fontWeight: 700, color: HOLIDAY.text }}>Public holiday · {info.holiday}</div>}
+            {info.note && <div style={{ color: C.secondary }}>{info.note}</div>}
+          </div>
+        )}
+        {dayShifts.length === 0 && offs.length === 0 && (
+          <div style={{ ...card, padding: "26px 18px", textAlign: "center", color: C.muted, fontSize: 15 }}>
+            <span style={{ display: "inline-grid", placeItems: "center", width: 44, height: 44, borderRadius: 14, background: "#f3f4f6", marginBottom: 8, color: C.secondary }}><CalendarPlus size={22} /></span>
+            {empty}
+          </div>
+        )}
+        {dayShifts.map((s) => <ShiftCard key={s.id} s={s} staff={staff} roles={roles} onEdit={onEdit} fresh={cascadeIds.has(s.id)} />)}
+        {offs.map(({ p, t }) => (
+          <div key={p.id} style={{ ...card, display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: C.offBg, boxShadow: "none" }}>
+            <Avatar name={p.name} tone={{ bg: "#ffedd5", text: C.offText }} />
+            <span style={{ flex: 1, fontSize: 15, fontWeight: 650 }}>{p.name}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: C.offText }}>Off{t!.reason ? ` · ${t!.reason}` : ""}</span>
+          </div>
+        ))}
       </div>
-      {(info.holiday || info.note) && (
-        <div style={{ ...card, boxShadow: "none", background: info.holiday ? HOLIDAY.bg : "#f3f4f6", padding: "10px 14px", fontSize: 14, lineHeight: 1.45 }}>
-          {info.holiday && <div style={{ fontWeight: 700, color: HOLIDAY.text }}>Public holiday · {info.holiday}</div>}
-          {info.note && <div style={{ color: C.secondary }}>{info.note}</div>}
-        </div>
-      )}
-      {dayShifts.length === 0 && offs.length === 0 && (
-        <div style={{ ...card, padding: "28px 18px", textAlign: "center", color: C.muted, fontSize: 15 }}>
-          <span style={{ display: "inline-grid", placeItems: "center", width: 44, height: 44, borderRadius: 14, background: "#f3f4f6", marginBottom: 8, color: C.secondary }}><CalendarPlus size={22} /></span>
-          <div>{emptyHint}</div>
-        </div>
-      )}
-      {dayShifts.map((s) => <ShiftCard key={s.id} s={s} staff={staff} roles={roles} onEdit={onEdit} fresh={cascadeIds.has(s.id)} />)}
-      {offs.map(({ p, t }) => (
-        <div key={p.id} style={{ ...card, display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: C.offBg, boxShadow: "none" }}>
-          <Avatar name={p.name} tone={{ bg: "#ffedd5", text: C.offText }} />
-          <span style={{ flex: 1, fontSize: 15, fontWeight: 650 }}>{p.name}</span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: C.offText }}>Off{t!.reason ? ` · ${t!.reason}` : ""}</span>
-        </div>
-      ))}
     </section>
   );
 }
@@ -721,7 +781,8 @@ function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascade
         const mine = shifts.filter((s) => (s.staff_id ?? "") === staffId && s.date === d);
         const off = staffId ? offOn(staffId, d) : undefined;
         return (
-          <div key={d} className="grid-cell" onClick={() => onAdd(staffId, d)} title="Add shift"
+          <div key={d} className="grid-cell" role="button" tabIndex={0} aria-label={`Add shift ${fmtDay(d)}`}
+            onClick={() => onAdd(staffId, d)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAdd(staffId, d); } }} title="Add shift"
             style={{ padding: 5, minHeight: 60, cursor: "pointer", display: "flex", flexDirection: "column", gap: 4, justifyContent: "center", minWidth: 0, background: d === today ? "rgba(183,224,33,0.06)" : undefined }}>
             {off && <div style={{ background: C.offBg, color: C.offText, borderRadius: 10, padding: "6px 8px", fontSize: 13, fontWeight: 700 }}>Off{off.reason ? ` · ${off.reason}` : ""}</div>}
             {mine.map((s) => { const isCascade = cascadeIds.has(s.id); const delay = isCascade ? cascadeIdx++ * 40 : 0; return <Chip key={s.id} s={s} roles={roles} onClick={() => onEdit(s)} cascade={isCascade} cascadeDelay={delay} />; })}

@@ -160,3 +160,28 @@ button:active:not(:disabled) { transform: scale(0.98); }
 @media (hover: hover) { .grid-cell:hover { background: #f8faf3 !important; } .grid-cell:hover .grid-plus { color: #65a30d; transform: scale(1.15); } }
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Fix batch: app ground everywhere on app routes (no cream in overscroll or safe areas) */
+html:has(.app), body:has(.app) { background: #f6f7f9; }
+
+/* Screen entrance on navigation */
+@keyframes route-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.route-in { animation: route-in 260ms cubic-bezier(.16,1,.3,1) both; }
+
+/* Sheet exit */
+@keyframes sheet-down { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes dialog-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(8px) scale(0.98); } }
+@keyframes scrim-out { from { opacity: 1; } to { opacity: 0; } }
+.sheet-scrim.is-closing { animation: scrim-out 220ms ease-in both; }
+.sheet.is-closing { animation: dialog-out 200ms ease-in both; }
+@media (max-width: 719px) { .sheet.is-closing { animation: sheet-down 220ms cubic-bezier(.4,0,1,1) both; } }
+
+/* Desktop grid: empty cells stay quiet; the + appears on hover or keyboard focus */
+.grid-plus { opacity: 0; }
+@media (hover: hover) { .grid-cell:hover .grid-plus { opacity: 1; } }
+.grid-cell:focus-visible { outline: 2px solid #111827; outline-offset: -2px; border-radius: 10px; }
+.grid-cell:focus-visible .grid-plus { opacity: 1; color: #65a30d; }
+
+@media (prefers-reduced-motion: reduce) {
+  .route-in, .sheet.is-closing, .sheet-scrim.is-closing { animation: none !important; }
+}
