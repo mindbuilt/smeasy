@@ -9,6 +9,7 @@ Paste each into **Supabase → Authentication → Emails → Templates**:
 |---|---|---|
 | Magic Link | `magic-link.html` | Your SMEasy login link |
 | Confirm signup | `confirm-signup.html` | Welcome to SMEasy: confirm your email |
+| Reset Password | `reset-password.html` | Reset your SMEasy password |
 | Change Email Address | `change-email.html` | Confirm your new SMEasy email address |
 | Reauthentication | `reauthentication.html` | Your SMEasy verification code |
 

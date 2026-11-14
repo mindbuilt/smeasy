@@ -18,7 +18,7 @@ export const faqGroups: FaqGroup[] = [
   {
     title: "Building the roster",
     items: [
-      { q: "How do I sign in?", a: "Enter your email and we send you a login link. There's no password. The link works on any device, and you stay signed in after that." },
+      { q: "How do I sign in?", a: "With your email and a password, or with a login link we email you. Choose whichever suits. You can set or change your password any time under Team → Your login. You stay signed in on each device until you log out." },
       { q: "Can I copy last week's roster?", a: "Yes. On an empty week, tap Copy last week and every shift is copied to the same days, ready to adjust." },
       { q: "Does it handle split shifts and shifts past midnight?", a: "Yes. Add two shifts on the same day for a split shift. For a late close, set a finish time earlier than the start — for example 5pm to 2am — and SMEasy counts the hours correctly." },
       { q: "How are hours worked out?", a: "Paid hours are the finish time minus the start time minus any unpaid break you set on the shift. SMEasy shows each person's weekly hours and the team total." },

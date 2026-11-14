@@ -52,7 +52,7 @@ export default function PricingPage() {
             <span style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-0.02em" }}>$0</span>
             <span style={{ fontSize: 14, color: C.muted }}>/month</span>
           </div>
-          <Link href="/auth/login/" style={{
+          <Link href="/auth/login/?signup" style={{
             display: "block", textAlign: "center", background: C.white, color: C.dark,
             border: `1px solid ${C.border}`, padding: "12px 20px", borderRadius: C.r1,
             textDecoration: "none", fontSize: 15, fontWeight: 600, marginBottom: 20,
@@ -81,7 +81,7 @@ export default function PricingPage() {
             <span style={{ fontSize: 14, color: "#b0ad9f" }}>/month</span>
           </div>
           <div style={{ fontSize: 13, color: "#b0ad9f", marginBottom: 20 }}>Plus GST ($20.90 a month in total). Per business, billed monthly, cancel any time.</div>
-          <Link href="/auth/login/" style={{
+          <Link href="/auth/login/?signup" style={{
             display: "block", textAlign: "center", background: C.accent, color: C.dark,
             padding: "12px 20px", borderRadius: C.r1,
             textDecoration: "none", fontSize: 15, fontWeight: 600, marginBottom: 20,

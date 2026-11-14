@@ -2,38 +2,104 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import { C, btn, input, label } from "@/components/ui";
+import { MIN_PASSWORD } from "@/lib/auth";
+
+type Mode = "login" | "signup" | "forgot";
+type Sent = { kind: "link" | "confirm" | "reset"; email: string } | null;
+
+/** Turns Supabase auth errors into plain English. */
+function friendly(message: string, mode: Mode) {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials"))
+    return "That email and password don't match. Check them, or use “Forgot password?” or “Email me a login link” below. If you've only ever logged in with a link, you won't have a password yet.";
+  if (m.includes("email not confirmed")) return "Please confirm your email first. Check your inbox for the email from SMEasy.";
+  if (m.includes("already registered")) return "There's already an account with that email. Log in instead, or use “Forgot password?”.";
+  if (m.includes("rate limit") || m.includes("too many") || m.includes("security purposes"))
+    return "Too many attempts. Please wait a minute and try again.";
+  if (m.includes("password") && mode === "signup") return `Choose a password of at least ${MIN_PASSWORD} characters.`;
+  return message;
+}
 
 export default function LoginPage() {
   const router = useRouter();
+  const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState<Sent>(null);
   const [error, setError] = useState<string | null>(null);
   // Don't show the login form until we know they aren't already logged in.
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     supabase().auth.getSession().then(({ data }) => {
-      if (data.session) router.replace("/week/");
-      else setChecking(false);
+      if (data.session) { router.replace("/week/"); return; }
+      if (new URLSearchParams(window.location.search).has("signup")) setMode("signup");
+      setChecking(false);
     });
   }, [router]);
 
-  async function send(e: React.FormEvent) {
+  const callback = () => `${window.location.origin}/auth/callback/`;
+
+  async function goIn() {
+    const { data } = await supabase().from("businesses").select("id").maybeSingle();
+    router.replace(data ? "/week/" : "/welcome/");
+  }
+
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setSending(true);
-    const { error } = await supabase().auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback/` },
-    });
-    setSending(false);
-    if (error) setError(error.message);
-    else setSent(true);
+    setBusy(true);
+    const sb = supabase().auth;
+    const addr = email.trim();
+    try {
+      if (mode === "login") {
+        const { error } = await sb.signInWithPassword({ email: addr, password });
+        if (error) throw error;
+        await goIn();
+        return;
+      }
+      if (mode === "signup") {
+        if (password.length < MIN_PASSWORD) throw new Error(`Choose a password of at least ${MIN_PASSWORD} characters.`);
+        const { data, error } = await sb.signUp({ email: addr, password, options: { emailRedirectTo: callback() } });
+        if (error) throw error;
+        if (data.session) { await goIn(); return; }
+        setSent({ kind: "confirm", email: addr });
+      }
+      if (mode === "forgot") {
+        const { error } = await sb.resetPasswordForEmail(addr, { redirectTo: `${window.location.origin}/auth/reset/` });
+        if (error) throw error;
+        setSent({ kind: "reset", email: addr });
+      }
+    } catch (err) {
+      setError(friendly((err as Error).message, mode));
+    } finally {
+      setBusy(false);
+    }
   }
+
+  async function emailLink() {
+    setError(null);
+    if (!email.trim()) { setError("Enter your email first."); return; }
+    setBusy(true);
+    const { error } = await supabase().auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: callback() } });
+    setBusy(false);
+    if (error) setError(friendly(error.message, mode));
+    else setSent({ kind: "link", email: email.trim() });
+  }
+
+  function switchTo(m: Mode) {
+    setMode(m);
+    setError(null);
+    setPassword("");
+  }
+
+  const heading = { fontSize: 20, fontWeight: 700, color: C.dark, margin: "0 0 6px" } as const;
+  const sub = { fontSize: 14, color: C.secondary, margin: "0 0 20px", lineHeight: 1.5 } as const;
+  const linkBtn = { background: "none", border: 0, padding: 0, color: C.dark, textDecoration: "underline", cursor: "pointer", fontSize: 13, fontFamily: "inherit" } as const;
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 24px 0" }}>
@@ -47,29 +113,76 @@ export default function LoginPage() {
           <p style={{ fontSize: 14, color: C.muted, margin: 0 }}>Checking if you&apos;re already logged in…</p>
         ) : sent ? (
           <>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: C.dark, margin: "0 0 8px" }}>Check your email</h1>
-            <p style={{ fontSize: 14, color: C.secondary, lineHeight: 1.5, margin: "0 0 20px" }}>
-              We sent a login link to <strong>{email}</strong>. Open it on any device to sign in.
+            <h1 style={heading}>Check your email</h1>
+            <p style={sub}>
+              {sent.kind === "link" && <>We sent a login link to <strong>{sent.email}</strong>. Open it on any device to log in.</>}
+              {sent.kind === "confirm" && <>We sent an email to <strong>{sent.email}</strong>. Tap the link in it to confirm your address and log in.</>}
+              {sent.kind === "reset" && <>If there&apos;s an account for <strong>{sent.email}</strong>, we&apos;ve sent a link to set a new password.</>}
             </p>
-            <button onClick={() => setSent(false)} style={btn("ghost")}>Use a different email</button>
+            <button onClick={() => { setSent(null); switchTo("login"); }} style={btn("ghost")}>Back to log in</button>
           </>
         ) : (
-          <form onSubmit={send}>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: C.dark, margin: "0 0 6px" }}>Rostering, sorted.</h1>
-            <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 20px" }}>
-              Enter your email and we&apos;ll send you a link. No password needed — new here? This sets up your account too.
+          <form onSubmit={submit}>
+            <h1 style={heading}>
+              {mode === "login" ? "Log in to SMEasy" : mode === "signup" ? "Create your account" : "Reset your password"}
+            </h1>
+            <p style={sub}>
+              {mode === "login" && "Welcome back. Rostering, sorted."}
+              {mode === "signup" && "Free during early access. You'll be building your first roster in about five minutes."}
+              {mode === "forgot" && "Enter your email and we'll send you a link to set a new password."}
             </p>
+
             <label style={label} htmlFor="email">Email</label>
             <input id="email" type="email" required autoComplete="email" autoFocus
               value={email} onChange={(e) => setEmail(e.target.value)} style={input}
               placeholder="you@yourbusiness.com.au" />
-            {error && <p style={{ color: C.danger, fontSize: 13, margin: "10px 0 0" }}>{error}</p>}
-            <button type="submit" disabled={sending} style={{ ...btn("primary"), width: "100%", marginTop: 16, opacity: sending ? 0.6 : 1 }}>
-              {sending ? "Sending…" : "Email me a login link"}
+
+            {mode !== "forgot" && (
+              <>
+                <div style={{ display: "flex", alignItems: "baseline", marginTop: 14 }}>
+                  <label style={label} htmlFor="password">Password</label>
+                  {mode === "login" && (
+                    <button type="button" onClick={() => switchTo("forgot")} style={{ ...linkBtn, marginLeft: "auto", fontSize: 12, color: C.secondary }}>
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <input id="password" type="password" required minLength={mode === "signup" ? MIN_PASSWORD : undefined}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  value={password} onChange={(e) => setPassword(e.target.value)} style={input} />
+                {mode === "signup" && <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0" }}>At least {MIN_PASSWORD} characters.</p>}
+              </>
+            )}
+
+            {error && <p role="alert" style={{ color: C.danger, fontSize: 13, margin: "12px 0 0", lineHeight: 1.45 }}>{error}</p>}
+
+            <button type="submit" disabled={busy} style={{ ...btn("primary"), width: "100%", marginTop: 16, opacity: busy ? 0.6 : 1 }}>
+              {busy ? "One moment…" : mode === "login" ? "Log in" : mode === "signup" ? "Create account" : "Send reset link"}
             </button>
-            <p style={{ fontSize: 12, color: C.muted, margin: "14px 0 0", lineHeight: 1.5 }}>
-              By continuing you agree to how we handle data in our <a href="/privacy/" style={{ color: C.secondary }}>privacy policy</a>.
+
+            {mode !== "forgot" && (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "16px 0", color: C.muted, fontSize: 12 }}>
+                  <span style={{ flex: 1, height: 1, background: C.border }} />or<span style={{ flex: 1, height: 1, background: C.border }} />
+                </div>
+                <button type="button" onClick={emailLink} disabled={busy} style={{ ...btn("secondary"), width: "100%" }}>
+                  Email me a login link instead
+                </button>
+                <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0", textAlign: "center" }}>No password needed. Works for new and existing accounts.</p>
+              </>
+            )}
+
+            <p style={{ fontSize: 13, color: C.secondary, margin: "20px 0 0", textAlign: "center" }}>
+              {mode === "login" && <>New to SMEasy? <button type="button" onClick={() => switchTo("signup")} style={linkBtn}>Create an account</button></>}
+              {mode === "signup" && <>Already have an account? <button type="button" onClick={() => switchTo("login")} style={linkBtn}>Log in</button></>}
+              {mode === "forgot" && <button type="button" onClick={() => switchTo("login")} style={linkBtn}>Back to log in</button>}
             </p>
+
+            {mode === "signup" && (
+              <p style={{ fontSize: 12, color: C.muted, margin: "14px 0 0", lineHeight: 1.5 }}>
+                By continuing you agree to how we handle data in our <a href="/privacy/" style={{ color: C.secondary }}>privacy policy</a>.
+              </p>
+            )}
           </form>
         )}
       </div>

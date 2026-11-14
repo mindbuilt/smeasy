@@ -66,10 +66,10 @@ export default function Home() {
           Staff rostering that actually feels easy.
         </h1>
         <p style={{ fontSize: "clamp(16px, 2.2vw, 19px)", color: C.secondary, maxWidth: 620, margin: "0 auto 28px", lineHeight: 1.55 }}>
-          Build the week in minutes, share it with one link, and export the hours when you&apos;re done. Made for small Australian businesses. No app for your staff, no passwords, no fuss.
+          Build the week in minutes, share it with one link, and export the hours when you&apos;re done. Made for small Australian businesses. No app or passwords for your staff, no fuss.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/auth/login/" style={{ background: C.dark, color: C.white, padding: "14px 26px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>Get started free</Link>
+          <Link href="/auth/login/?signup" style={{ background: C.dark, color: C.white, padding: "14px 26px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>Get started free</Link>
           <Link href="#how-it-works" style={{ background: C.white, color: C.dark, border: `1px solid ${C.border}`, padding: "14px 26px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>How it works</Link>
         </div>
         <p style={{ fontSize: 13, color: C.muted, marginTop: 14 }}>No credit card. Sign in with your email.</p>
@@ -172,7 +172,7 @@ export default function Home() {
       <section style={{ ...wrap, textAlign: "center" }}>
         <h2 style={{ fontSize: 30, fontWeight: 700, margin: "0 0 10px" }}>Ready to ditch the spreadsheet?</h2>
         <p style={{ color: C.secondary, fontSize: 16, margin: "0 0 22px" }}>Free during early access. Your first roster is about five minutes away.</p>
-        <Link href="/auth/login/" style={{ background: C.dark, color: C.white, padding: "14px 28px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>Get started free</Link>
+        <Link href="/auth/login/?signup" style={{ background: C.dark, color: C.white, padding: "14px 28px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>Get started free</Link>
         <p style={{ fontSize: 14, color: C.muted, marginTop: 18 }}>Questions? Read the <Link href="/faq/" style={{ color: C.secondary }}>FAQ</Link>.</p>
       </section>
       </ScrollReveal>

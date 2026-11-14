@@ -75,6 +75,14 @@ const templates = [
     after: ["The link works once and expires in an hour.", "Didn't sign up for SMEasy? You can safely ignore this email. No account is created unless someone uses the link."],
   },
   {
+    file: "reset-password", supabase: "Reset Password", subject: "Reset your SMEasy password",
+    preheader: "Set a new password for your SMEasy account.",
+    heading: "Set a new password",
+    body: ["Someone asked to reset the password for {{ .Email }}. Tap the button below to choose a new one."],
+    button: { href: "{{ .ConfirmationURL }}", label: "Choose a new password" },
+    after: ["The link works once and expires in an hour.", "Didn't ask for this? You can safely ignore this email. Your password stays the same unless someone uses the link."],
+  },
+  {
     file: "change-email", supabase: "Change Email Address", subject: "Confirm your new SMEasy email address",
     preheader: "Confirm the new email address for your SMEasy account.",
     heading: "Confirm your new email address",

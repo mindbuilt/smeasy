@@ -3,7 +3,7 @@
 > Simple staff rostering for Australian small businesses — cafés, restaurants, bars, shops and other small teams. Free during early access; afterwards free for up to 10 staff, $19/month + GST for bigger teams.
 
 ## What SMEasy does
-- Managers sign in with an emailed login link (no password).
+- Managers log in with email and password, or with an emailed login link.
 - Build a weekly roster: tap a day to add a shift with start, finish, unpaid break and role. Split shifts and shifts past midnight are supported.
 - Copy last week's roster in one tap.
 - Shifts are colour-coded by role; shifts and days can carry notes; shifts can be left unfilled ("no one yet"); a daily cover line shows people on, hours and gaps.

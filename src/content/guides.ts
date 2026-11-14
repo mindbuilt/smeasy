@@ -28,7 +28,7 @@ export const guides: Guide[] = [
     body: [
       { p: "This guide walks through your first roster in SMEasy, from signing up to publishing the week to your team. Most small teams are done in about five minutes." },
       { h2: "1. Sign up with your email" },
-      { p: "Go to smeasy.au and tap Get started. Enter your email and we'll send you a login link — there's no password to remember. Open the link on any device and you're in." },
+      { p: "Go to smeasy.au and tap Get started. Enter your email and choose a password, then confirm your email from the message we send you. Prefer not to have a password? Tap “Email me a login link instead” and open the link on any device." },
       { p: "The first time, SMEasy asks for your business name and what kind of business you run (café or restaurant, retail, or other). That sets up a starting list of shift roles, like Floor, Kitchen and Barista. You can change the roles any time." },
       { h2: "2. Add your team" },
       { p: "On the Team page, type each person's name and tap Add. That's all you need to start rostering." },
@@ -169,7 +169,7 @@ export const guides: Guide[] = [
       { h2: "4. Share from your phone" },
       { p: "After you publish, tap Copy team link and paste it into your group chat, or download the PDF and share it straight from your phone." },
       { h2: "5. Stay signed in" },
-      { p: "SMEasy keeps you signed in on your phone, so you won't need a new login link every time. If you do get signed out, request a link and open it on the same phone." },
+      { p: "SMEasy keeps you signed in on your phone, so you won't need to log in every time. If you do get signed out, log in with your email and password, or request a login link and open it on the same phone. You can set a password under Team → Your login." },
     ],
   },
   {

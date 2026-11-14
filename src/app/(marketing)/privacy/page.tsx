@@ -50,7 +50,8 @@ export default function Privacy() {
       <h2 style={h2}>What we collect</h2>
       <h3 style={h3}>From account holders</h3>
       <ul style={ul}>
-        <L>Email address, used to sign you in with a login link.</L>
+        <L>Email address, used to sign you in and to send login and password-reset links.</L>
+        <L>If you set one, your password. Our authentication provider stores it only in scrambled (hashed) form, so we can&apos;t see it.</L>
         <L>Business name, business type and the shift roles you set up.</L>
         <L>Sign-in records kept by our authentication provider, such as the time of sign-in, IP address and browser type, used to keep accounts secure.</L>
       </ul>

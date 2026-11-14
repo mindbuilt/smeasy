@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useManager } from "@/lib/useManager";
+import SetPassword from "@/components/SetPassword";
 import type { Staff } from "@/lib/types";
 import { STATES, STATE_TIMEZONE, type State } from "@/lib/holidays";
 import { AppShell, C, Loading, Modal, btn, input, label } from "@/components/ui";
@@ -133,6 +134,14 @@ function TeamPage() {
           const { data } = await supabase().from("businesses").update({ roles }).eq("id", business.id).select().single();
           if (data) setBusiness(data);
         }} />
+
+        <div id="login" style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: C.dark, margin: "0 0 4px" }}>Your login</h2>
+          <p style={{ fontSize: 13, color: C.secondary, margin: "0 0 12px", lineHeight: 1.5 }}>
+            You&apos;re logged in as <strong>{email}</strong>. Set a password to log in with your email and password, without waiting for a login link. You can still use a link any time.
+          </p>
+          <SetPassword />
+        </div>
       </div>
 
       {editing && (

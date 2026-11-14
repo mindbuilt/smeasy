@@ -23,7 +23,7 @@ export default function AccountLinks() {
   return (
     <>
       <Link href="/auth/login/" style={{ color: C.secondary, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Log in</Link>
-      <Link href="/auth/login/" style={primary}>Get started</Link>
+      <Link href="/auth/login/?signup" style={primary}>Get started</Link>
     </>
   );
 }

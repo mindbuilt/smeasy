@@ -1,5 +1,5 @@
 // Loads SMEasy's branded auth emails into the live Supabase project.
-// Changes ONLY: the 4 email subjects + bodies below, and the SMTP sender name.
+// Changes ONLY: the 5 email subjects + bodies below, and the SMTP sender name.
 // Nothing else in Supabase Auth is touched.
 //
 // Run: node scripts/push-email-templates.mjs
@@ -26,6 +26,8 @@ const body = {
   mailer_templates_magic_link_content: html("magic-link"),
   mailer_subjects_confirmation: "Welcome to SMEasy: confirm your email",
   mailer_templates_confirmation_content: html("confirm-signup"),
+  mailer_subjects_recovery: "Reset your SMEasy password",
+  mailer_templates_recovery_content: html("reset-password"),
   mailer_subjects_email_change: "Confirm your new SMEasy email address",
   mailer_templates_email_change_content: html("change-email"),
   mailer_subjects_reauthentication: "Your SMEasy verification code",
