@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { C } from "@/lib/theme";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, SIGNUPS_OPEN, SIGNUP_HREF, SIGNUP_CTA } from "@/lib/site";
 import { guides } from "@/content/guides";
 import AuthHashForwarder from "@/components/AuthHashForwarder";
 import ScrollReveal from "@/components/ScrollReveal";
-import SignedInGate from "@/components/SignedInGate";
-import ComingSoon from "@/components/ComingSoon";
 
 export const metadata: Metadata = {
   title: { absolute: "SMEasy — simple staff rostering for Australian small businesses" },
@@ -50,31 +48,19 @@ const jsonLd = {
   areaServed: "AU",
 };
 
-// Homepage is "coming soon" for everyone except a signed-in visitor (the test
-// account). To open it up, return <HomeContent /> directly from Home below.
 export default function Home() {
-  return (
-    <>
-      <AuthHashForwarder />
-      <SignedInGate fallback={<ComingSoon />}>
-        <HomeContent />
-      </SignedInGate>
-    </>
-  );
-}
-
-function HomeContent() {
   const featured = ["how-to-create-a-roster", "share-roster-with-staff", "shift-scheduling-best-practices"]
     .map((s) => guides.find((g) => g.slug === s)!);
 
   return (
     <>
+      <AuthHashForwarder />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Hero */}
       <section style={{ ...wrap, padding: "72px 20px 56px", textAlign: "center" }}>
         <div style={{ display: "inline-block", fontSize: 13, fontWeight: 600, color: C.shiftText, background: C.shiftBg, border: `1px solid ${C.shiftBorder}`, borderRadius: 999, padding: "4px 12px", marginBottom: 20 }}>
-          Free during early access
+          {SIGNUPS_OPEN ? "Free during early access" : "Coming soon"}
         </div>
         <h1 style={{ fontSize: "clamp(32px, 6vw, 52px)", lineHeight: 1.1, fontWeight: 700, margin: "0 auto 18px", maxWidth: 760, letterSpacing: "-0.02em" }}>
           Staff rostering that actually feels easy.
@@ -83,10 +69,12 @@ function HomeContent() {
           Build the week in minutes, share it with one link, and export the hours when you&apos;re done. Made for small Australian businesses. No app or passwords for your staff, no fuss.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/auth/login/?signup" style={{ background: C.dark, color: C.white, padding: "14px 26px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>Get started free</Link>
+          <Link href={SIGNUP_HREF} style={{ background: C.dark, color: C.white, padding: "14px 26px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>{SIGNUP_CTA}</Link>
           <Link href="#how-it-works" style={{ background: C.white, color: C.dark, border: `1px solid ${C.border}`, padding: "14px 26px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>How it works</Link>
         </div>
-        <p style={{ fontSize: 13, color: C.muted, marginTop: 14 }}>No credit card. Sign in with your email.</p>
+        <p style={{ fontSize: 13, color: C.muted, marginTop: 14 }}>
+          {SIGNUPS_OPEN ? "No credit card. Sign in with your email." : "We're opening soon. Leave your email and we'll let you know."}
+        </p>
       </section>
 
       {/* Hero image */}
@@ -185,8 +173,10 @@ function HomeContent() {
       <ScrollReveal>
       <section style={{ ...wrap, textAlign: "center" }}>
         <h2 style={{ fontSize: 30, fontWeight: 700, margin: "0 0 10px" }}>Ready to ditch the spreadsheet?</h2>
-        <p style={{ color: C.secondary, fontSize: 16, margin: "0 0 22px" }}>Free during early access. Your first roster is about five minutes away.</p>
-        <Link href="/auth/login/?signup" style={{ background: C.dark, color: C.white, padding: "14px 28px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>Get started free</Link>
+        <p style={{ color: C.secondary, fontSize: 16, margin: "0 0 22px" }}>
+          {SIGNUPS_OPEN ? "Free during early access. Your first roster is about five minutes away." : "SMEasy opens soon, free for small teams. Get on the early-access list and we'll email you when it's ready."}
+        </p>
+        <Link href={SIGNUP_HREF} style={{ background: C.dark, color: C.white, padding: "14px 28px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>{SIGNUP_CTA}</Link>
         <p style={{ fontSize: 14, color: C.muted, marginTop: 18 }}>Questions? Read the <Link href="/faq/" style={{ color: C.secondary }}>FAQ</Link>.</p>
       </section>
       </ScrollReveal>

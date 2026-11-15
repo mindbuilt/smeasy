@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { C } from "@/lib/theme";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, SIGNUPS_OPEN, SIGNUP_HREF, SIGNUP_CTA_SHORT } from "@/lib/site";
 import { guides, guideBySlug, Block } from "@/content/guides";
 
 export const dynamicParams = false;
@@ -66,9 +66,11 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       {g.body.map(render)}
 
       <div style={{ background: C.dark, color: C.white, borderRadius: C.r2, padding: "24px 22px", margin: "40px 0" }}>
-        <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Try SMEasy free</div>
-        <p style={{ margin: "0 0 16px", color: "#d9d6cc", fontSize: 15 }}>Simple rostering for Australian small businesses. Free during early access.</p>
-        <Link href="/auth/login/?signup" style={{ background: C.accent, color: C.dark, padding: "11px 20px", borderRadius: C.r1, textDecoration: "none", fontWeight: 700, fontSize: 15 }}>Get started</Link>
+        <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>{SIGNUPS_OPEN ? "Try SMEasy free" : "SMEasy is coming soon"}</div>
+        <p style={{ margin: "0 0 16px", color: "#d9d6cc", fontSize: 15 }}>
+          {SIGNUPS_OPEN ? "Simple rostering for Australian small businesses. Free during early access." : "Simple rostering for Australian small businesses. Get on the early-access list and we'll email you when it opens."}
+        </p>
+        <Link href={SIGNUP_HREF} style={{ background: C.accent, color: C.dark, padding: "11px 20px", borderRadius: C.r1, textDecoration: "none", fontWeight: 700, fontSize: 15 }}>{SIGNUP_CTA_SHORT}</Link>
       </div>
 
       <h2 style={{ fontSize: 18, margin: "0 0 12px" }}>More guides</h2>

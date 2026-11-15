@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { C, btn, input, label } from "@/components/ui";
 import { MIN_PASSWORD } from "@/lib/auth";
+import { SIGNUPS_OPEN, SIGNUP_HREF } from "@/lib/site";
 
 type Mode = "login" | "signup" | "forgot";
 type Sent = { kind: "link" | "confirm" | "reset"; email: string } | null;
@@ -19,6 +20,8 @@ function friendly(message: string, mode: Mode) {
   if (m.includes("already registered")) return "There's already an account with that email. Log in instead, or use “Forgot password?”.";
   if (m.includes("rate limit") || m.includes("too many") || m.includes("security purposes"))
     return "Too many attempts. Please wait a minute and try again.";
+  if (m.includes("signups not allowed") || m.includes("signup is disabled"))
+    return "There's no SMEasy account for that email. We're not open to new sign-ups yet.";
   if (m.includes("password") && mode === "signup") return `Choose a password of at least ${MIN_PASSWORD} characters.`;
   return message;
 }
@@ -37,7 +40,7 @@ export default function LoginPage() {
   useEffect(() => {
     supabase().auth.getSession().then(({ data }) => {
       if (data.session) { router.replace("/week/"); return; }
-      if (new URLSearchParams(window.location.search).has("signup")) setMode("signup");
+      if (SIGNUPS_OPEN && new URLSearchParams(window.location.search).has("signup")) setMode("signup");
       setChecking(false);
     });
   }, [router]);
@@ -85,7 +88,7 @@ export default function LoginPage() {
     setError(null);
     if (!email.trim()) { setError("Enter your email first."); return; }
     setBusy(true);
-    const { error } = await supabase().auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: callback() } });
+    const { error } = await supabase().auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: callback(), shouldCreateUser: SIGNUPS_OPEN } });
     setBusy(false);
     if (error) setError(friendly(error.message, mode));
     else setSent({ kind: "link", email: email.trim() });
@@ -168,12 +171,16 @@ export default function LoginPage() {
                 <button type="button" onClick={emailLink} disabled={busy} style={{ ...btn("secondary"), width: "100%" }}>
                   Email me a login link instead
                 </button>
-                <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0", textAlign: "center" }}>No password needed. Works for new and existing accounts.</p>
+                <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0", textAlign: "center" }}>
+                  {SIGNUPS_OPEN ? "No password needed. Works for new and existing accounts." : "No password needed."}
+                </p>
               </>
             )}
 
             <p style={{ fontSize: 13, color: C.secondary, margin: "20px 0 0", textAlign: "center" }}>
-              {mode === "login" && <>New to SMEasy? <button type="button" onClick={() => switchTo("signup")} style={linkBtn}>Create an account</button></>}
+              {mode === "login" && (SIGNUPS_OPEN
+                ? <>New to SMEasy? <button type="button" onClick={() => switchTo("signup")} style={linkBtn}>Create an account</button></>
+                : <>New to SMEasy? We&apos;re opening soon. <Link href={SIGNUP_HREF} style={{ color: C.dark }}>Get early access</Link></>)}
               {mode === "signup" && <>Already have an account? <button type="button" onClick={() => switchTo("login")} style={linkBtn}>Log in</button></>}
               {mode === "forgot" && <button type="button" onClick={() => switchTo("login")} style={linkBtn}>Back to log in</button>}
             </p>

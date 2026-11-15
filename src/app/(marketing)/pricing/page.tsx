@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { C } from "@/lib/theme";
+import { SIGNUP_HREF, SIGNUP_CTA, SIGNUP_CTA_SHORT } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -52,12 +53,12 @@ export default function PricingPage() {
             <span style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-0.02em" }}>$0</span>
             <span style={{ fontSize: 14, color: C.muted }}>/month</span>
           </div>
-          <Link href="/auth/login/?signup" style={{
+          <Link href={SIGNUP_HREF} style={{
             display: "block", textAlign: "center", background: C.white, color: C.dark,
             border: `1px solid ${C.border}`, padding: "12px 20px", borderRadius: C.r1,
             textDecoration: "none", fontSize: 15, fontWeight: 600, marginBottom: 20,
           }}>
-            Get started
+            {SIGNUP_CTA_SHORT}
           </Link>
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 10 }}>
             {free.map((f) => (
@@ -81,12 +82,12 @@ export default function PricingPage() {
             <span style={{ fontSize: 14, color: "#b0ad9f" }}>/month</span>
           </div>
           <div style={{ fontSize: 13, color: "#b0ad9f", marginBottom: 20 }}>Plus GST ($20.90 a month in total). Per business, billed monthly, cancel any time.</div>
-          <Link href="/auth/login/?signup" style={{
+          <Link href={SIGNUP_HREF} style={{
             display: "block", textAlign: "center", background: C.accent, color: C.dark,
             padding: "12px 20px", borderRadius: C.r1,
             textDecoration: "none", fontSize: 15, fontWeight: 600, marginBottom: 20,
           }}>
-            Get started free
+            {SIGNUP_CTA}
           </Link>
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 10 }}>
             {pro.map((f, i) => (

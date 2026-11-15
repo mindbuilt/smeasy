@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { C } from "@/lib/theme";
+import { SIGNUP_HREF, SIGNUP_CTA_SHORT } from "@/lib/site";
 
 const primary = { background: C.dark, color: C.white, padding: "9px 16px", borderRadius: C.r1, textDecoration: "none", fontSize: 14, fontWeight: 600 } as const;
 
@@ -23,7 +24,7 @@ export default function AccountLinks() {
   return (
     <>
       <Link href="/auth/login/" style={{ color: C.secondary, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Log in</Link>
-      <Link href="/auth/login/?signup" style={primary}>Get started</Link>
+      <Link href={SIGNUP_HREF} style={primary}>{SIGNUP_CTA_SHORT}</Link>
     </>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { C } from "@/lib/theme";
 import { faqGroups } from "@/content/faq";
+import { SIGNUP_HREF, SIGNUP_CTA } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "FAQ: rostering questions answered",
@@ -42,7 +43,7 @@ export default function FaqPage() {
         </section>
       ))}
       <div style={{ textAlign: "center", marginTop: 40 }}>
-        <Link href="/auth/login/?signup" style={{ background: C.dark, color: C.white, padding: "13px 26px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>Get started free</Link>
+        <Link href={SIGNUP_HREF} style={{ background: C.dark, color: C.white, padding: "13px 26px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>{SIGNUP_CTA}</Link>
       </div>
     </div>
   );
