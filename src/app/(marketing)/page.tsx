@@ -125,7 +125,7 @@ export default function Home() {
       {/* For staff: the page's one dark surface */}
       <section style={section}>
         <div style={{ ...inkCard, overflow: "hidden" }}>
-          <img src="/staff.jpg" alt="A barista checking their roster on their phone" width={1400} height={782}
+          <img src="/staff-2.jpg" alt="A barista checking their roster on their phone" width={1400} height={781}
             style={{ width: "100%", height: "auto", display: "block" }} />
           <div style={{ padding: "30px 30px 34px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 28, alignItems: "start" }}>
             <div>
