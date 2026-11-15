@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { C } from "@/lib/theme";
+import { C, button } from "@/lib/mkt";
 import { GTM_ID } from "@/lib/site";
 
 const KEY = "smeasy_analytics"; // "yes" | "no"
@@ -41,18 +41,19 @@ export default function CookieNotice() {
   }
 
   if (!show) return null;
+  const btn = { ...button("secondary", "md"), cursor: "pointer", fontFamily: "inherit", fontSize: 14 };
   return (
-    <div role="dialog" aria-label="Cookie preferences" style={{
-      position: "fixed", left: 16, right: 16, bottom: 16, zIndex: 80, maxWidth: 520, margin: "0 auto",
-      background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "14px 16px",
-      boxShadow: "0 10px 30px rgba(33,31,26,0.12)", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap",
+    <div role="dialog" aria-label="Cookie preferences" className="sheet" style={{
+      position: "fixed", left: 16, right: 16, bottom: "calc(16px + env(safe-area-inset-bottom))", zIndex: 80, maxWidth: 540, margin: "0 auto",
+      background: C.white, borderRadius: C.r2, padding: "14px 14px 14px 18px",
+      boxShadow: C.shadowLift, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap",
     }}>
       <p style={{ margin: 0, fontSize: 14, color: C.secondary, flex: 1, minWidth: 220, lineHeight: 1.45 }}>
         Can we use analytics cookies to see how people use this site? They&apos;re never used on rostering screens.
       </p>
       <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={() => choose(false)} style={{ padding: "8px 14px", borderRadius: C.r1, border: `1px solid ${C.border}`, background: C.white, color: C.dark, fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>No thanks</button>
-        <button onClick={() => choose(true)} style={{ padding: "8px 14px", borderRadius: C.r1, border: "none", background: C.dark, color: C.white, fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>OK</button>
+        <button onClick={() => choose(false)} className="app-press" style={btn}>No thanks</button>
+        <button onClick={() => choose(true)} className="app-press" style={{ ...btn, background: C.dark, color: C.white, borderColor: C.dark }}>OK</button>
       </div>
     </div>
   );

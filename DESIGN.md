@@ -1,6 +1,6 @@
 ---
 name: SMEasy
-description: Simple rostering for Australian small businesses. App screens only; marketing pages keep their own older look.
+description: Simple rostering for Australian small businesses. One system for the whole site, app screens and marketing pages alike.
 colors:
   lime: "#b7e021"
   lime-deep: "#65a30d"
@@ -216,7 +216,7 @@ SMEasy's app screens are the category standard done properly: a clean, modern sc
 
 The system is phone-first and touch-honest. Controls are at least 42px high (the dock buttons 56 to 58px), sheets rise from the bottom on phones, the day follows your thumb when you swipe, and small haptic ticks confirm taps on the tab bar, switches and the add button. On desktop the same language widens into a week grid inside a card, with a top nav in place of the tab bar.
 
-Scope: this file covers the app screens only (`/week`, `/team`, `/settings`, `/welcome`, login, the team roster link `/r` and the personal staff link `/s`), everything rendered inside the `.app` scope. The marketing pages under `src/app/(marketing)/` keep their older cream ground, IBM Plex Sans and flatter 4 to 6px corners (the `C` palette in `src/lib/theme.ts` and the `:root` values in `globals.css`). Those are a separate, older system. Don't mix the two, and don't treat this file as a spec for marketing.
+Scope: the whole site. That covers the app screens (`/week`, `/team`, `/settings`, `/welcome`, login, the team roster link `/r` and the personal staff link `/s`) and, since November 2026, the marketing pages under `src/app/(marketing)/` (home, pricing, guides, FAQ, contact, privacy). Everything renders inside the `.app` scope, and the body defaults are the same cool ground, ink and Figtree. The old marketing system (cream ground, IBM Plex Sans, 4 to 6px corners, the `C` palette in `src/lib/theme.ts`) is retired. Marketing applies this system at a larger scale; see "Marketing pages" below.
 
 **Key Characteristics:**
 - Cool ground, white borderless cards, soft two-layer shadows.
@@ -286,7 +286,7 @@ Shift roles take a calm categorical palette from `src/lib/roleColors.ts`, assign
 ### Named Rules
 **The Tabular Time Rule.** The `.app` scope sets `font-variant-numeric: tabular-nums`, so times, hours and counts line up in columns. Never turn it off for a numeric run.
 
-**The One Family Rule.** App screens use Figtree only. IBM Plex belongs to marketing.
+**The One Family Rule.** The whole site uses Figtree only. IBM Plex is retired and no longer loaded.
 
 **The Real Weights Rule.** Only 400, 500, 600, 700 and 800 are shipped. Specify one of those.
 
@@ -382,6 +382,17 @@ lucide-react line icons, inlined. Sizes run 17 to 21px in controls (17 in button
 - Loading uses a white shimmer skeleton, 1.3s.
 - `prefers-reduced-motion` turns off every animation and transition.
 
+## Marketing pages
+
+The same Pocket Roster parts at marketing scale. Shared style objects live in `src/lib/mkt.ts` (server-safe), and the marketing classes live in the "Marketing pages" block of `globals.css`.
+
+- **Top bar:** the app's 60px sticky bar (white at 92%, blurred, hairline). Nav items use the top-nav treatment, with the active page in ink on a divider fill. The header button is ink, never lime, because each page's own main button is the one lime action.
+- **Type scale:** display 800 at clamp(38 to 64px), -0.035em, for the home hero. Page titles are 800 at clamp(32 to 44px), section titles 800 at clamp(26 to 36px), and group headings 800 at 20px. The lead is 17 to 19px slate-secondary. Article body is 17px at line-height 1.7 in #374151, with a measure of 720px or less.
+- **Buttons:** links styled as app buttons at 50px (`button()` in `mkt.ts`), with a 0.97 press. Accent lime is the page's main action (hero, closing CTA, the Pro tier, the contact form submit). Secondary is white with a hairline.
+- **Containers:** borderless white cards with the Rest shadow. Lists of links, the FAQ and the feature list are one card divided by divider rules (Settings-list style, with chevrons on links), never a grid of same-size cards. Each page gets at most one ink card (staff section, Pro tier, guide CTA).
+- **Pills:** state washes. "Coming soon" uses the draft amber wash, "Free during early access" the lime wash, and guide categories the quiet divider pill. No uppercase eyebrows.
+- **Proof:** the home page shows the product in its own interface (`RosterPreview`): the desktop week grid with role swatches, a time-off block and a dashed Unfilled row, and on phones the week strip and shift cards. Its shifts pop in once with the copy-last-week cascade (450ms, 40ms stagger). This is the site's one authored motion. Content stays visible without JS and with reduced motion.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -396,7 +407,7 @@ lucide-react line icons, inlined. Sizes run 17 to 21px in controls (17 in button
 ### Don't:
 - **Don't** show two lime calls to action at once, and don't set lime text on white or on the cool ground.
 - **Don't** put borders on cards, or use dashed lines for anything except "nobody assigned yet".
-- **Don't** bring the marketing cream (#faf8f3 / #f6f4ef), IBM Plex Sans, or the 4 to 6px corners into app screens.
+- **Don't** bring back the retired marketing look: cream grounds (#faf8f3 / #f6f4ef), IBM Plex Sans, or 4 to 6px corners, anywhere on the site.
 - **Don't** use filled red buttons. Danger is red text on white with a hairline border.
 - **Don't** specify font weights between the shipped steps (450, 550, 650, 750). Only 400 to 800 in hundreds are loaded.
 - **Don't** label sections with small uppercase eyebrows. Headings and pills carry the hierarchy.

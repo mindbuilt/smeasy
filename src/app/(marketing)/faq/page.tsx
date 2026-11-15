@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { C } from "@/lib/theme";
+import { ChevronDown } from "lucide-react";
+import { C, pageTitle, groupTitle, lead, card, button, link } from "@/lib/mkt";
 import { faqGroups } from "@/content/faq";
 import { SIGNUP_HREF, SIGNUP_CTA } from "@/lib/site";
 
@@ -23,27 +24,30 @@ const jsonLd = {
 
 export default function FaqPage() {
   return (
-    <div style={{ maxWidth: 760, margin: "0 auto", padding: "48px 20px 0" }}>
+    <div style={{ maxWidth: 760, margin: "0 auto", padding: "56px 20px 0" }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <h1 style={{ fontSize: "clamp(28px, 5vw, 40px)", margin: "0 0 10px" }}>Frequently asked questions</h1>
-      <p style={{ fontSize: 17, color: C.secondary, margin: "0 0 32px" }}>
-        Everything you need to know before you start. For step-by-step help, see the <Link href="/guides/" style={{ color: C.dark }}>guides</Link>.
+      <h1 style={{ ...pageTitle, margin: "0 0 12px" }}>Frequently asked questions</h1>
+      <p style={{ ...lead, margin: "0 0 40px" }}>
+        Everything you need to know before you start. For step-by-step help, see the <Link href="/guides/" style={link}>guides</Link>.
       </p>
       {faqGroups.map((g) => (
-        <section key={g.title} style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 20, margin: "0 0 10px" }}>{g.title}</h2>
-          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2 }}>
+        <section key={g.title} style={{ marginBottom: 36 }}>
+          <h2 style={{ ...groupTitle, margin: "0 0 12px" }}>{g.title}</h2>
+          <div style={{ ...card, overflow: "hidden" }}>
             {g.items.map((f, i) => (
-              <details key={f.q} style={{ borderTop: i ? `1px solid ${C.divider}` : "none", padding: "14px 18px" }}>
-                <summary style={{ fontSize: 16, fontWeight: 600, cursor: "pointer", color: C.dark }}>{f.q}</summary>
-                <p style={{ fontSize: 16, lineHeight: 1.6, color: C.secondary, margin: "10px 0 2px" }}>{f.a}</p>
+              <details key={f.q} className="mkt-faq" style={{ borderTop: i ? `1px solid ${C.divider}` : "none" }}>
+                <summary style={{ fontSize: 16, fontWeight: 700, color: C.dark, padding: "16px 18px", lineHeight: 1.4 }}>
+                  {f.q}
+                  <ChevronDown size={19} strokeWidth={2.2} className="mkt-faq-icon" aria-hidden />
+                </summary>
+                <p style={{ fontSize: 16, lineHeight: 1.6, color: C.secondary, margin: 0, padding: "0 18px 18px", maxWidth: "68ch" }}>{f.a}</p>
               </details>
             ))}
           </div>
         </section>
       ))}
-      <div style={{ textAlign: "center", marginTop: 40 }}>
-        <Link href={SIGNUP_HREF} style={{ background: C.dark, color: C.white, padding: "13px 26px", borderRadius: C.r1, textDecoration: "none", fontSize: 16, fontWeight: 600 }}>{SIGNUP_CTA}</Link>
+      <div style={{ textAlign: "center", marginTop: 48 }}>
+        <Link href={SIGNUP_HREF} className="app-press" style={button("accent")}>{SIGNUP_CTA}</Link>
       </div>
     </div>
   );

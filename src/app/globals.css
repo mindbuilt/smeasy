@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
 @theme {
-  --color-accent: #cdf564;
-  --color-surface: #f6f4ef;
+  --color-accent: #b7e021;
+  --color-surface: #f6f7f9;
 }
 
+/* One system across the site: marketing pages and app screens share the app's
+   cool ground, ink and Figtree (see DESIGN.md). */
 :root {
-  --background: #f6f4ef;
-  --foreground: #1f1d19;
+  --background: #f6f7f9;
+  --foreground: #111827;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15,7 +17,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-plex), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-app), system-ui, -apple-system, sans-serif;
 }
 
 @keyframes smspin { to { transform: rotate(360deg); } }
@@ -55,16 +57,17 @@ input[type=range]::-moz-range-thumb {
   cursor: pointer;
 }
 input:focus, select:focus {
-  outline: 2px solid #cdf564;
-  outline-offset: -1px;
+  outline: none;
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgba(183,224,33,0.45);
 }
 
 /* Interactive states */
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid #211f1a;
+  outline: 2px solid #111827;
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: 8px;
 }
 button:hover:not(:disabled) { filter: brightness(0.96); }
 button:active:not(:disabled) { transform: scale(0.98); }
@@ -73,10 +76,49 @@ button:active:not(:disabled) { transform: scale(0.98); }
 .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 760px) { .grid-3 { grid-template-columns: 1fr; } }
 
-/* Marketing header: hide mid-nav on mobile, keep logo + CTA */
+/* ── Marketing pages (same system as the app, at marketing scale) ─────────── */
 @media (max-width: 640px) {
   .mkt-nav { display: none !important; }
 }
+.mkt-navlink { color: #6b7280; text-decoration: none; font-size: 15px; font-weight: 600; padding: 8px 12px; border-radius: 10px; transition: background-color 150ms ease, color 150ms ease; }
+.mkt-navlink[aria-current="page"] { color: #111827; background: #eef0f3; }
+@media (hover: hover) { .mkt-navlink:hover { color: #111827; } }
+
+/* List cards: rows divided by a hairline, a quiet fill on hover */
+.mkt-row { display: flex; align-items: center; gap: 14px; padding: 16px 18px; text-decoration: none; color: #111827; transition: background-color 150ms ease; }
+.mkt-row + .mkt-row { border-top: 1px solid #eef0f3; }
+@media (hover: hover) { a.mkt-row:hover { background: #f8faf3; } a.mkt-row:hover .mkt-chev { color: #111827; transform: translateX(2px); } }
+.mkt-chev { color: #c3c8d0; flex: none; transition: color 150ms ease, transform 150ms ease; }
+
+/* FAQ disclosure rows */
+.mkt-faq summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+.mkt-faq summary::-webkit-details-marker { display: none; }
+.mkt-faq .mkt-faq-icon { margin-left: auto; flex: none; color: #6b7280; transition: transform 220ms cubic-bezier(.16,1,.3,1); }
+.mkt-faq[open] .mkt-faq-icon { transform: rotate(180deg); color: #111827; }
+
+/* Feature list: two columns of rows inside one card on wide screens */
+.mkt-features { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mkt-features > * { border-top: 1px solid #eef0f3; }
+.mkt-features > :nth-child(-n+2) { border-top: none; }
+.mkt-features > :nth-child(odd) { border-right: 1px solid #eef0f3; }
+@media (max-width: 760px) {
+  .mkt-features { grid-template-columns: 1fr; }
+  .mkt-features > :nth-child(2) { border-top: 1px solid #eef0f3; }
+  .mkt-features > :nth-child(odd) { border-right: none; }
+}
+
+/* How it works: three steps in one card */
+.mkt-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mkt-steps > * + * { border-left: 1px solid #eef0f3; }
+@media (max-width: 760px) {
+  .mkt-steps { grid-template-columns: 1fr; }
+  .mkt-steps > * + * { border-left: none; border-top: 1px solid #eef0f3; }
+}
+
+/* Roster preview: shifts pop in once, the way Copy last week fills a week */
+.mkt-preview.is-armed:not(.is-in) .mkt-pop { opacity: 0; transform: translateY(8px) scale(0.92); }
+.mkt-preview.is-in .mkt-pop { animation: cascade-pop 450ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: calc(var(--i, 0) * 40ms); }
+@media (prefers-reduced-motion: reduce) { .mkt-preview .mkt-pop { opacity: 1 !important; transform: none !important; animation: none !important; } }
 
 /* Copy-last-week cascade entrance */
 @keyframes cascade-pop {

@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore, type FormEvent } from "react";
-import { C } from "@/lib/theme";
-import { btn, input, label } from "@/components/ui";
+import { btn, input, label, C } from "@/components/ui";
 import { SIGNUPS_OPEN } from "@/lib/site";
 
 const ENDPOINT = "https://formspree.io/f/xwlovdea";
@@ -54,7 +53,7 @@ export default function ContactForm() {
 
   if (status.kind === "sent") {
     return (
-      <div role="status" style={{ background: C.shiftBg, border: `1px solid ${C.shiftBorder}`, borderRadius: C.r2, padding: "20px 22px", fontSize: 16, lineHeight: 1.55 }}>
+      <div role="status" style={{ background: C.shiftBg, color: C.shiftText, borderRadius: C.r2, padding: "20px 22px", fontSize: 16, lineHeight: 1.55 }}>
         {earlyAccess
           ? <><strong>Thanks, you&apos;re on the list.</strong> We&apos;ll email you as soon as SMEasy opens.</>
           : <><strong>Thanks, your message is on its way.</strong> We&apos;ll reply to the email address you gave, usually within one business day.</>}
@@ -65,7 +64,7 @@ export default function ContactForm() {
   const field = { display: "grid", gap: 6 } as const;
   const lbl = { ...label, fontSize: 14, marginBottom: 0 };
   return (
-    <form onSubmit={submit} style={{ display: "grid", gap: 16, background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, padding: "24px 22px" }}>
+    <form onSubmit={submit} style={{ display: "grid", gap: 16, background: C.white, borderRadius: C.r2, boxShadow: C.shadow, padding: "24px 22px" }}>
       <div style={field}>
         <label htmlFor="c-name" style={lbl}>Your name</label>
         <input id="c-name" name="name" required autoComplete="name" maxLength={100} style={input} />
@@ -99,7 +98,7 @@ export default function ContactForm() {
       <p style={{ margin: 0, fontSize: 13, color: C.muted, lineHeight: 1.5 }}>
         Please don&apos;t include passwords or staff details you don&apos;t need to. Your message is delivered to us by Formspree.
       </p>
-      <button type="submit" disabled={status.kind === "sending"} style={{ ...btn("primary"), justifySelf: "start", padding: "12px 24px", fontSize: 16 }}>
+      <button type="submit" disabled={status.kind === "sending"} className="app-press" style={{ ...btn("accent"), justifySelf: "start", padding: "12px 24px", fontSize: 16, minHeight: 48, fontWeight: 700 }}>
         {status.kind === "sending" ? "Sending…" : earlyAccess ? "Get early access" : "Send message"}
       </button>
     </form>

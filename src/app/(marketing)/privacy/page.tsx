@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { CSSProperties, ReactNode } from "react";
-import { C } from "@/lib/theme";
+import { C, pageTitle, card, link } from "@/lib/mkt";
 import { ABN, CONTACT_EMAIL, LEGAL_ENTITY } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -11,19 +11,19 @@ export const metadata: Metadata = {
 
 const UPDATED = "15 November 2026";
 
-const h2: CSSProperties = { fontSize: 22, margin: "34px 0 10px" };
-const h3: CSSProperties = { fontSize: 17, margin: "20px 0 8px" };
-const p: CSSProperties = { fontSize: 16, lineHeight: 1.65, color: C.secondary, margin: "0 0 12px" };
-const ul: CSSProperties = { ...p, paddingLeft: 22 };
-const td: CSSProperties = { padding: "10px 12px", borderTop: `1px solid ${C.divider}`, verticalAlign: "top", fontSize: 15, color: C.secondary };
+const h2: CSSProperties = { fontSize: 22, fontWeight: 800, letterSpacing: "-0.015em", margin: "40px 0 12px" };
+const h3: CSSProperties = { fontSize: 17, fontWeight: 700, margin: "22px 0 8px" };
+const p: CSSProperties = { fontSize: 16, lineHeight: 1.65, color: "#374151", margin: "0 0 12px" };
+const ul: CSSProperties = { ...p, paddingLeft: 22, listStyle: "disc" }; // Tailwind's reset strips markers
+const td: CSSProperties = { padding: "12px 14px", borderTop: `1px solid ${C.divider}`, verticalAlign: "top", fontSize: 15, color: C.secondary, lineHeight: 1.5 };
 
-const Mail = () => <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: C.dark }}>{CONTACT_EMAIL}</a>;
+const Mail = () => <a href={`mailto:${CONTACT_EMAIL}`} style={link}>{CONTACT_EMAIL}</a>;
 const L = ({ children }: { children: ReactNode }) => <li style={{ marginBottom: 6 }}>{children}</li>;
 
 export default function Privacy() {
   return (
-    <article style={{ maxWidth: 760, margin: "0 auto", padding: "44px 20px 0" }}>
-      <h1 style={{ fontSize: "clamp(28px, 5vw, 38px)", margin: "0 0 8px" }}>Privacy policy</h1>
+    <article style={{ maxWidth: 740, margin: "0 auto", padding: "56px 20px 0" }}>
+      <h1 style={{ ...pageTitle, margin: "0 0 10px" }}>Privacy policy</h1>
       <p style={{ ...p, color: C.muted, fontSize: 14 }}>Last updated {UPDATED}</p>
 
       <p style={p}>
@@ -101,10 +101,10 @@ export default function Privacy() {
 
       <h2 style={h2}>Who we share information with</h2>
       <p style={p}>We use these service providers to run SMEasy. They process information on our behalf:</p>
-      <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: C.r2, overflowX: "auto", margin: "0 0 14px" }}>
+      <div style={{ ...card, overflowX: "auto", margin: "0 0 14px" }}>
         <table style={{ borderCollapse: "collapse", width: "100%", minWidth: 520 }}>
           <thead>
-            <tr>{["Provider", "What for", "Where"].map((h) => <th key={h} style={{ ...td, borderTop: "none", textAlign: "left", color: C.dark, fontSize: 14 }}>{h}</th>)}</tr>
+            <tr>{["Provider", "What for", "Where"].map((h) => <th key={h} style={{ ...td, borderTop: "none", textAlign: "left", color: C.dark, fontSize: 14, fontWeight: 700 }}>{h}</th>)}</tr>
           </thead>
           <tbody>
             <tr><td style={td}>Supabase</td><td style={td}>Database and sign-in</td><td style={td}>Data stored in Sydney, Australia. Supabase Inc. is based in the United States and its staff may access data for support and operations.</td></tr>
@@ -146,7 +146,7 @@ export default function Privacy() {
       <h2 style={h2}>Complaints</h2>
       <p style={p}>
         If you have a concern about how we&apos;ve handled personal information, contact us first at <Mail />. We&apos;ll respond within 30 days.
-        If you&apos;re not satisfied, you can complain to the Office of the Australian Information Commissioner at <a href="https://www.oaic.gov.au" style={{ color: C.dark }}>oaic.gov.au</a>.
+        If you&apos;re not satisfied, you can complain to the Office of the Australian Information Commissioner at <a href="https://www.oaic.gov.au" style={link}>oaic.gov.au</a>.
       </p>
 
       <h2 style={h2}>Changes to this policy</h2>

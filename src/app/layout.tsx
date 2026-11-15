@@ -3,20 +3,8 @@ import { SITE_URL } from "@/lib/site";
 import localFont from "next/font/local";
 import "./globals.css";
 
-// IBM Plex Sans (SIL Open Font License, src/fonts/OFL-LICENSE.txt), bundled
-// with the site: no Google Fonts requests at build time or in the browser.
-const plex = localFont({
-  src: [
-    { path: "../fonts/ibm-plex-sans-latin-400-normal.woff2", weight: "400", style: "normal" },
-    { path: "../fonts/ibm-plex-sans-latin-500-normal.woff2", weight: "500", style: "normal" },
-    { path: "../fonts/ibm-plex-sans-latin-600-normal.woff2", weight: "600", style: "normal" },
-    { path: "../fonts/ibm-plex-sans-latin-700-normal.woff2", weight: "700", style: "normal" },
-  ],
-  display: "swap",
-  variable: "--font-plex",
-});
-
-// Figtree (SIL Open Font License), the app screens' face. Latin subset, five weights, self-hosted.
+// Figtree (SIL Open Font License), the one face for the whole site, marketing and app.
+// Latin subset, five weights, self-hosted: no Google Fonts requests.
 const figtree = localFont({
   src: [
     { path: "../fonts/figtree-latin-400.woff2", weight: "400", style: "normal" },
@@ -55,7 +43,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-AU" className={`${plex.variable} ${figtree.variable}`}>
+    <html lang="en-AU" className={figtree.variable}>
       <body>{children}</body>
     </html>
   );
