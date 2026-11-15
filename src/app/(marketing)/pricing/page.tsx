@@ -77,7 +77,7 @@ export default function PricingPage() {
             <span style={price}>$19</span>
             <span style={{ fontSize: 15, color: "rgba(255,255,255,0.72)" }}>/month</span>
           </div>
-          <div style={{ fontSize: 14, color: "rgba(255,255,255,0.72)", marginBottom: 22, lineHeight: 1.45 }}>Plus GST ($20.90 a month in total). Per business, billed monthly, cancel any time.</div>
+          <div style={{ fontSize: 14, color: "rgba(255,255,255,0.72)", marginBottom: 22, lineHeight: 1.45 }}>Plus GST. Per business, billed monthly, cancel any time.</div>
           <Link href={SIGNUP_HREF} className="app-press" style={{ ...button("onInk"), display: "flex", marginBottom: 22 }}>
             {SIGNUP_CTA}
           </Link>

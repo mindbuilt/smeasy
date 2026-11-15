@@ -4,6 +4,8 @@
 // Run it in your own Terminal (not through Claude, so your key stays out of chat logs):
 //   STRIPE_SECRET_KEY=sk_test_... node scripts/stripe-setup.mjs
 // Add --live only when you mean to set up real billing with a live key.
+// Add --new-webhook-secret to recreate the webhook endpoint (Stripe only reveals a
+// signing secret once, when the endpoint is created).
 //
 // It creates or finds:
 //   - Product "SMEasy Pro", price A$19/month (GST added on top, lookup key smeasy_pro_monthly)
@@ -26,6 +28,7 @@ const EVENTS = ["checkout.session.completed", "customer.subscription.created", "
 
 const KEY = process.env.STRIPE_SECRET_KEY ?? "";
 const live = process.argv.includes("--live");
+const newWebhook = process.argv.includes("--new-webhook-secret");
 if (!/^sk_(test|live)_/.test(KEY) && !/^rk_(test|live)_/.test(KEY)) {
   console.error("Set STRIPE_SECRET_KEY to your Stripe secret key (sk_test_...).");
   process.exit(1);
@@ -96,11 +99,15 @@ else {
 
 // 4. Webhook endpoint (Stripe only reveals the signing secret when it's created)
 let webhookSecret = "";
-const hooks = (await api("GET", "webhook_endpoints", { limit: 100 })).data.filter((h) => h.url === WEBHOOK_URL);
+let hooks = (await api("GET", "webhook_endpoints", { limit: 100 })).data.filter((h) => h.url === WEBHOOK_URL);
+if (hooks.length && newWebhook) {
+  for (const h of hooks) await api("DELETE", `webhook_endpoints/${h.id}`);
+  console.log(`✓ Removed the old webhook so a new signing secret can be issued`);
+  hooks = [];
+}
 if (hooks.length) {
   console.log(`✓ Webhook exists (${hooks[0].id}). Its secret can't be read back.`);
-  console.log("  If STRIPE_WEBHOOK_SECRET isn't set yet: Stripe dashboard → Developers → Webhooks → this endpoint → Roll secret,");
-  console.log("  then run:  npx supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_... --project-ref " + PROJECT_REF);
+  console.log("  If STRIPE_WEBHOOK_SECRET isn't saved in Supabase yet, re-run with --new-webhook-secret.");
 } else {
   const h = await api("POST", "webhook_endpoints", { url: WEBHOOK_URL, enabled_events: EVENTS, description: "SMEasy billing sync" });
   webhookSecret = h.secret;
@@ -114,7 +121,8 @@ const dir = mkdtempSync(join(tmpdir(), "smeasy-stripe-"));
 const envFile = join(dir, "secrets.env");
 writeFileSync(envFile, lines.join("\n") + "\n", { mode: 0o600 });
 try {
-  execFileSync("npx", ["supabase", "secrets", "set", "--env-file", envFile, "--project-ref", PROJECT_REF], { stdio: "inherit" });
+  // --yes: CLI v3 asks before changing a hosted project, and this runs non-interactively.
+  execFileSync("npx", ["supabase", "secrets", "set", "--env-file", envFile, `--remote=${PROJECT_REF}`, "--yes"], { stdio: "inherit" });
   console.log(`✓ Saved ${lines.map((l) => l.split("=")[0]).join(", ")} as Supabase secrets`);
 } catch {
   console.error("✗ Couldn't save Supabase secrets. Run `npx supabase login` first, then re-run this script.");
@@ -123,4 +131,4 @@ try {
   rmSync(dir, { recursive: true, force: true });
 }
 
-console.log(`\nDone (${KEY.includes("_live_") ? "LIVE" : "test"} mode). Next:\n  npx supabase db push\n  npx supabase functions deploy billing --project-ref ${PROJECT_REF}\n  npx supabase functions deploy stripe-webhook --no-verify-jwt --project-ref ${PROJECT_REF}`);
+if (!process.exitCode) console.log(`\nDone (${KEY.includes("_live_") ? "LIVE" : "test"} mode). Check with:  npx supabase secrets list --remote=${PROJECT_REF}`);

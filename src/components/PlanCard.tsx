@@ -80,7 +80,7 @@ export default function PlanCard({ businessId }: { businessId: string }) {
       {pro ? (
         <>
           <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 14px", lineHeight: 1.5 }}>
-            Unlimited staff and priority email support. $19 a month plus GST ($20.90).{" "}
+            Unlimited staff and priority email support. $19 a month plus GST.{" "}
             {billing?.current_period_end && (billing.cancel_at_period_end
               ? <>Your plan ends on <strong style={{ color: C.dark }}>{fmt(billing.current_period_end)}</strong>.</>
               : <>Renews on {fmt(billing.current_period_end)}.</>)}
@@ -100,7 +100,7 @@ export default function PlanCard({ businessId }: { businessId: string }) {
           <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 14px", lineHeight: 1.5 }}>
             Every feature, for up to {FREE_STAFF_LIMIT} staff. You have <strong style={{ color: overLimit ? "#9b2c25" : C.dark }}>{staffCount ?? "…"}</strong>.
             {!STAFF_LIMIT_ENFORCED && " There's no staff limit during early access."}
-            {" "}Pro is for bigger teams: more than {FREE_STAFF_LIMIT} staff and priority email support, for $19 a month plus GST ($20.90).
+            {" "}Pro is for bigger teams: more than {FREE_STAFF_LIMIT} staff and priority email support, for $19 a month plus GST.
           </p>
           {BILLING_ENABLED && (
             <button type="button" onClick={() => go("checkout")} disabled={busy} className="app-press" style={{ ...btn("accent"), opacity: busy ? 0.6 : 1 }}>
