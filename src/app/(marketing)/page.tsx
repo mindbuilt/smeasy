@@ -5,6 +5,8 @@ import { SITE_URL } from "@/lib/site";
 import { guides } from "@/content/guides";
 import AuthHashForwarder from "@/components/AuthHashForwarder";
 import ScrollReveal from "@/components/ScrollReveal";
+import SignedInGate from "@/components/SignedInGate";
+import ComingSoon from "@/components/ComingSoon";
 
 export const metadata: Metadata = {
   title: { absolute: "SMEasy — simple staff rostering for Australian small businesses" },
@@ -48,13 +50,25 @@ const jsonLd = {
   areaServed: "AU",
 };
 
+// Homepage is "coming soon" for everyone except a signed-in visitor (the test
+// account). To open it up, return <HomeContent /> directly from Home below.
 export default function Home() {
+  return (
+    <>
+      <AuthHashForwarder />
+      <SignedInGate fallback={<ComingSoon />}>
+        <HomeContent />
+      </SignedInGate>
+    </>
+  );
+}
+
+function HomeContent() {
   const featured = ["how-to-create-a-roster", "share-roster-with-staff", "shift-scheduling-best-practices"]
     .map((s) => guides.find((g) => g.slug === s)!);
 
   return (
     <>
-      <AuthHashForwarder />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Hero */}
