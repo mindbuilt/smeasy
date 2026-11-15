@@ -238,3 +238,7 @@ html:has(.app), body:has(.app) { background: #f6f7f9; }
 }
 /* Touch screens wide enough for the grid (tablets) can't hover: keep a faint + as the add cue */
 @media (hover: none) { .grid-plus { opacity: 1; } }
+
+/* Day timeline: empty track space adds a shift */
+.tl-track { transition: background-color 150ms ease; }
+@media (hover: hover) { .tl-track:hover { background: rgba(132,204,22,0.06); } }

@@ -9,7 +9,8 @@ import { useManager } from "@/lib/useManager";
 import type { Business, Roster, Shift, Staff, TimeOff } from "@/lib/types";
 import { DAY_NAMES, addDays, fmtAUD, fmtDay, fmtTime, fmtWeek, mondayOf, shiftHours, thisMonday, toISO, weekDates } from "@/lib/dates";
 import { AppShell, Avatar, C, Loading, Modal, btn, card, haptic, input, label } from "@/components/ui";
-import { CalendarPlus, Check, ChevronLeft, ChevronRight, Copy, Download, FileText, Info, Link2, MoreHorizontal, Plus, StickyNote, Undo2, UserPlus, X } from "lucide-react";
+import { CalendarPlus, CalendarDays, Check, ChevronLeft, ChevronRight, Copy, Download, FileText, Info, Link2, Columns3 as Columns, List, MoreHorizontal, Plus, StickyNote, Undo2, UserPlus, X } from "lucide-react";
+import DayTimeline, { dayCover } from "@/components/DayTimeline";
 import { downloadRosterPdf } from "@/lib/rosterPdf";
 import { roleSwatch, UNFILLED } from "@/lib/roleColors";
 import { holidayOn } from "@/lib/holidays";
@@ -80,6 +81,11 @@ function WeekPage() {
   const [selDay, setSelDay] = useState<string | null>(null);
   const [slide, setSlide] = useState<"left" | "right">("right");
   const [moreOpen, setMoreOpen] = useState(false);
+  // Desktop: the week grid or one day as a timeline. Phone: the day as a list or a timeline.
+  const [deskView, setDeskViewState] = useState<"week" | "day">(() => (typeof window !== "undefined" && localStorage.getItem("smeasy-desk-view") === "day" ? "day" : "week"));
+  const [phoneMode, setPhoneModeState] = useState<"list" | "timeline">(() => (typeof window !== "undefined" && localStorage.getItem("smeasy-phone-day") === "timeline" ? "timeline" : "list"));
+  const setDeskView = (v: "week" | "day") => { localStorage.setItem("smeasy-desk-view", v); setDeskViewState(v); };
+  const setPhoneMode = (v: "list" | "timeline") => { haptic(5); localStorage.setItem("smeasy-phone-day", v); setPhoneModeState(v); };
 
   useEffect(() => {
     if (!business) return;
@@ -130,14 +136,15 @@ function WeekPage() {
     timeOff.find((t) => t.staff_id === staffId && t.status === "approved" && t.start_date <= date && t.end_date >= date);
 
   // ── Actions ──────────────────────────────────────────────────────────────
-  function newShift(staffId: string, date: string) {
+  function newShift(staffId: string, date: string, start?: string, end?: string) {
     const person = staffById.get(staffId);
     const last = [...shifts].reverse().find((s) => (s.staff_id ?? "") === staffId);
+    const hours = start && end ? shiftHours(start, end, 0) : null;
     setDraft({
       staff_id: staffId, date,
-      start_time: last ? hhmm(last.start_time) : "09:00",
-      end_time: last ? hhmm(last.end_time) : "17:00",
-      break_minutes: last?.break_minutes ?? 30,
+      start_time: start ?? (last ? hhmm(last.start_time) : "09:00"),
+      end_time: end ?? (last ? hhmm(last.end_time) : "17:00"),
+      break_minutes: hours !== null ? (hours >= 5 ? 30 : 0) : last?.break_minutes ?? 30,
       role: last?.role ?? person?.default_role ?? business?.roles[0] ?? "",
       notes: "",
     });
@@ -367,6 +374,7 @@ function WeekPage() {
         {isMobile && <button onClick={() => setMoreOpen(true)} className="app-press" style={{ ...btn("ghost"), width: 42, padding: 0, borderRadius: 999, flex: "none", background: "#eef0f3", color: C.dark }} aria-label="More: copy last week, PDF, hours"><MoreHorizontal size={20} /></button>}
         {!isMobile && (
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {staff.length > 0 && <ViewToggle value={deskView} onChange={setDeskView} options={[["week", "Week", <Columns size={16} key="w" />], ["day", "Day", <CalendarDays size={16} key="d" />]]} />}
             {staff.length > 0 && !isPast && (
               <button onClick={copyLastWeek} disabled={busy} className="app-press" style={btn()} title="Adds last week's shifts to this week. Shifts already here aren't doubled up.">
                 <Copy size={17} /> Copy last week
@@ -447,6 +455,7 @@ function WeekPage() {
           <WeekStrip days={days} day={day} today={today} shifts={shifts} dayInfo={dayInfo} onPick={pickDay} />
           <DayView key={day} slide={slide} d={day} staff={staff} shifts={shifts} roles={roles} offOn={offOn} info={dayInfo(day)}
             onEdit={editShift} onDay={() => setEditingDay(day)} onSwipe={stepDay} cascadeIds={cascadeIds}
+            mode={phoneMode} onMode={setPhoneMode} compact isToday={day === today} readOnly={isPast} onNew={(id, a, b) => newShift(id, day, a, b)}
             atStart={day === days[0]} atEnd={day === days[6]}
             empty={isPast ? <div>No shifts this day.</div> : (
               <>
@@ -483,6 +492,23 @@ function WeekPage() {
             document.body,
           )}
         </>
+      ) : deskView === "day" ? (
+        <div style={{ maxWidth: 1100 }}>
+          <WeekStrip days={days} day={day} today={today} shifts={shifts} dayInfo={dayInfo} onPick={pickDay} />
+          <DayView key={day} slide={slide} d={day} staff={staff} shifts={shifts} roles={roles} offOn={offOn} info={dayInfo(day)}
+            onEdit={editShift} onDay={() => setEditingDay(day)} onSwipe={stepDay} cascadeIds={cascadeIds}
+            mode="timeline" isToday={day === today} readOnly={isPast} onNew={(id, a, b) => newShift(id, day, a, b)}
+            atStart={day === days[0]} atEnd={day === days[6]}
+            empty={isPast ? <div>No shifts this day.</div> : (
+              <>
+                <div style={{ marginBottom: 12 }}>No shifts on this day yet.</div>
+                <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+                  <button onClick={() => newShift("", day)} className="app-press" style={btn()}><Plus size={17} /> Add a shift</button>
+                  {shifts.length === 0 && <button onClick={copyLastWeek} disabled={busy} className="app-press" style={btn()}><Copy size={17} /> Copy last week</button>}
+                </div>
+              </>
+            )} />
+        </div>
       ) : (
         <>
           {shifts.length === 0 && (
@@ -491,7 +517,8 @@ function WeekPage() {
             </p>
           )}
           <Grid days={days} today={today} staff={staff} shifts={shifts} hours={hoursByStaff} offOn={offOn} onAdd={newShift} onEdit={editShift} cascadeIds={cascadeIds}
-            roles={roles} dayInfo={dayInfo} onDay={setEditingDay} addStaff={<AddStaff onAdd={addStaff} />} />
+            roles={roles} dayInfo={dayInfo} onDay={setEditingDay} addStaff={<AddStaff onAdd={addStaff} />}
+            onOpenDay={(d) => { setSelDay(d); setDeskView("day"); }} />
         </>
       )}
 
@@ -559,6 +586,27 @@ function SheetAction({ icon, label, hint, onClick }: { icon: React.ReactNode; la
       <span style={{ display: "grid", placeItems: "center", width: 38, height: 38, borderRadius: 12, background: C.white, flex: "none" }}>{icon}</span>
       <span><span style={{ display: "block", fontSize: 16, fontWeight: 700 }}>{label}</span><span style={{ display: "block", fontSize: 13, color: C.muted }}>{hint}</span></span>
     </button>
+  );
+}
+
+function ViewToggle<T extends string>({ value, onChange, options, label = "View" }: {
+  value: T; onChange: (v: T) => void; options: [T, string, React.ReactNode][]; label?: string;
+}) {
+  return (
+    <div role="group" aria-label={label} style={{ display: "inline-flex", padding: 3, borderRadius: 999, background: "#eef0f3", gap: 2, flex: "none" }}>
+      {options.map(([v, text, icon]) => {
+        const on = v === value;
+        return (
+          <button key={v} type="button" onClick={() => onChange(v)} aria-pressed={on} className="app-press" style={{
+            display: "inline-flex", alignItems: "center", gap: 6, border: "none", borderRadius: 999, padding: text ? "7px 14px" : "7px 10px", minHeight: 36,
+            fontSize: 14, fontWeight: 650, fontFamily: "inherit", cursor: "pointer",
+            background: on ? C.dark : "transparent", color: on ? C.white : C.secondary, transition: "background-color 180ms ease, color 180ms ease",
+          }} aria-label={text ? undefined : String(v)} title={text ? undefined : String(v)}>
+            {icon}{text}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -663,10 +711,12 @@ function WeekStrip({ days, day, today, shifts, dayInfo, onPick }: {
   );
 }
 
-function DayView({ d, slide, staff, shifts, roles, offOn, info, onEdit, onDay, onSwipe, cascadeIds, empty, atStart, atEnd }: {
+function DayView({ d, slide, staff, shifts, roles, offOn, info, onEdit, onDay, onSwipe, cascadeIds, empty, atStart, atEnd, mode = "list", onMode, compact, isToday, readOnly, onNew }: {
   d: string; slide: "left" | "right"; staff: Staff[]; shifts: Shift[]; roles: string[]; offOn: OffOn;
   info: { holiday: string | null; note: string | null }; onEdit: (s: Shift) => void; onDay: () => void; onSwipe: (n: number) => void;
   cascadeIds: Set<string>; empty: React.ReactNode; atStart: boolean; atEnd: boolean;
+  mode?: "list" | "timeline"; onMode?: (m: "list" | "timeline") => void; compact?: boolean; isToday: boolean; readOnly: boolean;
+  onNew: (staffId: string, start?: string, end?: string) => void;
 }) {
   // The day follows your thumb; let go past the threshold to move a day, otherwise it settles back.
   const start = useRef<{ x: number; y: number; lock: "x" | "y" | null } | null>(null);
@@ -707,8 +757,9 @@ function DayView({ d, slide, staff, shifts, roles, offOn, info, onEdit, onDay, o
             <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: "-0.01em" }}>{fmtDay(d)}</h2>
             <div style={{ fontSize: 14, color: C.secondary }}><CoverageText c={coverage(shifts, d)} /></div>
           </div>
-          <button onClick={onDay} className="app-press" style={{ ...btn("ghost"), padding: "8px 10px", minHeight: 38, color: C.dark }}>
-            <StickyNote size={17} /> {info.note ? "Edit note" : "Day note"}
+          {onMode && <ViewToggle label="Show the day as" value={mode} onChange={onMode} options={[["list", "", <List size={18} key="l" />], ["timeline", "", <CalendarDays size={18} key="t" />]]} />}
+          <button onClick={onDay} className="app-press" style={{ ...btn("ghost"), padding: "8px 10px", minHeight: 38, color: C.dark }} aria-label={info.note ? "Edit day note" : "Add a day note"}>
+            <StickyNote size={17} />{!onMode && <> {info.note ? "Edit note" : "Day note"}</>}
           </button>
         </div>
         {(info.holiday || info.note) && (
@@ -723,8 +774,12 @@ function DayView({ d, slide, staff, shifts, roles, offOn, info, onEdit, onDay, o
             {empty}
           </div>
         )}
-        {dayShifts.map((s) => <ShiftCard key={s.id} s={s} staff={staff} roles={roles} onEdit={onEdit} fresh={cascadeIds.has(s.id)} />)}
-        {offs.map(({ p, t }) => (
+        {mode === "timeline" && (dayShifts.length > 0 || offs.length > 0 || !compact) && (
+          <DayTimeline dayShifts={dayShifts} staff={staff} roles={roles} offs={offs.map(({ p, t }) => ({ p, t: t! }))}
+            isToday={isToday} compact={compact} readOnly={readOnly} onEdit={onEdit} onNew={onNew} />
+        )}
+        {mode === "list" && dayShifts.map((s) => <ShiftCard key={s.id} s={s} staff={staff} roles={roles} onEdit={onEdit} fresh={cascadeIds.has(s.id)} />)}
+        {mode === "list" && offs.map(({ p, t }) => (
           <div key={p.id} style={{ ...card, display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: C.offBg, boxShadow: "none" }}>
             <Avatar name={p.name} tone={{ bg: "#ffedd5", text: C.offText }} />
             <span style={{ flex: 1, fontSize: 15, fontWeight: 650 }}>{p.name}</span>
@@ -781,11 +836,16 @@ function Chip({ s, roles, onClick, cascade, cascadeDelay = 0 }: {
   );
 }
 
-function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascadeIds, roles, dayInfo, onDay, addStaff }: {
+function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascadeIds, roles, dayInfo, onDay, addStaff, onOpenDay }: {
   days: string[]; today: string; staff: Staff[]; shifts: Shift[]; hours: Map<string, number>; offOn: OffOn;
   onAdd: (staffId: string, date: string) => void; onEdit: (s: Shift) => void; cascadeIds: Set<string>;
-  roles: string[]; dayInfo: DayInfo; onDay: (d: string) => void; addStaff: React.ReactNode;
+  roles: string[]; dayInfo: DayInfo; onDay: (d: string) => void; addStaff: React.ReactNode; onOpenDay: (d: string) => void;
 }) {
+  // One shared time scale for the week's cover bars, so days line up.
+  const covers = days.map((d) => dayCover(shifts.filter((s) => s.date === d)));
+  const withShifts = covers.filter((c, i) => shifts.some((s) => s.date === days[i]));
+  const wLo = withShifts.length ? Math.min(...withShifts.map((c) => c.lo)) : 0;
+  const wHi = withShifts.length ? Math.max(...withShifts.map((c) => c.hi)) : 1;
   const cols = "190px repeat(7, minmax(104px, 1fr)) 64px";
   const hasUnfilled = shifts.some((s) => !s.staff_id);
   let cascadeIdx = 0;
@@ -832,12 +892,26 @@ function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascade
       {staff.map((p) => row(p.id, <><Avatar name={p.name} size={32} tone={p.default_role ? (() => { const sw = roleSwatch(p.default_role, roles); return { bg: sw.bg, text: sw.text }; })() : undefined} /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span></>, p.id, hours.get(p.id) ? hours.get(p.id)!.toFixed(1) : <span style={{ color: C.faint }}>—</span>))}
       <div style={{ borderTop: `1px solid ${C.divider}`, minWidth: 960 }}>{addStaff}</div>
       <div style={{ display: "grid", gridTemplateColumns: cols, minWidth: 960, background: "#fafbfc", borderTop: `1px solid ${C.divider}`, borderRadius: `0 0 ${C.r2}px ${C.r2}px` }}>
-        <div style={{ padding: "10px 14px", fontSize: 13, fontWeight: 650, color: C.muted }}>Cover</div>
-        {days.map((d) => (
-          <div key={d} style={{ padding: "10px 4px", fontSize: 13, color: C.secondary, textAlign: "center" }}>
-            <CoverageText c={coverage(shifts, d)} />
-          </div>
-        ))}
+        <div style={{ padding: "10px 14px", fontSize: 13, fontWeight: 650, color: C.muted }}>Cover<span style={{ display: "block", fontSize: 12, fontWeight: 500 }}>Red = nobody on</span></div>
+        {days.map((d, i) => {
+          const cv = covers[i];
+          const has = shifts.some((s) => s.date === d);
+          const at = (m: number) => `${((m - wLo) / (wHi - wLo)) * 100}%`;
+          return (
+            <button key={d} onClick={() => onOpenDay(d)} disabled={!has} className="app-press" title={has ? "See this day by time" : undefined}
+              aria-label={has ? `${fmtDay(d)}: ${cv.gaps.length ? `${cv.gaps.length} ${cv.gaps.length === 1 ? "gap" : "gaps"} with nobody on` : "covered"}. Open day view` : undefined}
+              style={{ padding: "10px 6px", fontSize: 13, color: C.secondary, textAlign: "center", border: "none", background: "transparent", fontFamily: "inherit", cursor: has ? "pointer" : "default", minWidth: 0 }}>
+              <CoverageText c={coverage(shifts, d)} />
+              {has && (
+                <span aria-hidden style={{ display: "block", position: "relative", height: 8, margin: "7px 2px 0", borderRadius: 4, background: "#eef0f3", overflow: "hidden" }}>
+                  <span style={{ position: "absolute", top: 0, bottom: 0, left: at(cv.first), width: `calc(${at(cv.last)} - ${at(cv.first)})`, background: "#9ca3af" }} />
+                  {cv.gaps.map((g) => <span key={g.start} style={{ position: "absolute", top: 0, bottom: 0, left: at(g.start), width: `max(3px, calc(${at(g.end)} - ${at(g.start)}))`, background: UNFILLED.border }} />)}
+                </span>
+              )}
+              {has && cv.gaps.length > 0 && <span style={{ display: "block", marginTop: 4, fontSize: 12, fontWeight: 700, color: UNFILLED.text }}>{cv.gaps.length === 1 ? "1 gap" : `${cv.gaps.length} gaps`}</span>}
+            </button>
+          );
+        })}
         <div />
       </div>
     </div>
