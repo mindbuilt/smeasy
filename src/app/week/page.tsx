@@ -147,7 +147,7 @@ function WeekPage() {
     setDraft({ id: s.id, staff_id: s.staff_id ?? "", date: s.date, start_time: hhmm(s.start_time), end_time: hhmm(s.end_time), break_minutes: s.break_minutes, role: s.role ?? "", notes: s.notes ?? "" });
   }
 
-  async function saveShift(d: Draft) {
+  async function saveShift(d: Draft, alsoOn: string[] = []) {
     if (!business) return;
     const sb = supabase();
     const r = await ensureRoster(business);
@@ -159,8 +159,21 @@ function WeekPage() {
       ? await sb.from("shifts").update(row).eq("id", d.id).select().single()
       : await sb.from("shifts").insert(row).select().single();
     if (error || !data) { setNotice("Couldn't save that shift. Check the times and try again."); return; }
-    setShifts((all) => (d.id ? all.map((s) => (s.id === d.id ? data : s)) : [...all, data]));
-    haptic(10);
+    let copies: Shift[] = [];
+    const extra = alsoOn.filter((x) => x !== d.date);
+    if (extra.length) {
+      const { data: more, error: moreErr } = await sb.from("shifts").insert(extra.map((date) => ({ ...row, date }))).select();
+      if (moreErr) setNotice("Saved that shift, but couldn't add it to the other days. Please try again.");
+      copies = more ?? [];
+      const clashes = copies.filter((c) => c.staff_id && offOn(c.staff_id, c.date)).length;
+      if (copies.length) {
+        setNotice(`Added the same shift on ${copies.length} more ${copies.length === 1 ? "day" : "days"}.` + (clashes ? ` ${clashes} clash with approved time off, check the orange days.` : ""));
+        setCascadeIds(new Set(copies.map((c) => c.id)));
+        setTimeout(() => setCascadeIds(new Set()), 1200);
+      }
+    }
+    setShifts((all) => [...(d.id ? all.map((s) => (s.id === d.id ? data : s)) : [...all, data]), ...copies]);
+    haptic(copies.length ? [10, 40, 16] : 10);
     setDraft(null);
   }
 
@@ -511,7 +524,7 @@ function WeekPage() {
       )}
 
       {draft && (
-        <ShiftEditor draft={draft} staff={staff} roles={business.roles} offOn={offOn}
+        <ShiftEditor draft={draft} staff={staff} roles={business.roles} offOn={offOn} weekDays={days} shifts={shifts}
           onClose={() => setDraft(null)} onSave={saveShift} onDelete={deleteShift} />
       )}
 
@@ -815,7 +828,7 @@ function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascade
         })}
         <div style={{ padding: "12px 6px", fontSize: 13, fontWeight: 650, color: C.muted, textAlign: "center", alignSelf: "end" }}>Hrs</div>
       </div>
-      {hasUnfilled && row("unfilled", <span style={{ color: UNFILLED.text, display: "flex", alignItems: "center", gap: 10 }}><span aria-hidden style={{ width: 32, height: 32, borderRadius: "50%", border: `1.5px dashed ${UNFILLED.border}`, display: "grid", placeItems: "center", fontWeight: 800 }}>?</span>Unfilled</span>, "", "", UNFILLED.bg)}
+      {row("unfilled", <span title="Shifts you need covered but haven't given to anyone yet. Staff don't see them." style={{ color: UNFILLED.text, display: "flex", alignItems: "center", gap: 10 }}><span aria-hidden style={{ width: 32, height: 32, borderRadius: "50%", border: `1.5px dashed ${UNFILLED.border}`, display: "grid", placeItems: "center", fontWeight: 800, flex: "none" }}>?</span><span style={{ lineHeight: 1.2 }}>Unfilled<span style={{ display: "block", fontSize: 12, fontWeight: 500, color: C.muted }}>Need covering</span></span></span>, "", "", hasUnfilled ? UNFILLED.bg : undefined)}
       {staff.map((p) => row(p.id, <><Avatar name={p.name} size={32} tone={p.default_role ? (() => { const sw = roleSwatch(p.default_role, roles); return { bg: sw.bg, text: sw.text }; })() : undefined} /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span></>, p.id, hours.get(p.id) ? hours.get(p.id)!.toFixed(1) : <span style={{ color: C.faint }}>—</span>))}
       <div style={{ borderTop: `1px solid ${C.divider}`, minWidth: 960 }}>{addStaff}</div>
       <div style={{ display: "grid", gridTemplateColumns: cols, minWidth: 960, background: "#fafbfc", borderTop: `1px solid ${C.divider}`, borderRadius: `0 0 ${C.r2}px ${C.r2}px` }}>
@@ -862,11 +875,17 @@ function Pill({ on, onClick, children, tone }: { on: boolean; onClick: () => voi
   );
 }
 
-function ShiftEditor({ draft, staff, roles, offOn, onClose, onSave, onDelete }: {
-  draft: Draft; staff: Staff[]; roles: string[]; offOn: OffOn;
-  onClose: () => void; onSave: (d: Draft) => Promise<void>; onDelete: (id: string) => Promise<void>;
+function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, onClose, onSave, onDelete }: {
+  draft: Draft; staff: Staff[]; roles: string[]; offOn: OffOn; weekDays: string[]; shifts: Shift[];
+  onClose: () => void; onSave: (d: Draft, alsoOn: string[]) => Promise<void>; onDelete: (id: string) => Promise<void>;
 }) {
   const [d, setD] = useState(draft);
+  const [alsoOn, setAlsoOn] = useState<string[]>([]);
+  const others = weekDays.filter((x) => x !== d.date);
+  const weekdays = weekDays.slice(0, 5).filter((x) => x !== d.date);
+  const toggleDay = (x: string) => { haptic(4); setAlsoOn((a) => (a.includes(x) ? a.filter((y) => y !== x) : [...a, x])); };
+  // A day where this person already works the same hours would be a double-up.
+  const sameShiftOn = (x: string) => shifts.some((s) => (s.staff_id ?? "") === d.staff_id && s.date === x && s.start_time.slice(0, 5) === d.start_time && s.end_time.slice(0, 5) === d.end_time);
   const [saving, setSaving] = useState(false);
   const hours = d.start_time && d.end_time && d.start_time !== d.end_time ? shiftHours(d.start_time, d.end_time, d.break_minutes) : 0;
   const overnight = d.end_time && d.start_time && d.end_time < d.start_time;
@@ -874,7 +893,7 @@ function ShiftEditor({ draft, staff, roles, offOn, onClose, onSave, onDelete }: 
 
   return (
     <Modal title={`${d.id ? "Edit" : "Add"} shift · ${fmtDay(d.date)}`} onClose={onClose}>
-      <form onSubmit={async (e) => { e.preventDefault(); setSaving(true); await onSave(d); setSaving(false); }} style={{ display: "grid", gap: 16 }}>
+      <form onSubmit={async (e) => { e.preventDefault(); setSaving(true); await onSave(d, alsoOn.filter((x) => !sameShiftOn(x))); setSaving(false); }} style={{ display: "grid", gap: 16 }}>
         <div>
           <span style={label}>Who</span>
           <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "2px 2px 6px", margin: "0 -2px" }}>
@@ -899,6 +918,7 @@ function ShiftEditor({ draft, staff, roles, offOn, onClose, onSave, onDelete }: 
             </button>
           </div>
           {off && <p style={{ margin: "4px 0 0", fontSize: 14, color: C.offText }}>Heads up: they have approved time off this day.</p>}
+          {d.staff_id === "" && <p style={{ margin: "6px 0 0", fontSize: 14, color: UNFILLED.text, background: UNFILLED.bg, borderRadius: 12, padding: "8px 12px", lineHeight: 1.45 }}>Saved as an unfilled shift: a gap you still need to cover. It shows in red on your roster until you give it to someone. Staff can&apos;t see it.</p>}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <div><label style={label} htmlFor="s-start">Start</label><input id="s-start" style={input} type="time" step={900} required value={d.start_time} onChange={(e) => setD({ ...d, start_time: e.target.value })} /></div>
@@ -918,11 +938,41 @@ function ShiftEditor({ draft, staff, roles, offOn, onClose, onSave, onDelete }: 
             </div>
           </div>
         )}
+        <div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 6 }}>
+            <span style={{ ...label, marginBottom: 0 }}>{d.id ? "Copy to other days" : "Also add on"}</span>
+            <button type="button" onClick={() => setAlsoOn(weekdays)} style={{ background: "none", border: "none", padding: 0, fontSize: 13, fontWeight: 650, color: C.shiftText, cursor: "pointer", fontFamily: "inherit" }}>Weekdays</button>
+            <button type="button" onClick={() => setAlsoOn(others)} style={{ background: "none", border: "none", padding: 0, fontSize: 13, fontWeight: 650, color: C.shiftText, cursor: "pointer", fontFamily: "inherit" }}>Every day</button>
+            {alsoOn.length > 0 && <button type="button" onClick={() => setAlsoOn([])} style={{ background: "none", border: "none", padding: 0, fontSize: 13, fontWeight: 650, color: C.muted, cursor: "pointer", fontFamily: "inherit", marginLeft: "auto" }}>Clear</button>}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+            {weekDays.map((x, i) => {
+              const self = x === d.date;
+              const on = self || alsoOn.includes(x);
+              const dup = !self && sameShiftOn(x);
+              const away = !self && d.staff_id ? !!offOn(d.staff_id, x) : false;
+              return (
+                <button key={x} type="button" disabled={self || dup} onClick={() => toggleDay(x)} aria-pressed={on}
+                  title={self ? "This shift" : dup ? "Already has this shift" : away ? "Approved time off this day" : undefined}
+                  className="app-press" style={{
+                    border: `1.5px solid ${on ? C.dark : away ? C.offBorder : C.border}`, borderRadius: 12, padding: "6px 0",
+                    background: on ? C.dark : dup ? "#f3f4f6" : C.white, color: on ? C.white : dup ? C.faint : C.dark,
+                    cursor: self || dup ? "default" : "pointer", fontFamily: "inherit", opacity: self ? 0.55 : 1,
+                  }}>
+                  <span style={{ display: "block", fontSize: 11, fontWeight: 600, opacity: 0.8 }}>{DAY_NAMES[i]}</span>
+                  <span style={{ display: "block", fontSize: 16, fontWeight: 800 }}>{Number(x.slice(8))}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <div><label style={label} htmlFor="s-note">Note (optional, staff see it)</label>
           <input id="s-note" style={input} maxLength={200} value={d.notes} onChange={(e) => setD({ ...d, notes: e.target.value })} placeholder="e.g. Open up — keys in the safe" />
         </div>
         <button type="submit" disabled={saving || hours === 0} className="app-press" style={{ ...btn("primary"), minHeight: 50, fontSize: 16, opacity: saving || hours === 0 ? 0.55 : 1 }}>
-          {saving ? "Saving…" : hours > 0 ? `Save shift · ${hours.toFixed(2).replace(/\.?0+$/, "")}h${overnight ? " (past midnight)" : ""}` : "Start and finish can't be the same"}
+          {saving ? "Saving…" : hours > 0
+            ? (() => { const n = 1 + alsoOn.filter((x) => !sameShiftOn(x)).length; return n > 1 ? `Save on ${n} days · ${hours.toFixed(2).replace(/\.?0+$/, "")}h each` : `Save shift · ${hours.toFixed(2).replace(/\.?0+$/, "")}h${overnight ? " (past midnight)" : ""}`; })()
+            : "Start and finish can't be the same"}
         </button>
         {d.id && <button type="button" onClick={() => onDelete(d.id!)} className="app-press" style={btn("danger")}>Delete shift</button>}
       </form>
