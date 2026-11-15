@@ -6,6 +6,7 @@ import { C, pageTitle, groupTitle, card, inkCard, onInk, button, pill } from "@/
 import { SITE_URL, SIGNUPS_OPEN, SIGNUP_HREF, SIGNUP_CTA_SHORT } from "@/lib/site";
 import { guides, guideBySlug, Block } from "@/content/guides";
 import { guideImage, GUIDE_IMAGE } from "@/content/guideImages";
+import DeviceShot from "@/components/DeviceShot";
 
 export const dynamicParams = false;
 
@@ -34,6 +35,12 @@ const text = { fontSize: 17, lineHeight: 1.7, color: "#374151", margin: "0 0 16p
 function render(b: Block, i: number) {
   if ("h2" in b) return <h2 key={i} style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.015em", lineHeight: 1.2, margin: "40px 0 12px", color: C.dark }}>{b.h2}</h2>;
   if ("p" in b) return <p key={i} style={text}>{b.p}</p>;
+  if ("shot" in b) return (
+    <figure key={i} style={{ margin: "26px 0 30px" }}>
+      <DeviceShot name={b.shot} alt={b.alt} />
+      <figcaption style={{ fontSize: 14, color: C.muted, textAlign: "center", margin: "16px auto 0", maxWidth: 460, lineHeight: 1.45 }}>{b.caption}</figcaption>
+    </figure>
+  );
   if ("tip" in b) return (
     <div key={i} style={{ display: "flex", gap: 12, background: "#ecfccb", borderRadius: 12, padding: "14px 16px", margin: "8px 0 22px", fontSize: 16, lineHeight: 1.55, color: "#3f6212" }}>
       <Lightbulb size={19} strokeWidth={2.2} style={{ flex: "none", marginTop: 2 }} aria-hidden />

@@ -6,7 +6,9 @@ export type Block =
   | { p: string }
   | { ul: string[] }
   | { ol: string[] }
-  | { tip: string };
+  | { tip: string }
+  // A real screenshot from public/product/ (see components/DeviceShot.tsx)
+  | { shot: "roster-week-desktop" | "roster-day-phone" | "add-shift-phone" | "staff-link-phone" | "time-off-phone" | "team-phone"; alt: string; caption: string };
 
 export interface Guide {
   slug: string;
@@ -38,6 +40,7 @@ export const guides: Guide[] = [
         "Mobile — handy for texting them their link.",
         "Email is optional too. If you turn on Pay details in Settings, you can also add an hourly rate and payroll ID. Skip these if you don't need them.",
       ] },
+      { shot: "team-phone", alt: "The SMEasy Team page on a phone, listing staff with their usual roles and Edit, Text link and Copy link buttons", caption: "The Team page: everyone's usual role, and their link ready to text or copy." },
       { h2: "3. Add shifts" },
       { p: "Open Roster. You'll see your team down the side and Monday to Sunday across the top. Tap any cell to add a shift: pick a start and finish time, an unpaid break and a role, then save." },
       { ul: [
@@ -48,7 +51,9 @@ export const guides: Guide[] = [
       { tip: "SMEasy remembers each person's last shift times, so adding the same shift across several days is quick." },
       { p: "Each role has its own colour, so you can see the mix at a glance. Add a note to a shift if there's something the person needs to know, or tap a day's heading to add a note for the whole day." },
       { p: "Same hours on several days? Under \"Also add on\", tap the other days (or Weekdays or Every day) and SMEasy adds the shift to all of them at once. Editing a shift works the same way, under \"Copy to other days\"." },
+      { shot: "add-shift-phone", alt: "The Add shift sheet on a phone: Ben picked, 8am to 12pm, Manager role, and Tuesday to Friday selected under Also add on", caption: "One shift, five days: pick the other days under \"Also add on\" and save once." },
       { p: "Not sure who'll work a shift yet? Add it in the Unfilled row at the top of the roster (or choose \"No one yet\" in the shift editor) and it shows in red as unfilled. Staff don't see unfilled shifts. The Cover line under each day shows how many people are on, their hours and any unfilled shifts." },
+      { shot: "roster-week-desktop", alt: "A week's roster in SMEasy on a laptop: seven staff, shifts colour-coded by role, an unfilled Sunday shift in red, a time-off request and the cover count under each day", caption: "The whole week on a laptop: roles in colour, the unfilled shift in red, cover under each day." },
       { tip: "Set your state under Settings and public holidays are marked on the roster." },
       { h2: "4. Copy last week" },
       { p: "Most rosters look a lot like last week's. On an empty week, tap Copy last week and every shift is copied across to the same days. Then just adjust what's different." },
@@ -77,6 +82,7 @@ export const guides: Guide[] = [
         "Each week, publish the roster and drop a quick \"next week's up\" in the chat.",
       ] },
       { p: "Staff open the link, pick their name to highlight their shifts and hours, and can flip between published weeks. The page remembers their name on that phone." },
+      { shot: "staff-link-phone", alt: "The team roster link on a staff member's phone: Jack's next shift, 7am to 11am tomorrow, above the day's full roster with his shift highlighted", caption: "What staff see: their next shift up top, the whole team below." },
       { tip: "Tell staff to add the link to their phone's home screen. It then opens like an app." },
       { h2: "Option 2: the PDF" },
       { p: "Tap PDF on the Roster (on a phone, it's under the … button) to download the roster as a one-page A4 sheet: your team down the side, Monday to Sunday across, with shift times, roles and hours. Print it for the staff room or attach it in the group chat. Staff can download the same PDF from the team link." },
@@ -109,6 +115,7 @@ export const guides: Guide[] = [
       ] },
       { h2: "How you approve or decline" },
       { p: "Pending requests appear at the top of the Roster for the week they fall in, with Approve and Decline buttons. Approved days show as Off in orange on that person's row, so you won't roster them by accident." },
+      { shot: "time-off-phone", alt: "The roster on a phone with Lily Chen's time-off request for a family wedding at the top, with Approve and Decline buttons", caption: "A pending request sits at the top of the roster until you approve or decline it." },
       { tip: "If you copy last week and someone has approved time off, SMEasy tells you how many copied shifts clash so you can fix them." },
       { p: "SMEasy doesn't send notifications yet, so let staff know your decision, or they'll see it next time they open their link." },
       { h2: "Last-minute sick calls" },
@@ -160,6 +167,7 @@ export const guides: Guide[] = [
       { p: "There's nothing to install. SMEasy runs in your phone's browser, and the roster screen is laid out for small screens." },
       { h2: "1. Use the day cards" },
       { p: "On a phone, the roster shows one day at a time. Tap a day in the strip at the top (or swipe left and right), then tap + to add a shift: choose who, set the times and save. Copy last week, the PDF and payroll hours are under the … button." },
+      { shot: "roster-day-phone", alt: "The SMEasy roster on a phone showing Monday's shifts as cards under the week strip, with the add button and bottom tab bar", caption: "One day at a time, with the week strip on top and + to add a shift." },
       { h2: "2. Fix call-outs in seconds" },
       { p: "Someone can't make it? Tap their shift, then delete it or switch it to whoever's covering. If the week's already published, the team link updates immediately." },
       { h2: "3. Put SMEasy on your home screen" },

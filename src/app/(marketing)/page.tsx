@@ -7,6 +7,7 @@ import { guides } from "@/content/guides";
 import { guideImage } from "@/content/guideImages";
 import AuthHashForwarder from "@/components/AuthHashForwarder";
 import RosterPreview from "@/components/RosterPreview";
+import DeviceShot from "@/components/DeviceShot";
 
 export const metadata: Metadata = {
   title: { absolute: "SMEasy — simple staff rostering for Australian small businesses" },
@@ -22,10 +23,13 @@ export const metadata: Metadata = {
 };
 
 const steps = [
-  { n: "1", t: "Add your team", d: "Type in names and pick their usual roles. That's it — you're ready to build." },
-  { n: "2", t: "Build the week", d: "Tap a day to add a shift, or copy last week and tweak what's different." },
-  { n: "3", t: "Publish and share", d: "Hit publish, paste the team link in your group chat (or send the PDF). Done." },
-];
+  { n: "1", t: "Add your team", d: "Type in names and pick their usual roles. That's it — you're ready to build.",
+    shot: "team-phone", alt: "The SMEasy Team page on a phone, listing staff with their usual roles" },
+  { n: "2", t: "Build the week", d: "Tap a day to add a shift, or copy last week and tweak what's different.",
+    shot: "add-shift-phone", alt: "Adding a shift on a phone: who, start and finish, role, and the other days to add it to" },
+  { n: "3", t: "Publish and share", d: "Hit publish, paste the team link in your group chat (or send the PDF). Done.",
+    shot: "staff-link-phone", alt: "The team roster link on a staff member's phone, showing their next shift" },
+] as const;
 
 const features = [
   { Icon: Copy, t: "Copy last week", d: "Most weeks look the same. Copy last week in one tap, then tweak what's different." },
@@ -103,6 +107,9 @@ export default function Home() {
         <ol className="mkt-steps" style={{ ...card, listStyle: "none", margin: 0, padding: 0 }}>
           {steps.map((s) => (
             <li key={s.n} style={{ padding: "24px 24px 26px" }}>
+              <div style={{ background: C.bg, borderRadius: 14, padding: "22px 18px 0", marginBottom: 20, overflow: "hidden", height: 380 }}>
+                <DeviceShot name={s.shot} alt={s.alt} style={{ maxWidth: 230 }} />
+              </div>
               <span aria-hidden style={{ width: 36, height: 36, borderRadius: 999, background: "#ecfccb", color: "#3f6212", display: "grid", placeItems: "center", fontWeight: 800, fontSize: 16, marginBottom: 14 }}>{s.n}</span>
               <h3 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-0.01em", margin: "0 0 6px" }}>{s.t}</h3>
               <p style={{ fontSize: 15, color: C.secondary, margin: 0, lineHeight: 1.5 }}>{s.d}</p>
@@ -115,6 +122,8 @@ export default function Home() {
       <section style={section}>
         <h2 style={{ ...sectionTitle, textAlign: "center", margin: "0 auto 10px", maxWidth: 680 }}>Everything you need to roster. Nothing you don&apos;t.</h2>
         <p style={{ ...lead, textAlign: "center", margin: "0 0 28px", fontSize: 17 }}>SMEasy does one thing — rostering — and keeps it simple.</p>
+        <DeviceShot name="roster-week-desktop" style={{ marginBottom: 16 }}
+          alt="A week's roster in SMEasy on a laptop: seven staff, shifts colour-coded by role, an unfilled Sunday shift, a time-off request and the cover count under each day" />
         <ul className="mkt-features" style={{ ...card, listStyle: "none", margin: 0, padding: 0, overflow: "hidden" }}>
           {features.map(({ Icon, t, d }) => (
             <li key={t} style={{ display: "flex", gap: 14, padding: "20px 22px" }}>

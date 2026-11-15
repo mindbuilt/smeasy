@@ -893,8 +893,9 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, onClose, on
 
   return (
     <Modal title={`${d.id ? "Edit" : "Add"} shift · ${fmtDay(d.date)}`} onClose={onClose}>
-      <form onSubmit={async (e) => { e.preventDefault(); setSaving(true); await onSave(d, alsoOn.filter((x) => !sameShiftOn(x))); setSaving(false); }} style={{ display: "grid", gap: 16 }}>
-        <div>
+      <form onSubmit={async (e) => { e.preventDefault(); setSaving(true); await onSave(d, alsoOn.filter((x) => !sameShiftOn(x))); setSaving(false); }} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 16 }}>
+        {/* minmax(0, 1fr): lets the sideways-scrolling "Who" row scroll instead of widening the sheet past the screen (5+ staff) */}
+        <div style={{ minWidth: 0 }}>
           <span style={label}>Who</span>
           <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "2px 2px 6px", margin: "0 -2px" }}>
             {staff.map((p) => {
@@ -920,7 +921,7 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, onClose, on
           {off && <p style={{ margin: "4px 0 0", fontSize: 14, color: C.offText }}>Heads up: they have approved time off this day.</p>}
           {d.staff_id === "" && <p style={{ margin: "6px 0 0", fontSize: 14, color: UNFILLED.text, background: UNFILLED.bg, borderRadius: 12, padding: "8px 12px", lineHeight: 1.45 }}>Saved as an unfilled shift: a gap you still need to cover. It shows in red on your roster until you give it to someone. Staff can&apos;t see it.</p>}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 10 }}>
           <div><label style={label} htmlFor="s-start">Start</label><input id="s-start" style={input} type="time" step={900} required value={d.start_time} onChange={(e) => setD({ ...d, start_time: e.target.value })} /></div>
           <div><label style={label} htmlFor="s-end">Finish</label><input id="s-end" style={input} type="time" step={900} required value={d.end_time} onChange={(e) => setD({ ...d, end_time: e.target.value })} /></div>
         </div>
@@ -945,7 +946,7 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, onClose, on
             <button type="button" onClick={() => setAlsoOn(others)} style={{ background: "none", border: "none", padding: 0, fontSize: 13, fontWeight: 650, color: C.shiftText, cursor: "pointer", fontFamily: "inherit" }}>Every day</button>
             {alsoOn.length > 0 && <button type="button" onClick={() => setAlsoOn([])} style={{ background: "none", border: "none", padding: 0, fontSize: 13, fontWeight: 650, color: C.muted, cursor: "pointer", fontFamily: "inherit", marginLeft: "auto" }}>Clear</button>}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 4 }}>
             {weekDays.map((x, i) => {
               const self = x === d.date;
               const on = self || alsoOn.includes(x);
