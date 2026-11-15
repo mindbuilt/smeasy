@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { C, pageTitle, groupTitle, lead, card, link } from "@/lib/mkt";
 import { guides, Guide } from "@/content/guides";
+import { guideImage } from "@/content/guideImages";
 
 export const metadata: Metadata = {
   title: "Rostering guides for small businesses",
@@ -28,12 +29,14 @@ export default function GuidesIndex() {
             <h2 style={{ ...groupTitle, margin: "0 0 12px" }}>{cat}</h2>
             <div style={{ ...card, overflow: "hidden" }}>
               {list.map((g) => (
-                <Link key={g.slug} href={`/guides/${g.slug}/`} className="mkt-row">
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                <Link key={g.slug} href={`/guides/${g.slug}/`} className="mkt-row" style={{ alignItems: "flex-start" }}>
+                  <img src={guideImage(g.slug).thumb} alt="" width={128} height={72} loading="lazy" className="mkt-thumb"
+                    style={{ width: 128, height: 72, objectFit: "cover", borderRadius: 10, flex: "none", background: C.divider }} />
+                  <div style={{ flex: 1, minWidth: 0, alignSelf: "center" }}>
                     <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 3 }}>{g.title}</div>
                     <div style={{ fontSize: 15, color: C.secondary, lineHeight: 1.5 }}>{g.description}</div>
                   </div>
-                  <ChevronRight size={20} strokeWidth={2.2} className="mkt-chev" aria-hidden />
+                  <ChevronRight size={20} strokeWidth={2.2} className="mkt-chev" aria-hidden style={{ alignSelf: "center" }} />
                 </Link>
               ))}
             </div>

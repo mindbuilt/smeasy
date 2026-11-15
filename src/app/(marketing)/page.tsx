@@ -4,6 +4,7 @@ import { CalendarOff, CalendarRange, CalendarSync, Check, ChevronRight, Copy, Fi
 import { C, wrap, display, sectionTitle, lead, card, inkCard, onInk, button, pill, link } from "@/lib/mkt";
 import { SITE_URL, SIGNUPS_OPEN, SIGNUP_HREF, SIGNUP_CTA } from "@/lib/site";
 import { guides } from "@/content/guides";
+import { guideImage } from "@/content/guideImages";
 import AuthHashForwarder from "@/components/AuthHashForwarder";
 import RosterPreview from "@/components/RosterPreview";
 
@@ -33,6 +34,13 @@ const features = [
   { Icon: CalendarOff, t: "Time-off requests", d: "Staff ask for days off from their phone. Approve or decline right on the roster." },
   { Icon: FileSpreadsheet, t: "Hours for payroll", d: "Download every shift's hours as a spreadsheet for your bookkeeper, Xero or MYOB." },
   { Icon: CalendarSync, t: "In their calendar", d: "Staff subscribe once and their shifts appear in their phone's calendar — updated when you change the roster." },
+];
+
+// Captions describe what's built today (PRODUCT.md): role presets, split and past-midnight shifts.
+const types = [
+  { src: "/types/cafe.jpg", t: "Cafés", d: "Floor, kitchen and barista roles ready to go, and split shifts for the morning and lunch rush.", alt: "Two café staff in aprons smiling at a phone behind the counter" },
+  { src: "/types/retail.jpg", t: "Shops", d: "A retail preset with sales floor, stockroom and checkout, ready to change to suit you.", alt: "A boutique owner unlocking the front door of a small clothing shop" },
+  { src: "/types/hospitality.jpg", t: "Restaurants and bars", d: "Late closes are easy: set 5pm to 2am and SMEasy counts the hours correctly.", alt: "A restaurant team sharing a staff meal at a long timber table, seen from above" },
 ];
 
 const jsonLd = {
@@ -122,6 +130,23 @@ export default function Home() {
         </ul>
       </section>
 
+      {/* Who it's for */}
+      <section style={section}>
+        <h2 style={{ ...sectionTitle, textAlign: "center", margin: "0 auto 28px", maxWidth: 680 }}>Made for cafés, shops and restaurants</h2>
+        <div className="grid-3" style={{ gap: 14 }}>
+          {types.map((t) => (
+            <figure key={t.src} style={{ ...card, margin: 0, overflow: "hidden" }}>
+              <img src={t.src} alt={t.alt} width={960} height={720} loading="lazy"
+                style={{ width: "100%", height: "auto", aspectRatio: "4 / 3", objectFit: "cover", display: "block", background: C.divider }} />
+              <figcaption style={{ padding: "14px 18px 16px" }}>
+                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.01em", marginBottom: 2 }}>{t.t}</div>
+                <div style={{ fontSize: 15, color: C.secondary, lineHeight: 1.45 }}>{t.d}</div>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+
       {/* For staff: the page's one dark surface */}
       <section style={section}>
         <div style={{ ...inkCard, overflow: "hidden" }}>
@@ -153,10 +178,14 @@ export default function Home() {
         </div>
         <div className="grid-3" style={{ gap: 14 }}>
           {featured.map((g) => (
-            <Link key={g.slug} href={`/guides/${g.slug}/`} className="app-lift" style={{ ...card, display: "flex", flexDirection: "column", gap: 8, padding: "20px 20px 18px", textDecoration: "none", color: C.dark, transition: "box-shadow 160ms ease, transform 160ms ease" }}>
-              <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.01em", lineHeight: 1.25 }}>{g.title}</div>
-              <div style={{ fontSize: 15, color: C.secondary, lineHeight: 1.5, flex: 1 }}>{g.description}</div>
-              <span style={{ ...pill("quiet"), alignSelf: "flex-start", marginTop: 6 }}>{g.category}</span>
+            <Link key={g.slug} href={`/guides/${g.slug}/`} className="app-lift" style={{ ...card, display: "flex", flexDirection: "column", overflow: "hidden", textDecoration: "none", color: C.dark, transition: "box-shadow 160ms ease, transform 160ms ease" }}>
+              <img src={guideImage(g.slug).thumb} alt="" width={480} height={268} loading="lazy"
+                style={{ width: "100%", height: "auto", aspectRatio: "16 / 9", objectFit: "cover", display: "block", background: C.divider }} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "18px 20px 18px", flex: 1 }}>
+                <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.01em", lineHeight: 1.25 }}>{g.title}</div>
+                <div style={{ fontSize: 15, color: C.secondary, lineHeight: 1.5, flex: 1 }}>{g.description}</div>
+                <span style={{ ...pill("quiet"), alignSelf: "flex-start", marginTop: 6 }}>{g.category}</span>
+              </div>
             </Link>
           ))}
         </div>

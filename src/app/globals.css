@@ -76,6 +76,14 @@ button:active:not(:disabled) { transform: scale(0.98); }
 .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 760px) { .grid-3 { grid-template-columns: 1fr; } }
 
+/* Login: a photo fills the left half on wide screens; phones keep the plain card */
+.login-photo { display: none; }
+@media (min-width: 960px) {
+  .login-photo { display: block; position: fixed; top: 0; bottom: 0; left: 0; width: 50%; background: #1f2937; }
+  .login-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .login-main { margin-left: 50%; }
+}
+
 /* ── Marketing pages (same system as the app, at marketing scale) ─────────── */
 @media (max-width: 640px) {
   .mkt-nav { display: none !important; }
@@ -88,6 +96,7 @@ button:active:not(:disabled) { transform: scale(0.98); }
 .mkt-row { display: flex; align-items: center; gap: 14px; padding: 16px 18px; text-decoration: none; color: #111827; transition: background-color 150ms ease; }
 .mkt-row + .mkt-row { border-top: 1px solid #eef0f3; }
 @media (hover: hover) { a.mkt-row:hover { background: #f8faf3; } a.mkt-row:hover .mkt-chev { color: #111827; transform: translateX(2px); } }
+@media (max-width: 520px) { .mkt-thumb { width: 84px !important; height: 47px !important; } }
 .mkt-chev { color: #c3c8d0; flex: none; transition: color 150ms ease, transform 150ms ease; }
 
 /* FAQ disclosure rows */

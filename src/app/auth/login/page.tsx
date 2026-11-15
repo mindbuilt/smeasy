@@ -105,10 +105,15 @@ export default function LoginPage() {
   const linkBtn = { background: "none", border: 0, padding: 0, color: C.dark, textDecoration: "underline", cursor: "pointer", fontSize: 13, fontFamily: "inherit" } as const;
 
   return (
-    <div className="app" style={{ minHeight: "100dvh", background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 24px 0" }}>
+    <>
+    {/* Desktop only: a quiet café at opening time fills the left half */}
+    <div className="login-photo" aria-hidden>
+      <img src="/login.jpg" alt="" width={1100} height={1473} />
+    </div>
+    <div className="app login-main" style={{ minHeight: "100dvh", background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 24px 0" }}>
       <div style={{ background: C.white, borderRadius: C.r2, boxShadow: C.shadow, padding: "32px 28px", width: "100%", maxWidth: 380, margin: "auto 0" }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, textDecoration: "none" }}>
-          <span style={{ width: 24, height: 24, borderRadius: C.r1, background: C.accent, display: "block" }} />
+          <span style={{ width: 24, height: 24, borderRadius: 7, background: C.accent, display: "block", boxShadow: "inset 0 -2px 0 rgba(0,0,0,0.08)" }} />
           <span style={{ fontWeight: 700, fontSize: 17, color: C.dark }}>SMEasy</span>
         </Link>
 
@@ -203,5 +208,6 @@ export default function LoginPage() {
         <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>
       </footer>
     </div>
+    </>
   );
 }

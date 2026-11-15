@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Lightbulb } from "lucide-react";
 import { C, pageTitle, groupTitle, card, inkCard, onInk, button, pill } from "@/lib/mkt";
 import { SITE_URL, SIGNUPS_OPEN, SIGNUP_HREF, SIGNUP_CTA_SHORT } from "@/lib/site";
 import { guides, guideBySlug, Block } from "@/content/guides";
+import { guideImage, GUIDE_IMAGE } from "@/content/guideImages";
 
 export const dynamicParams = false;
 
@@ -20,7 +21,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: g.title,
     description: g.description,
     alternates: { canonical: url },
-    openGraph: { url, title: g.title, description: g.description, type: "article" },
+    openGraph: {
+      url, title: g.title, description: g.description, type: "article",
+      images: [{ url: guideImage(g.slug).src, ...GUIDE_IMAGE, alt: guideImage(g.slug).alt }],
+    },
+    twitter: { card: "summary_large_image" },
   };
 }
 
@@ -56,6 +61,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
     description: g.description,
     dateModified: g.updated,
     mainEntityOfPage: `${SITE_URL}/guides/${g.slug}/`,
+    image: `${SITE_URL}${guideImage(g.slug).src}`,
     publisher: { "@type": "Organization", name: "SMEasy", url: SITE_URL },
   };
 
@@ -68,10 +74,12 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
         </Link>
       </nav>
       <h1 style={{ ...pageTitle, fontSize: "clamp(30px, 5vw, 42px)", margin: "0 0 16px" }}>{g.title}</h1>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", margin: "0 0 32px", fontSize: 14, color: C.muted }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", margin: "0 0 26px", fontSize: 14, color: C.muted }}>
         <span style={pill("quiet")}>{g.category}</span>
         <span>Updated {fmtDate(g.updated)}</span>
       </div>
+      <img src={guideImage(g.slug).src} alt={guideImage(g.slug).alt} {...GUIDE_IMAGE} fetchPriority="high"
+        style={{ width: "100%", height: "auto", display: "block", borderRadius: C.r2, boxShadow: C.shadow, margin: "0 0 36px", background: C.divider }} />
       {g.body.map(render)}
 
       <div style={{ ...inkCard, padding: "26px 24px", margin: "48px 0 40px" }}>
@@ -86,6 +94,8 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       <div style={{ ...card, overflow: "hidden" }}>
         {others.map((o) => (
           <Link key={o.slug} href={`/guides/${o.slug}/`} className="mkt-row">
+            <img src={guideImage(o.slug).thumb} alt="" width={84} height={47} loading="lazy"
+              style={{ width: 84, height: 47, objectFit: "cover", borderRadius: 8, flex: "none", background: C.divider }} />
             <span style={{ flex: 1, fontSize: 16, fontWeight: 700 }}>{o.title}</span>
             <ChevronRight size={20} strokeWidth={2.2} className="mkt-chev" aria-hidden />
           </Link>
