@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { addDays, thisMonday } from "@/lib/dates";
+import { addDays, toISO } from "@/lib/dates";
 import { downloadRosterPdf, PdfShift } from "@/lib/rosterPdf";
 import { Avatar, C, Loading, btn, card, haptic } from "@/components/ui";
 import { DayList, NextShift, StaffFooter, StaffShell, WeekNav, hoursOf, readToken } from "@/components/StaffBits";
@@ -20,7 +20,8 @@ const TOKEN_KEY = "smeasy_team_token";
 // Shared team roster: /r/#<team_token>. Read-only, published weeks only.
 export default function TeamRoster() {
   const [token, setToken] = useState<string | null>(null);
-  const [week, setWeek] = useState(thisMonday());
+  // Any date in the week will do: the server rounds it to the business's week start.
+  const [week, setWeek] = useState(() => toISO(new Date()));
   const [view, setView] = useState<View | null | "invalid">(null);
   const [me, setMe] = useState("");
 

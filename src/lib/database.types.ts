@@ -91,6 +91,7 @@ export type Database = {
           state: string | null
           team_token: string
           timezone: string
+          week_start_day: number
         }
         Insert: {
           created_at?: string
@@ -102,6 +103,7 @@ export type Database = {
           state?: string | null
           team_token?: string
           timezone?: string
+          week_start_day?: number
         }
         Update: {
           created_at?: string
@@ -113,6 +115,7 @@ export type Database = {
           state?: string | null
           team_token?: string
           timezone?: string
+          week_start_day?: number
         }
         Relationships: []
       }
@@ -351,6 +354,7 @@ export type Database = {
     }
     Functions: {
       get_staff_calendar: { Args: { p_token: string }; Returns: Json }
+      set_week_start_day: { Args: { p_day: number }; Returns: number }
       get_staff_roster: {
         Args: { p_token: string; p_week?: string }
         Returns: Json

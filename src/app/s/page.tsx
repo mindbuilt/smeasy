@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { addDays, fmtDay, thisMonday, toISO } from "@/lib/dates";
+import { addDays, fmtDay, toISO } from "@/lib/dates";
 import { Plane, Users } from "lucide-react";
 import { C, Loading, btn, card, haptic, input, label } from "@/components/ui";
 import { CalendarButtons, DayList, NextShift, StaffFooter, StaffShell, WeekNav, hoursOf, readToken } from "@/components/StaffBits";
@@ -23,7 +23,8 @@ export default function StaffRoster() {
   // Token lives in the URL hash (/s/#<token>): works with the static export
   // and is never sent to the server or written to access logs.
   const [token, setToken] = useState<string | null>(null);
-  const [week, setWeek] = useState(thisMonday());
+  // Any date in the week will do: the server rounds it to the business's week start.
+  const [week, setWeek] = useState(() => toISO(new Date()));
   const [view, setView] = useState<View | null | "invalid">(null);
   const [showTeam, setShowTeam] = useState(false);
   const [asking, setAsking] = useState(false);

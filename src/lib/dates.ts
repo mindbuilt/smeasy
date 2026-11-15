@@ -21,15 +21,33 @@ export function addDays(d: string, n: number): string {
   return toISO(dt);
 }
 
+export const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+/** ISO weekday: 1 = Monday ... 7 = Sunday. */
+export function isoDay(d: string): number {
+  return ((parse(d).getDay() + 6) % 7) + 1;
+}
+
+/** Short day name for a date, e.g. "Sat". */
+export function dayName(d: string): string {
+  return DAY_NAMES[isoDay(d) - 1];
+}
+
+/** First day of the week containing d, for a week that starts on startDay (1 = Monday ... 7 = Sunday). */
+export function weekStartOf(d: string, startDay = 1): string {
+  return addDays(d, -((isoDay(d) - startDay + 7) % 7));
+}
+
+export function thisWeekStart(startDay = 1): string {
+  return weekStartOf(toISO(new Date()), startDay);
+}
+
 export function mondayOf(d: string): string {
-  const dt = parse(d);
-  const dow = (dt.getDay() + 6) % 7; // Mon = 0
-  dt.setDate(dt.getDate() - dow);
-  return toISO(dt);
+  return weekStartOf(d, 1);
 }
 
 export function thisMonday(): string {
-  return mondayOf(toISO(new Date()));
+  return thisWeekStart(1);
 }
 
 export function weekDates(monday: string): string[] {

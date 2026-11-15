@@ -5,7 +5,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, StickyNote } from "lucide-reac
 import { C, Avatar, btn, card } from "@/components/ui";
 import { roleSwatch } from "@/lib/roleColors";
 import { holidayOn } from "@/lib/holidays";
-import { DAY_NAMES, fmtDay, fmtTime, fmtWeek, shiftHours, thisMonday, toISO, weekDates } from "@/lib/dates";
+import { addDays, dayName, fmtDay, fmtTime, fmtWeek, shiftHours, toISO, weekDates } from "@/lib/dates";
 
 export type StaffShiftView = {
   id: string; date: string; start_time: string; end_time: string; break_minutes: number;
@@ -66,12 +66,13 @@ export function StaffFooter({ hint }: { hint: string }) {
 
 export function WeekNav({ weekStart, onStep }: { weekStart: string; onStep: (n: number) => void }) {
   const round = { ...btn(), width: 44, padding: 0, borderRadius: 999 };
+  const today = toISO(new Date());
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "0 0 14px" }}>
       <button onClick={() => onStep(-1)} className="app-press" style={round} aria-label="Previous week"><ChevronLeft size={20} /></button>
       <div style={{ flex: 1, textAlign: "center" }}>
         <div style={{ fontSize: 17, fontWeight: 800, color: C.dark, letterSpacing: "-0.01em" }}>{fmtWeek(weekStart)}</div>
-        <div style={{ fontSize: 13, color: C.muted }}>{weekStart === thisMonday() ? "This week" : weekStart > thisMonday() ? "Coming up" : "Past week"}</div>
+        <div style={{ fontSize: 13, color: C.muted }}>{today >= weekStart && today <= addDays(weekStart, 6) ? "This week" : weekStart > today ? "Coming up" : "Past week"}</div>
       </div>
       <button onClick={() => onStep(1)} className="app-press" style={round} aria-label="Next week"><ChevronRight size={20} /></button>
     </div>
@@ -141,14 +142,14 @@ export function DayList({ weekStart, shifts, roles, state, dayNotes, isMine, you
   const today = toISO(new Date());
   return (
     <div style={{ display: "grid", gap: 8 }}>
-      {weekDates(weekStart).map((d, i) => {
+      {weekDates(weekStart).map((d) => {
         const day = shifts.filter((s) => s.date === d);
         const isToday = d === today;
         const extras = holidayOn(d, state) || dayNotes.some((n) => n.date === d);
         if (!day.length && !extras) {
           return (
             <div key={d} style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 14px", fontSize: 14, color: C.muted }}>
-              <span style={{ width: 82, fontWeight: 650 }}>{DAY_NAMES[i]} {Number(d.slice(8))}</span>
+              <span style={{ width: 82, fontWeight: 650 }}>{dayName(d)} {Number(d.slice(8))}</span>
               <span style={{ flex: 1, height: 1, background: C.border }} />
               <span>No shifts</span>
             </div>

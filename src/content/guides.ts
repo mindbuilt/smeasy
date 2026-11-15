@@ -42,7 +42,7 @@ export const guides: Guide[] = [
       ] },
       { shot: "team-phone", alt: "The SMEasy Team page on a phone, listing staff with their usual roles and Edit, Text link and Copy link buttons", caption: "The Team page: everyone's usual role, and their link ready to text or copy." },
       { h2: "3. Add shifts" },
-      { p: "Open Roster. You'll see your team down the side and Monday to Sunday across the top. Tap any cell to add a shift: pick a start and finish time, an unpaid break and a role, then save." },
+      { p: "Open Roster. You'll see your team down the side and the days of the week across the top (Monday to Sunday, unless you pick a different start day in Settings). Tap any cell to add a shift: pick a start and finish time, an unpaid break and a role, then save." },
       { ul: [
         "Shifts that finish after midnight are fine — set a finish time earlier than the start, like 5pm to 2am.",
         "Split shifts work too. Tap the same day again to add a second shift.",
@@ -85,7 +85,7 @@ export const guides: Guide[] = [
       { shot: "staff-link-phone", alt: "The team roster link on a staff member's phone: Jack's next shift, 7am to 11am tomorrow, above the day's full roster with his shift highlighted", caption: "What staff see: their next shift up top, the whole team below." },
       { tip: "Tell staff to add the link to their phone's home screen. It then opens like an app." },
       { h2: "Option 2: the PDF" },
-      { p: "Tap PDF on the Roster (on a phone, it's under the … button) to download the roster as a one-page A4 sheet: your team down the side, Monday to Sunday across, with shift times, roles and hours. Print it for the staff room or attach it in the group chat. Staff can download the same PDF from the team link." },
+      { p: "Tap PDF on the Roster (on a phone, it's under the … button) to download the roster as a one-page A4 sheet: your team down the side, the week's days across, with shift times, roles and hours. Print it for the staff room or attach it in the group chat. Staff can download the same PDF from the team link." },
       { h2: "What staff can and can't see" },
       { ul: [
         "They see published weeks only. Drafts stay private until you publish.",

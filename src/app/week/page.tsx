@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useManager } from "@/lib/useManager";
 import type { Business, Roster, Shift, Staff, TimeOff } from "@/lib/types";
-import { DAY_NAMES, addDays, fmtAUD, fmtDay, fmtTime, fmtWeek, mondayOf, shiftHours, thisMonday, toISO, weekDates } from "@/lib/dates";
+import { addDays, dayName, fmtAUD, fmtDay, fmtTime, fmtWeek, shiftHours, thisWeekStart, toISO, weekDates, weekStartOf } from "@/lib/dates";
 import { AppShell, Avatar, C, Loading, Modal, btn, card, haptic, input, label } from "@/components/ui";
 import { CalendarPlus, CalendarDays, Check, ChevronLeft, ChevronRight, Copy, Download, FileText, Info, Link2, Columns3 as Columns, List, MoreHorizontal, Plus, StickyNote, Undo2, UserPlus, X } from "lucide-react";
 import DayTimeline, { dayCover } from "@/components/DayTimeline";
@@ -31,11 +31,11 @@ type Draft = {
 
 const hhmm = (t: string) => t.slice(0, 5);
 
-async function fetchWeek(monday: string, days: string[]) {
+async function fetchWeek(weekStart: string, days: string[]) {
   const sb = supabase();
   const [st, ro, to, dn] = await Promise.all([
     sb.from("staff").select("*").eq("active", true).order("name"),
-    sb.from("rosters").select("*").eq("week_start", monday).maybeSingle(),
+    sb.from("rosters").select("*").eq("week_start", weekStart).maybeSingle(),
     sb.from("time_off").select("*").lte("start_date", days[6]).gte("end_date", days[0]).neq("status", "declined"),
     sb.from("day_notes").select("id, date, note").gte("date", days[0]).lte("date", days[6]),
   ]);
@@ -60,8 +60,9 @@ function WeekPage() {
   const router = useRouter();
   const params = useSearchParams();
   const { business, email } = useManager();
-  const monday = mondayOf(params.get("w") ?? thisMonday());
-  const days = useMemo(() => weekDates(monday), [monday]);
+  const startDay = business?.week_start_day ?? 1;
+  const weekStart = weekStartOf(params.get("w") ?? toISO(new Date()), startDay);
+  const days = useMemo(() => weekDates(weekStart), [weekStart]);
   const isMobile = useIsMobile();
 
   const [staff, setStaff] = useState<Staff[] | null>(null);
@@ -90,21 +91,21 @@ function WeekPage() {
   useEffect(() => {
     if (!business) return;
     let cancelled = false;
-    fetchWeek(monday, days).then((w) => {
+    fetchWeek(weekStart, days).then((w) => {
       if (cancelled) return;
       setStaff(w.staff); setRoster(w.roster); setTimeOff(w.timeOff); setShifts(w.shifts); setDayNotes(w.dayNotes);
     });
     return () => { cancelled = true; };
-  }, [business, monday, days]);
+  }, [business, weekStart, days]);
 
   async function ensureRoster
 (b: Business): Promise<Roster | null> {
     if (roster) return roster;
     const sb = supabase();
-    const { data, error } = await sb.from("rosters").insert({ business_id: b.id, week_start: monday }).select().single();
+    const { data, error } = await sb.from("rosters").insert({ business_id: b.id, week_start: weekStart }).select().single();
     if (error) {
       // Created in another tab meanwhile — fetch it.
-      const { data: existing } = await sb.from("rosters").select("*").eq("week_start", monday).maybeSingle();
+      const { data: existing } = await sb.from("rosters").select("*").eq("week_start", weekStart).maybeSingle();
       setRoster(existing ?? null);
       return existing ?? null;
     }
@@ -112,7 +113,7 @@ function WeekPage() {
     return data;
   }
 
-  const goWeek = (n: number) => router.push(`/week?w=${addDays(monday, n * 7)}`);
+  const goWeek = (n: number) => router.push(`/week?w=${addDays(weekStart, n * 7)}`);
 
   // ── Derived numbers ──────────────────────────────────────────────────────
   const hoursByStaff = useMemo(() => {
@@ -128,7 +129,7 @@ function WeekPage() {
   const missingRate = [...hoursByStaff.keys()].filter((id) => staffById.get(id)?.hourly_rate == null).length;
   const pending = timeOff.filter((t) => t.status === "pending");
   const published = roster?.status === "published";
-  const isPast = monday < thisMonday();
+  const isPast = weekStart < thisWeekStart(startDay);
   const roles = business?.roles ?? [];
   const dayInfo = (d: string) => ({ holiday: holidayOn(d, business?.state), note: dayNotes.find((n) => n.date === d)?.note ?? null });
 
@@ -203,8 +204,8 @@ function WeekPage() {
     if (!business || !staff) return;
     setBusy(true);
     const sb = supabase();
-    const prevMonday = addDays(monday, -7);
-    const { data: prev } = await sb.from("rosters").select("id").eq("week_start", prevMonday).maybeSingle();
+    const prevWeek = addDays(weekStart, -7);
+    const { data: prev } = await sb.from("rosters").select("id").eq("week_start", prevWeek).maybeSingle();
     const { data: prevShifts } = prev
       ? await sb.from("shifts").select("*").eq("roster_id", prev.id)
       : { data: [] as Shift[] };
@@ -284,7 +285,7 @@ function WeekPage() {
     if (!business) return;
     downloadRosterPdf({
       business: business.name,
-      weekStart: monday,
+      weekStart: weekStart,
       people: (staff ?? []).map((p) => p.name),
       shifts: shifts.map((s) => ({ ...s, staff_name: s.staff_id ? staffById.get(s.staff_id)?.name ?? "" : "" })),
       roles,
@@ -325,7 +326,7 @@ function WeekPage() {
     const csv = rows.map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    a.download = `hours-${monday}.csv`;
+    a.download = `hours-${weekStart}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
   }
@@ -360,11 +361,11 @@ function WeekPage() {
         {isMobile ? null : <button onClick={() => goWeek(1)} className="app-press" style={{ ...btn(), width: 42, padding: 0, borderRadius: 999, flex: "none" }} aria-label="Next week"><ChevronRight size={20} /></button>}
         <div style={{ minWidth: 0, flex: isMobile ? 1 : "none", textAlign: isMobile ? "center" : "left" }}>
           <h1 style={{ fontSize: isMobile ? 19 : 24, fontWeight: 800, color: C.dark, margin: 0, letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 8, justifyContent: isMobile ? "center" : "flex-start", flexWrap: "wrap" }}>
-            {fmtWeek(monday)}
+            {fmtWeek(weekStart)}
             <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0, padding: "3px 9px", borderRadius: 999, background: statusTone.bg, color: statusTone.text, transition: "background-color 400ms ease, color 400ms ease" }}>{statusTone.label}</span>
           </h1>
           <div style={{ fontSize: isMobile ? 13 : 14, color: C.muted, marginTop: 2 }}>
-            {monday === thisMonday() ? "This week" : <Link href="/week" style={{ color: C.secondary }}>Back to this week</Link>}
+            {weekStart === thisWeekStart(startDay) ? "This week" : <Link href="/week" style={{ color: C.secondary }}>Back to this week</Link>}
             {isMobile && shifts.length > 0 && <> · {totalHours.toFixed(1).replace(/\.0$/, "")}h · {filled} {filled === 1 ? "shift" : "shifts"}{unfilled.length > 0 && <span style={{ color: UNFILLED.text, fontWeight: 700 }}> · {unfilled.length} unfilled</span>}</>}
             {!isMobile && !published && <> · your team can&apos;t see this week until you publish</>}
             {!isMobile && published && !isPast && <> · your team can see this week, and changes show straight away</>}
@@ -523,7 +524,7 @@ function WeekPage() {
       )}
 
       {moreOpen && (
-        <Modal title={fmtWeek(monday)} onClose={() => setMoreOpen(false)}>
+        <Modal title={fmtWeek(weekStart)} onClose={() => setMoreOpen(false)}>
           {shifts.length > 0 && (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
               <Stat value={totalHours.toFixed(1)} label="paid hours" />
@@ -561,7 +562,7 @@ function WeekPage() {
             <span className="publish-badge" style={{ display: "inline-grid", placeItems: "center", width: 76, height: 76, borderRadius: "50%", background: C.accent, boxShadow: "0 8px 22px rgba(101,163,13,0.35)" }}>
               <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke={C.dark} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
             </span>
-            <p style={{ fontSize: 17, fontWeight: 750, color: C.dark, margin: "14px 0 4px" }}>Your team can see {fmtWeek(monday)} now.</p>
+            <p style={{ fontSize: 17, fontWeight: 750, color: C.dark, margin: "14px 0 4px" }}>Your team can see {fmtWeek(weekStart)} now.</p>
             <p style={{ fontSize: 15, color: C.secondary, lineHeight: 1.5, margin: 0 }}>Paste the team link in your group chat, or send the PDF. The link stays the same every week.</p>
           </div>
           {unfilled.length > 0 && (
@@ -689,7 +690,7 @@ function WeekStrip({ days, day, today, shifts, dayInfo, onPick }: {
 }) {
   return (
     <div role="tablist" aria-label="Days" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, ...card, padding: 6, marginBottom: 14 }}>
-      {days.map((d, i) => {
+      {days.map((d) => {
         const on = d === day;
         const n = shifts.filter((s) => s.date === d).length;
         const gaps = shifts.some((s) => s.date === d && !s.staff_id);
@@ -700,7 +701,7 @@ function WeekStrip({ days, day, today, shifts, dayInfo, onPick }: {
             background: on ? C.dark : hol ? HOLIDAY.bg : "transparent", color: on ? C.white : C.dark,
             transition: "background-color 220ms ease, color 220ms ease",
           }}>
-            <span style={{ display: "block", fontSize: 12, fontWeight: 600, color: on ? "#d1d5db" : d === today ? C.shiftText : C.muted }}>{DAY_NAMES[i]}</span>
+            <span style={{ display: "block", fontSize: 12, fontWeight: 600, color: on ? "#d1d5db" : d === today ? C.shiftText : C.muted }}>{dayName(d)}</span>
             <span style={{ display: "block", fontSize: 18, fontWeight: 800, lineHeight: 1.3 }}>{Number(d.slice(8))}</span>
             <span aria-hidden style={{ display: "block", height: 6, margin: "3px auto 0", width: n ? Math.min(6 + n * 4, 22) : 6, borderRadius: 6,
               background: gaps ? "#ef4444" : n ? (on ? C.accent : "#84cc16") : on ? "#374151" : "#e5e7eb", transition: "width 240ms ease" }} />
@@ -873,13 +874,13 @@ function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascade
     <div style={{ ...card, overflowX: "auto" }}>
       <div style={{ display: "grid", gridTemplateColumns: cols, minWidth: 960 }}>
         <div style={{ padding: "12px 14px", fontSize: 13, fontWeight: 650, color: C.muted, alignSelf: "end" }}>Staff</div>
-        {days.map((d, i) => {
+        {days.map((d) => {
           const info = dayInfo(d);
           const isToday = d === today;
           return (
             <button key={d} onClick={() => onDay(d)} title={info.note ? "Edit day note" : "Add a note for this day"} className="app-press"
               style={{ padding: "10px 6px 8px", textAlign: "center", border: "none", background: info.holiday ? HOLIDAY.bg : "transparent", cursor: "pointer", fontFamily: "inherit", minWidth: 0, borderRadius: 12, margin: 4 }}>
-              <span style={{ display: "block", fontSize: 12, fontWeight: 650, color: isToday ? C.shiftText : C.muted }}>{DAY_NAMES[i]}</span>
+              <span style={{ display: "block", fontSize: 12, fontWeight: 650, color: isToday ? C.shiftText : C.muted }}>{dayName(d)}</span>
               <span style={{ display: "inline-grid", placeItems: "center", minWidth: 32, height: 32, borderRadius: 999, fontSize: 17, fontWeight: 800, color: isToday ? C.dark : C.dark, background: isToday ? C.accent : "transparent" }}>{Number(d.slice(8))}</span>
               {info.holiday && <span style={{ display: "block", fontSize: 12, fontWeight: 700, color: HOLIDAY.text, marginTop: 2 }}>{info.holiday}</span>}
               {info.note && <span style={{ display: "block", fontSize: 12, fontWeight: 500, color: C.secondary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 2 }} title={info.note}>{info.note}</span>}
@@ -1021,7 +1022,7 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, onClose, on
             {alsoOn.length > 0 && <button type="button" onClick={() => setAlsoOn([])} style={{ background: "none", border: "none", padding: 0, fontSize: 13, fontWeight: 650, color: C.muted, cursor: "pointer", fontFamily: "inherit", marginLeft: "auto" }}>Clear</button>}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 4 }}>
-            {weekDays.map((x, i) => {
+            {weekDays.map((x) => {
               const self = x === d.date;
               const on = self || alsoOn.includes(x);
               const dup = !self && sameShiftOn(x);
@@ -1034,7 +1035,7 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, onClose, on
                     background: on ? C.dark : dup ? "#f3f4f6" : C.white, color: on ? C.white : dup ? C.faint : C.dark,
                     cursor: self || dup ? "default" : "pointer", fontFamily: "inherit", opacity: self ? 0.55 : 1,
                   }}>
-                  <span style={{ display: "block", fontSize: 11, fontWeight: 600, opacity: 0.8 }}>{DAY_NAMES[i]}</span>
+                  <span style={{ display: "block", fontSize: 11, fontWeight: 600, opacity: 0.8 }}>{dayName(x)}</span>
                   <span style={{ display: "block", fontSize: 16, fontWeight: 800 }}>{Number(x.slice(8))}</span>
                 </button>
               );
