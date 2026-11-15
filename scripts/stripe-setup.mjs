@@ -1,0 +1,126 @@
+#!/usr/bin/env node
+// One-time Stripe setup for SMEasy Pro. Safe to re-run: it finds what already exists.
+//
+// Run it in your own Terminal (not through Claude, so your key stays out of chat logs):
+//   STRIPE_SECRET_KEY=sk_test_... node scripts/stripe-setup.mjs
+// Add --live only when you mean to set up real billing with a live key.
+//
+// It creates or finds:
+//   - Product "SMEasy Pro", price A$19/month (GST added on top, lookup key smeasy_pro_monthly)
+//   - Tax rate "GST" 10%, Australia, exclusive  ->  $20.90/month in total
+//   - Customer portal settings (update card, invoices, cancel at period end)
+//   - Webhook endpoint for the stripe-webhook Edge Function
+// Then it stores STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ID and
+// STRIPE_TAX_RATE_ID as Supabase Edge Function secrets (needs `npx supabase login`).
+// Secrets are never printed.
+
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+const PROJECT_REF = "jrbjkrukmcqxrthhpdwx";
+const WEBHOOK_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/stripe-webhook`;
+const LOOKUP_KEY = "smeasy_pro_monthly";
+const EVENTS = ["checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"];
+
+const KEY = process.env.STRIPE_SECRET_KEY ?? "";
+const live = process.argv.includes("--live");
+if (!/^sk_(test|live)_/.test(KEY) && !/^rk_(test|live)_/.test(KEY)) {
+  console.error("Set STRIPE_SECRET_KEY to your Stripe secret key (sk_test_...).");
+  process.exit(1);
+}
+if (KEY.includes("_live_") && !live) {
+  console.error("That's a LIVE key. Re-run with --live if you really mean to set up real billing.");
+  process.exit(1);
+}
+
+function form(obj, prefix = "", out = new URLSearchParams()) {
+  for (const [k, v] of Object.entries(obj)) {
+    const key = prefix ? `${prefix}[${k}]` : k;
+    if (v === undefined) continue;
+    if (Array.isArray(v)) v.forEach((x, i) => (typeof x === "object" ? form(x, `${key}[${i}]`, out) : out.append(`${key}[${i}]`, String(x))));
+    else if (typeof v === "object") form(v, key, out);
+    else out.append(key, String(v));
+  }
+  return out;
+}
+
+async function api(method, path, params) {
+  const url = new URL(`https://api.stripe.com/v1/${path}`);
+  const init = { method, headers: { Authorization: `Bearer ${KEY}` } };
+  if (params && method === "GET") form(params).forEach((v, k) => url.searchParams.append(k, v));
+  else if (params) { init.body = form(params); init.headers["Content-Type"] = "application/x-www-form-urlencoded"; }
+  const res = await fetch(url, init);
+  const body = await res.json();
+  if (!res.ok) throw new Error(`${method} ${path}: ${body.error?.message ?? res.status}`);
+  return body;
+}
+
+// 1. Product + price
+let price = (await api("GET", `prices?lookup_keys[]=${LOOKUP_KEY}&active=true`)).data[0];
+if (price) console.log(`✓ Price exists: ${price.id}`);
+else {
+  const product = await api("POST", "products", { name: "SMEasy Pro", description: "More than 10 staff, plus priority email support." });
+  price = await api("POST", "prices", {
+    product: product.id, currency: "aud", unit_amount: 1900, recurring: { interval: "month" },
+    tax_behavior: "exclusive", lookup_key: LOOKUP_KEY, nickname: "Pro monthly",
+  });
+  console.log(`✓ Created product ${product.id} and price ${price.id} (A$19/month + GST)`);
+}
+
+// 2. GST tax rate
+let tax = (await api("GET", "tax_rates", { active: true, limit: 100 })).data
+  .find((t) => t.display_name === "GST" && t.percentage === 10 && t.country === "AU" && !t.inclusive);
+if (tax) console.log(`✓ GST tax rate exists: ${tax.id}`);
+else {
+  tax = await api("POST", "tax_rates", { display_name: "GST", percentage: 10, inclusive: false, country: "AU", jurisdiction: "AU", description: "Australian GST" });
+  console.log(`✓ Created GST tax rate ${tax.id}`);
+}
+
+// 3. Customer portal
+const portals = (await api("GET", "billing_portal/configurations", { is_default: true, limit: 1 })).data;
+if (portals.length) console.log(`✓ Customer portal is configured (${portals[0].id})`);
+else {
+  const p = await api("POST", "billing_portal/configurations", {
+    business_profile: { headline: "SMEasy billing", privacy_policy_url: "https://www.smeasy.au/privacy/" },
+    features: {
+      invoice_history: { enabled: true },
+      payment_method_update: { enabled: true },
+      customer_update: { enabled: true, allowed_updates: ["email", "name", "address", "tax_id"] },
+      subscription_cancel: { enabled: true, mode: "at_period_end" },
+    },
+  });
+  console.log(`✓ Created customer portal settings ${p.id}`);
+}
+
+// 4. Webhook endpoint (Stripe only reveals the signing secret when it's created)
+let webhookSecret = "";
+const hooks = (await api("GET", "webhook_endpoints", { limit: 100 })).data.filter((h) => h.url === WEBHOOK_URL);
+if (hooks.length) {
+  console.log(`✓ Webhook exists (${hooks[0].id}). Its secret can't be read back.`);
+  console.log("  If STRIPE_WEBHOOK_SECRET isn't set yet: Stripe dashboard → Developers → Webhooks → this endpoint → Roll secret,");
+  console.log("  then run:  npx supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_... --project-ref " + PROJECT_REF);
+} else {
+  const h = await api("POST", "webhook_endpoints", { url: WEBHOOK_URL, enabled_events: EVENTS, description: "SMEasy billing sync" });
+  webhookSecret = h.secret;
+  console.log(`✓ Created webhook ${h.id} → ${WEBHOOK_URL}`);
+}
+
+// 5. Supabase secrets (written to a private temp file, passed to the CLI, then deleted)
+const lines = [`STRIPE_SECRET_KEY=${KEY}`, `STRIPE_PRICE_ID=${price.id}`, `STRIPE_TAX_RATE_ID=${tax.id}`];
+if (webhookSecret) lines.push(`STRIPE_WEBHOOK_SECRET=${webhookSecret}`);
+const dir = mkdtempSync(join(tmpdir(), "smeasy-stripe-"));
+const envFile = join(dir, "secrets.env");
+writeFileSync(envFile, lines.join("\n") + "\n", { mode: 0o600 });
+try {
+  execFileSync("npx", ["supabase", "secrets", "set", "--env-file", envFile, "--project-ref", PROJECT_REF], { stdio: "inherit" });
+  console.log(`✓ Saved ${lines.map((l) => l.split("=")[0]).join(", ")} as Supabase secrets`);
+} catch {
+  console.error("✗ Couldn't save Supabase secrets. Run `npx supabase login` first, then re-run this script.");
+  process.exitCode = 1;
+} finally {
+  rmSync(dir, { recursive: true, force: true });
+}
+
+console.log(`\nDone (${KEY.includes("_live_") ? "LIVE" : "test"} mode). Next:\n  npx supabase db push\n  npx supabase functions deploy billing --project-ref ${PROJECT_REF}\n  npx supabase functions deploy stripe-webhook --no-verify-jwt --project-ref ${PROJECT_REF}`);

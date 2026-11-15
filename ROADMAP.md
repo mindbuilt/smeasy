@@ -31,7 +31,7 @@ have been removed from the site until built.
 - [ ] **Multiple locations** per business.
 - [ ] **Installable app (PWA)** and offline viewing of the published roster.
 - [ ] **Pay details as a Pro feature?** — Settings → Pay details (hourly rates, payroll IDs, base-rate estimate, pay columns in CSV) is built and free for now. Decide whether it moves to Pro when billing exists.
-- [ ] **Pricing and billing** — tiers decided (Free ≤10 staff with every feature; Pro $19/month + GST for more staff + priority email support). Build: staff-limit check, Stripe billing, advance email before charging.
+- [ ] **Pricing and billing** — tiers decided (Free ≤10 staff with every feature; Pro $19/month + GST for more staff + priority email support). Stripe billing is built (test mode). Still to do before charging anyone: enforce the staff limit (UI on the Team page + a database check), switch Stripe to live keys, email early-access users well in advance, and terms of service.
 
 ## SEO and content
 - [ ] More guides: printable/free roster template (could use the PDF), rostering around public holidays, how to roster a small café, casual vs part-time rostering basics (link to Fair Work, no legal advice).

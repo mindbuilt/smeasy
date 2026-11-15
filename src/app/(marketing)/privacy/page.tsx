@@ -53,6 +53,7 @@ export default function Privacy() {
         <L>Email address, used to sign you in and to send login and password-reset links.</L>
         <L>If you set one, your password. Our authentication provider stores it only in scrambled (hashed) form, so we can&apos;t see it.</L>
         <L>Business name, business type and the shift roles you set up.</L>
+        <L>If you upgrade to Pro: your billing name and address, an ABN if you add one, and your subscription status. Card details are entered on Stripe&apos;s checkout and never reach us.</L>
         <L>Sign-in records kept by our authentication provider, such as the time of sign-in, IP address and browser type, used to keep accounts secure.</L>
       </ul>
       <h3 style={h3}>About staff (entered by the account holder)</h3>
@@ -109,6 +110,7 @@ export default function Privacy() {
           <tbody>
             <tr><td style={td}>Supabase</td><td style={td}>Database and sign-in</td><td style={td}>Data stored in Sydney, Australia. Supabase Inc. is based in the United States and its staff may access data for support and operations.</td></tr>
             <tr><td style={td}>Resend</td><td style={td}>Sending sign-in emails</td><td style={td}>United States company; emails sent via Amazon Web Services (Tokyo region)</td></tr>
+            <tr><td style={td}>Stripe</td><td style={td}>Payments and invoices for the Pro plan. Card details go straight to Stripe; we never see or store them</td><td style={td}>Stripe Payments Australia; data processed in the United States and other countries</td></tr>
             <tr><td style={td}>Formspree</td><td style={td}>Receiving contact form messages</td><td style={td}>United States</td></tr>
             <tr><td style={td}>Vercel</td><td style={td}>Website hosting</td><td style={td}>Global network; United States company</td></tr>
             <tr><td style={td}>Google (Tag Manager, Analytics)</td><td style={td}>Website analytics, public pages only, with consent</td><td style={td}>United States and other countries</td></tr>

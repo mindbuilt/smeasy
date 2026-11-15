@@ -23,10 +23,10 @@ does **today**. Anything not built goes in `ROADMAP.md`, never in marketing.
 
 ## Not built — see ROADMAP.md
 Notifications, Xero/MYOB import formats, swaps, availability, award checks,
-penalty-rate costing, multiple managers/locations, billing.
+penalty-rate costing, multiple managers/locations, the Free staff limit (switch built, off).
 
 ## Pricing
-Free during early access. Planned: Free up to 10 staff with every feature; Pro $19/month + GST ($20.90) for more than 10 staff plus priority email support. Limits and billing not built yet — see ROADMAP.md.
+Free during early access. Planned: Free up to 10 staff with every feature; Pro $19/month + GST ($20.90) for more than 10 staff plus priority email support. Billing is built with Stripe (Settings → Plan: Upgrade via Stripe Checkout, Manage billing via the Stripe portal; `billing` + `stripe-webhook` Edge Functions; `public.billing` table, written only by the webhook). Running in Stripe test mode. The 10-staff limit is not enforced during early access (`STAFF_LIMIT_ENFORCED` in src/lib/site.ts) — see ROADMAP.md.
 
 ## Voice
 Australian English, plain and friendly, manager-to-manager. Short sentences.

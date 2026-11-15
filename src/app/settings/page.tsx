@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
 import { useManager } from "@/lib/useManager";
 import SetPassword from "@/components/SetPassword";
+import PlanCard from "@/components/PlanCard";
 import { STATES, STATE_TIMEZONE, type State } from "@/lib/holidays";
 import { roleSwatch } from "@/lib/roleColors";
 import { payDetailsOn, withPayDetails } from "@/lib/pay";
@@ -42,6 +43,10 @@ export default function SettingsPage() {
             {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0" }}>Used to mark public holidays on your roster and set your time zone.</p>
+        </section>
+
+        <section id="plan" style={card}>
+          <PlanCard businessId={business.id} />
         </section>
 
         <section style={card}>

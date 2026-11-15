@@ -13,3 +13,13 @@ export const SIGNUPS_OPEN = false;
 export const SIGNUP_HREF = SIGNUPS_OPEN ? "/auth/login/?signup" : "/contact/?topic=early-access";
 export const SIGNUP_CTA = SIGNUPS_OPEN ? "Get started free" : "Get early access";
 export const SIGNUP_CTA_SHORT = SIGNUPS_OPEN ? "Get started" : "Get early access";
+
+/**
+ * Billing (Stripe, via the `billing` and `stripe-webhook` Edge Functions).
+ * BILLING_ENABLED shows Upgrade / Manage billing in Settings → Plan.
+ * STAFF_LIMIT_ENFORCED stops Free businesses adding more than FREE_STAFF_LIMIT active staff.
+ * It stays off during early access (the pricing page promises no limits until we email people).
+ */
+export const BILLING_ENABLED = true;
+export const STAFF_LIMIT_ENFORCED = false;
+export const FREE_STAFF_LIMIT = 10;
