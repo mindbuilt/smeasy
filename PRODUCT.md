@@ -15,9 +15,9 @@ does **today**. Anything not built goes in `ROADMAP.md`, never in marketing.
 |---|---|
 | Sign-in | Email + password (Supabase), or magic link (implicit flow, works across devices). Forgot password → /auth/reset. Set/change password in Settings → Your login. Nav: Roster · Team · Settings. Welcome step sets business name + role preset (café / retail / other). |
 | Team | Add/edit people: usual role, mobile, email. Hourly rate + payroll ID only when Settings → Pay details is on (businesses.payroll_settings.pay_details, off by default). Remove/bring back. |
-| This week | Grid (desktop) / day cards (mobile). Shifts with start, finish, unpaid break, role. Split shifts and past-midnight shifts. Copy last week. Paid hours per person + total. Base-rate wage estimate only when Pay details is on. Publish / unpublish. Approve/decline time off. |
+| Roster | Grid (desktop, always-visible Unfilled row) / week strip + one day at a time with swipe (mobile). Add a shift to several days at once (Also add on / Copy to other days). Shifts with start, finish, unpaid break, role. Split shifts and past-midnight shifts. Copy last week. Paid hours per person + total. Base-rate wage estimate only when Pay details is on. Publish / unpublish. Approve/decline time off. |
 | Sharing | One **team roster link** per business (`/r/#token`, published weeks only, names/times/roles only, resettable). **PDF** (A4 landscape). |
-| Time off | Personal staff link (`/s/#token`) — own shifts + request time off. Requests show on This week. |
+| Time off | Personal staff link (`/s/#token`) — own shifts + request time off. Requests show on the Roster. |
 | Payroll | Hours CSV: name, date, day, start, finish, break, rostered + actual hours, role; plus payroll ID, hourly rate, base pay when Pay details is on. |
 | Data | Supabase Postgres in Sydney (ap-southeast-2). RLS: a manager sees only their own business. Staff access only via SECURITY DEFINER functions that expose published rosters. |
 

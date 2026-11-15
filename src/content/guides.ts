@@ -39,7 +39,7 @@ export const guides: Guide[] = [
         "Email is optional too. If you turn on Pay details in Settings, you can also add an hourly rate and payroll ID. Skip these if you don't need them.",
       ] },
       { h2: "3. Add shifts" },
-      { p: "Open This week. You'll see your team down the side and Monday to Sunday across the top. Tap any cell to add a shift: pick a start and finish time, an unpaid break and a role, then save." },
+      { p: "Open Roster. You'll see your team down the side and Monday to Sunday across the top. Tap any cell to add a shift: pick a start and finish time, an unpaid break and a role, then save." },
       { ul: [
         "Shifts that finish after midnight are fine — set a finish time earlier than the start, like 5pm to 2am.",
         "Split shifts work too. Tap the same day again to add a second shift.",
@@ -79,7 +79,7 @@ export const guides: Guide[] = [
       { p: "Staff open the link, pick their name to highlight their shifts and hours, and can flip between published weeks. The page remembers their name on that phone." },
       { tip: "Tell staff to add the link to their phone's home screen. It then opens like an app." },
       { h2: "Option 2: the PDF" },
-      { p: "Tap PDF on This week to download the roster as a one-page A4 sheet: your team down the side, Monday to Sunday across, with shift times, roles and hours. Print it for the staff room or attach it in the group chat. Staff can download the same PDF from the team link." },
+      { p: "Tap PDF on the Roster (on a phone, it's under the … button) to download the roster as a one-page A4 sheet: your team down the side, Monday to Sunday across, with shift times, roles and hours. Print it for the staff room or attach it in the group chat. Staff can download the same PDF from the team link." },
       { h2: "What staff can and can't see" },
       { ul: [
         "They see published weeks only. Drafts stay private until you publish.",
@@ -108,11 +108,11 @@ export const guides: Guide[] = [
         "They can see whether it's waiting, approved or declined each time they open the link.",
       ] },
       { h2: "How you approve or decline" },
-      { p: "Pending requests appear at the top of This week for the week they fall in, with Approve and Decline buttons. Approved days show as Off in orange on that person's row, so you won't roster them by accident." },
+      { p: "Pending requests appear at the top of the Roster for the week they fall in, with Approve and Decline buttons. Approved days show as Off in orange on that person's row, so you won't roster them by accident." },
       { tip: "If you copy last week and someone has approved time off, SMEasy tells you how many copied shifts clash so you can fix them." },
       { p: "SMEasy doesn't send notifications yet, so let staff know your decision, or they'll see it next time they open their link." },
       { h2: "Last-minute sick calls" },
-      { p: "If someone calls in sick on the day, open This week, tap their shift and either delete it or change it to whoever's covering. Changes to a published roster show up on the team link straight away." },
+      { p: "If someone calls in sick on the day, open the Roster, tap their shift and either delete it or change it to whoever's covering. Changes to a published roster show up on the team link straight away." },
       { h2: "Simple rules that keep it fair" },
       { ul: [
         "Set a notice period, such as two weeks for planned leave, and stick to it.",
@@ -134,7 +134,7 @@ export const guides: Guide[] = [
       { p: "SMEasy works out the paid hours for every shift (finish time minus start time minus the unpaid break) and lets you download them as a spreadsheet for payroll." },
       { h2: "Download the hours" },
       { ol: [
-        "Open the week on This week.",
+        "Open the week on the Roster.",
         "Tap Hours CSV.",
         "Open the file in Excel, Numbers or Google Sheets, or send it to your bookkeeper.",
       ] },
@@ -159,7 +159,7 @@ export const guides: Guide[] = [
     body: [
       { p: "There's nothing to install. SMEasy runs in your phone's browser, and the roster screen is laid out for small screens." },
       { h2: "1. Use the day cards" },
-      { p: "On a phone, This week switches from the wide grid to one card per day. Tap + Add shift on a day, choose who, set the times and save." },
+      { p: "On a phone, the roster shows one day at a time. Tap a day in the strip at the top (or swipe left and right), then tap + to add a shift: choose who, set the times and save. Copy last week, the PDF and payroll hours are under the … button." },
       { h2: "2. Fix call-outs in seconds" },
       { p: "Someone can't make it? Tap their shift, then delete it or switch it to whoever's covering. If the week's already published, the team link updates immediately." },
       { h2: "3. Put SMEasy on your home screen" },
@@ -221,7 +221,7 @@ export const guides: Guide[] = [
         "The staff member finds someone to swap with, usually in the staff group chat.",
         "Both people message you to confirm the swap.",
         "You check it works — the right skills, and nobody pushed into too many hours.",
-        "You update the roster: tap each shift on This week and change who's working.",
+        "You update the roster: tap each shift on the Roster and change who's working.",
         "Because the roster's published, the team link shows the change straight away.",
       ] },
       { p: "SMEasy doesn't automate swaps. You make the change on the roster, which keeps you in control of who's working." },
