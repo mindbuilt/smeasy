@@ -387,6 +387,10 @@ allow_dynamic_registration = false
 [functions.stripe-webhook]
 verify_jwt = false
 
+# Xero redirects the manager's browser here after they approve the connection.
+[functions.xero-callback]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

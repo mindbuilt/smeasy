@@ -6,6 +6,7 @@ import type { Database } from "@/lib/database.types";
 import { useManager } from "@/lib/useManager";
 import SetPassword from "@/components/SetPassword";
 import PlanCard from "@/components/PlanCard";
+import XeroCard from "@/components/XeroCard";
 import { STATES, STATE_TIMEZONE, type State } from "@/lib/holidays";
 import { roleSwatch } from "@/lib/roleColors";
 import { payDetailsOn, withPayDetails } from "@/lib/pay";
@@ -49,6 +50,10 @@ export default function SettingsPage() {
 
         <section id="plan" style={card}>
           <PlanCard businessId={business.id} />
+        </section>
+
+        <section id="payroll" style={card}>
+          <XeroCard businessId={business.id} />
         </section>
 
         <section style={card}>

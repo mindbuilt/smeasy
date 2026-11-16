@@ -163,6 +163,7 @@ export type Database = {
           published_at: string | null
           status: string
           week_start: string
+          xero_sent_at: string | null
         }
         Insert: {
           business_id: string
@@ -172,6 +173,7 @@ export type Database = {
           published_at?: string | null
           status?: string
           week_start: string
+          xero_sent_at?: string | null
         }
         Update: {
           business_id?: string
@@ -181,6 +183,7 @@ export type Database = {
           published_at?: string | null
           status?: string
           week_start?: string
+          xero_sent_at?: string | null
         }
         Relationships: [
           {
@@ -283,6 +286,7 @@ export type Database = {
           name: string
           payroll_id: string | null
           roster_token: string
+          xero_employee_id: string | null
         }
         Insert: {
           active?: boolean
@@ -298,6 +302,7 @@ export type Database = {
           name: string
           payroll_id?: string | null
           roster_token?: string
+          xero_employee_id?: string | null
         }
         Update: {
           active?: boolean
@@ -313,6 +318,7 @@ export type Database = {
           name?: string
           payroll_id?: string | null
           roster_token?: string
+          xero_employee_id?: string | null
         }
         Relationships: [
           {
@@ -371,6 +377,12 @@ export type Database = {
             referencedColumns: ["id", "business_id"]
           },
         ]
+      }
+      xero_connections: {
+        Row: { business_id: string; connected_at: string; connection_id: string | null; last_sent_at: string | null; tenant_id: string; tenant_name: string | null }
+        Insert: { business_id: string; connected_at?: string; connection_id?: string | null; last_sent_at?: string | null; tenant_id: string; tenant_name?: string | null }
+        Update: { business_id?: string; connected_at?: string; connection_id?: string | null; last_sent_at?: string | null; tenant_id?: string; tenant_name?: string | null }
+        Relationships: []
       }
     }
     Views: {

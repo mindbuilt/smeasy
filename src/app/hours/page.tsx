@@ -30,6 +30,9 @@ function HoursPage() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [xero, setXero] = useState<{ tenant_name: string | null } | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState<{ name: string; ok: boolean; note: string }[] | null>(null);
 
   useEffect(() => {
     if (!business) return;
@@ -40,6 +43,8 @@ function HoursPage() {
         sb.from("staff").select("*").order("name"), // removed staff too, so past weeks keep their names
         sb.from("rosters").select("*").eq("week_start", weekStart).maybeSingle(),
       ]);
+      const { data: xc } = await sb.from("xero_connections").select("tenant_name").maybeSingle();
+      if (!cancelled) setXero(xc ?? null);
       const sh = ro.data ? (await sb.from("shifts").select("*").eq("roster_id", ro.data.id).not("staff_id", "is", null).order("start_time")).data ?? [] : [];
       if (cancelled) return;
       setStaff(st.data ?? []); setRoster(ro.data ?? null); setShifts(sh);
@@ -57,6 +62,20 @@ function HoursPage() {
       setShifts((all) => all.map((x) => (x.id === s.id ? s : x)));
       setNotice("Couldn't save that change. Please try again.");
     }
+  }
+
+  async function sendToXero() {
+    if (!roster) return;
+    setSending(true); setSent(null); setNotice(null);
+    const { data, error } = await supabase().functions.invoke("xero", { body: { action: "send", roster_id: roster.id } });
+    setSending(false);
+    if (error || !data) {
+      let msg = "Couldn't send to Xero. Please try again.";
+      try { const b = await (error as { context?: Response })?.context?.json(); if (b?.error) msg = b.error; } catch { /* keep default */ }
+      setNotice(msg); return;
+    }
+    setSent(data.results);
+    if (data.results.some((r: { ok: boolean }) => r.ok)) { setRoster({ ...roster, xero_sent_at: new Date().toISOString() }); haptic([10, 40, 16]); }
   }
 
   async function setApproved(on: boolean) {
@@ -170,6 +189,15 @@ function HoursPage() {
                   <span role="cell" style={{ textAlign: "right" }}>{fmtH(totalWorked)}h</span>
                 </div>
               </div>
+              {sent && (
+                <div role="status" style={{ background: "#f3f4f6", borderRadius: 12, padding: "10px 12px", margin: "10px 0 0", fontSize: 14, lineHeight: 1.55 }}>
+                  <strong style={{ color: C.dark }}>Sent to {xero?.tenant_name ?? "Xero"}:</strong>
+                  {sent.map((r) => (
+                    <div key={r.name} style={{ color: r.ok ? C.secondary : C.danger }}>{r.ok ? "✓" : "✗"} {r.name}: {r.note}</div>
+                  ))}
+                  {sent.some((r) => r.ok) && <div style={{ color: C.muted, marginTop: 4 }}>They&apos;re drafts in Xero Payroll: check them there and approve them in your pay run.</div>}
+                </div>
+              )}
               <p style={{ fontSize: 13, color: C.muted, margin: "10px 0 14px" }}>
                 {edits === 0 ? "Everything as rostered so far." : `${edits} ${edits === 1 ? "shift" : "shifts"} changed from the roster.`} Paid hours, unpaid breaks taken out.
               </p>
@@ -177,6 +205,11 @@ function HoursPage() {
                 {!approved && (
                   <button onClick={() => setApproved(true)} disabled={busy} className="app-press" style={{ ...btn("accent"), padding: "10px 20px" }}>
                     <Check size={18} /> {busy ? "Approving…" : "Approve hours"}
+                  </button>
+                )}
+                {approved && xero && (
+                  <button onClick={sendToXero} disabled={sending} className="app-press" style={{ ...btn("accent"), padding: "10px 20px" }}>
+                    {sending ? "Sending to Xero…" : roster?.xero_sent_at ? "Send to Xero again" : "Send to Xero"}
                   </button>
                 )}
                 <button onClick={() => downloadHoursCsv({ shifts, staff, pay, weekStart })} className="app-press" style={btn()}>
