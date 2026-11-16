@@ -6,7 +6,8 @@ import { supabase } from "@/lib/supabase";
 import { addDays, toISO } from "@/lib/dates";
 import { downloadRosterPdf, PdfShift } from "@/lib/rosterPdf";
 import { C, Loading, btn, card, haptic, input } from "@/components/ui";
-import { DayList, NextShift, StaffFooter, StaffShell, WeekNav, hoursOf, readToken, MineSwitch } from "@/components/StaffBits";
+import { Mail } from "lucide-react";
+import { DayList, StaffFooter, StaffShell, WeekNav, readToken } from "@/components/StaffBits";
 
 type TeamShift = PdfShift & { id: string };
 type View = {
@@ -14,23 +15,18 @@ type View = {
   state: string | null; roles: string[]; day_notes: { date: string; note: string }[];
 };
 
-const ME_KEY = "smeasy_me";
 const TOKEN_KEY = "smeasy_team_token";
 
-// Shared team roster: /r/#<team_token>. Read-only, published weeks only.
+// Shared team roster: /r/#<team_token>. Read-only, published weeks only. It's one link for the
+// whole team, so it can't know who's looking: "my shifts" lives on each person's personal link.
 export default function TeamRoster() {
   const [token, setToken] = useState<string | null>(null);
   // Any date in the week will do: the server rounds it to the business's week start.
   const [week, setWeek] = useState(() => toISO(new Date()));
   const [view, setView] = useState<View | null | "invalid">(null);
-  const [me, setMe] = useState("");
-  const [mineOnly, setMineOnly] = useState(true);
 
   useEffect(() => {
-    const read = () => {
-      setToken(readToken(TOKEN_KEY));
-      setMe(localStorage.getItem(ME_KEY) ?? "");
-    };
+    const read = () => setToken(readToken(TOKEN_KEY));
     read();
     window.addEventListener("hashchange", read);
     return () => window.removeEventListener("hashchange", read);
@@ -57,8 +53,6 @@ export default function TeamRoster() {
   );
   if (view === null) return <StaffShell><Loading /></StaffShell>;
 
-  const pickMe = (name: string) => { haptic(5); setMe(name); localStorage.setItem(ME_KEY, name); };
-  const mine = view.shifts.filter((s) => s.staff_name === me);
   const step = (n: number) => { setWeek(addDays(week, n * 7)); haptic(5); };
 
   return (
@@ -72,35 +66,48 @@ export default function TeamRoster() {
         </div>
       ) : (
         <>
-          {me && view.staff.includes(me) ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-              <MineSwitch mine={mineOnly} onChange={setMineOnly} />
-              <button type="button" onClick={() => pickMe("")} style={{ background: "none", border: "none", padding: 0, font: "inherit", fontSize: 13, color: C.muted, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>
-                Not {me.split(" ")[0]}? Change
-              </button>
-            </div>
-          ) : view.staff.length > 0 && (
-            <label style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 14, fontSize: 15, fontWeight: 650, color: C.dark }}>
-              Which one are you?
-              <select value="" onChange={(e) => { if (e.target.value) { pickMe(e.target.value); setMineOnly(true); } }}
-                style={{ ...input, width: "auto", minWidth: 180, minHeight: 40, padding: "8px 12px", fontSize: 15 }}>
-                <option value="">Pick your name</option>
-                {view.staff.map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
-            </label>
-          )}
-
-          {me && mineOnly && <NextShift shifts={mine} roles={view.roles ?? []} totalHours={hoursOf(mine)} count={mine.length} name={me} />}
-
-          <DayList weekStart={view.week_start} shifts={me && mineOnly ? mine : view.shifts} roles={view.roles ?? []} state={view.state}
-            dayNotes={view.day_notes ?? []} isMine={(s) => !!me && s.staff_name === me} />
+          <DayList weekStart={view.week_start} shifts={view.shifts} roles={view.roles ?? []} state={view.state}
+            dayNotes={view.day_notes ?? []} isMine={() => false} />
 
           <button onClick={() => downloadRosterPdf({ business: view.business, weekStart: view.week_start, shifts: view.shifts, roles: view.roles ?? [], state: view.state, dayNotes: view.day_notes ?? [], teamLink: window.location.href })}
             className="app-press" style={{ ...btn(), width: "100%", marginTop: 14, minHeight: 48 }}><FileText size={18} /> Download this week as a PDF</button>
         </>
       )}
 
-      <StaffFooter hint="Add this page to your home screen and it opens like an app, always showing the latest published roster. Want your shifts in your phone's calendar? Ask your manager for your personal link." />
+      {validToken && <SendMyLink token={token!} />}
+
+      <StaffFooter hint="Add this page to your home screen and it opens like an app, always showing the latest published roster." />
     </StaffShell>
+  );
+}
+
+/** "Just my shifts": email yourself your personal link (only works for an email on the team). */
+function SendMyLink({ token }: { token: string }) {
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setState("sending");
+    await supabase().functions.invoke("send-my-link", { body: { team_token: token, email } });
+    haptic(10);
+    setState("sent");
+  }
+  return (
+    <section style={{ ...card, padding: "16px 16px 14px", marginTop: 14 }}>
+      <h2 style={{ fontSize: 17, fontWeight: 800, color: C.dark, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Mail size={19} /> Just your shifts</h2>
+      {state === "sent" ? (
+        <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.5 }}>
+          If that email is on the team, your personal link is on its way. It shows your shifts first, and lets you request time off and add shifts to your calendar.
+        </p>
+      ) : (
+        <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
+          <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.5 }}>Get your personal link by email. It opens on your own shifts.</p>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="The email your manager has for you" aria-label="Your email" autoComplete="email" style={input} />
+            <button type="submit" disabled={state === "sending" || !email.trim()} className="app-press" style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: email.trim() ? 1 : 0.5 }}>{state === "sending" ? "Sending…" : "Email me"}</button>
+          </div>
+        </form>
+      )}
+    </section>
   );
 }

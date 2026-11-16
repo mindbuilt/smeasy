@@ -391,6 +391,10 @@ verify_jwt = false
 [functions.xero-callback]
 verify_jwt = false
 
+# Team roster link (no login): "Email me my personal link".
+[functions.send-my-link]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.
