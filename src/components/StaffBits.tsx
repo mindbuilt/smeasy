@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CalendarDays, ChevronLeft, ChevronRight, StickyNote } from "lucide-react";
 import { C, Avatar, btn, card } from "@/components/ui";
 import { roleSwatch } from "@/lib/roleColors";
+import StaffWeek from "@/components/StaffWeek";
 import { holidayOn } from "@/lib/holidays";
 import { addDays, dayName, fmtDay, fmtTime, fmtWeek, shiftHours, toISO, weekDates } from "@/lib/dates";
 
@@ -142,7 +143,7 @@ export function DayList({ weekStart, shifts, roles, state, dayNotes, isMine, you
   const today = toISO(new Date());
   return (
     <>
-      <WeekColumns weekStart={weekStart} shifts={shifts} roles={roles} state={state} dayNotes={dayNotes} isMine={isMine} youLabel={youLabel} today={today} />
+      <StaffWeek weekStart={weekStart} shifts={shifts} roles={roles} state={state} dayNotes={dayNotes} isMine={isMine} youLabel={youLabel} today={today} />
     <div className="staff-week-list" style={{ display: "grid", gap: 8 }}>
       {weekDates(weekStart).map((d) => {
         const day = shifts.filter((s) => s.date === d);
@@ -181,48 +182,6 @@ export function DayList({ weekStart, shifts, roles, state, dayNotes, isMine, you
       })}
     </div>
     </>
-  );
-}
-
-/**
- * Wide screens: the week as a calendar, Mon → Sun across (or from the business's week start),
- * each day's shifts underneath. Breaks out of the narrow staff column to use the width.
- */
-function WeekColumns({ weekStart, shifts, roles, state, dayNotes, isMine, youLabel, today }: {
-  weekStart: string; shifts: StaffShiftView[]; roles: string[]; state: string | null;
-  dayNotes: { date: string; note: string }[]; isMine: (s: StaffShiftView) => boolean; youLabel?: boolean; today: string;
-}) {
-  return (
-    <div className="staff-week-grid" style={{
-      width: "min(1120px, calc(100vw - 32px))", position: "relative", left: "50%", transform: "translateX(-50%)",
-      gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 8,
-    }}>
-      {weekDates(weekStart).map((d) => {
-        const day = shifts.filter((s) => s.date === d).sort((a, b) => a.start_time.localeCompare(b.start_time));
-        const isToday = d === today;
-        return (
-          <section key={d} aria-label={fmtDay(d)} style={{ ...card, padding: "10px 8px 8px", minHeight: 140, outline: isToday ? `2px solid ${C.accent}` : "none", display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ textAlign: "center", paddingBottom: 4 }}>
-              <span style={{ display: "block", fontSize: 12, fontWeight: 650, color: isToday ? C.shiftText : C.muted }}>{dayName(d)}</span>
-              <span style={{ display: "inline-grid", placeItems: "center", minWidth: 30, height: 30, borderRadius: 999, fontSize: 16, fontWeight: 800, color: C.dark, background: isToday ? C.accent : "transparent" }}>{Number(d.slice(8))}</span>
-            </div>
-            <DayExtras date={d} state={state} dayNotes={dayNotes} />
-            {day.length === 0 && <span style={{ fontSize: 13, color: C.faint, textAlign: "center", marginTop: 6 }}>No shifts</span>}
-            {day.map((s) => {
-              const me = isMine(s);
-              const sw = roleSwatch(s.role, roles);
-              return (
-                <div key={s.id} title={s.notes ?? undefined} style={{ borderRadius: 10, padding: "6px 8px", background: sw.bg, borderLeft: `3px solid ${sw.border}`, minWidth: 0, boxShadow: me ? `inset 0 0 0 2px ${C.dark}` : "none" }}>
-                  <span style={{ display: "block", fontSize: 13, fontWeight: me ? 800 : 700, color: C.dark, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{me && youLabel ? "You" : s.staff_name.split(" ")[0]}</span>
-                  <span style={{ display: "block", fontSize: 12, color: C.secondary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fmtTime(s.start_time)}–{fmtTime(s.end_time)}</span>
-                  {s.role && <span style={{ display: "block", fontSize: 12, color: sw.text, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.role}</span>}
-                </div>
-              );
-            })}
-          </section>
-        );
-      })}
-    </div>
   );
 }
 
