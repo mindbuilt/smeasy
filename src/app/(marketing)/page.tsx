@@ -27,16 +27,16 @@ const steps = [
     shot: "team-phone", alt: "The SMEasy Team page on a phone, listing staff with their usual roles" },
   { n: "2", t: "Build the week", d: "Tap a day to add a shift, or copy last week and tweak what's different.",
     shot: "add-shift-phone", alt: "Adding a shift on a phone: who, start and finish, role, and the other days to add it to" },
-  { n: "3", t: "Publish and share", d: "Hit publish, paste the team link in your group chat (or send the PDF). Done.",
+  { n: "3", t: "Publish and share", d: "Hit publish and your team gets their shifts by email. The team link and PDF are there too.",
     shot: "staff-link-phone", alt: "The team roster link on a staff member's phone, showing their next shift" },
 ] as const;
 
 const features = [
   { Icon: Copy, t: "Copy last week", d: "Most weeks look the same. Copy last week in one tap, then tweak what's different." },
-  { Icon: CalendarRange, t: "See the week at a glance", d: "Shifts colour-coded by role, public holidays marked, and a daily count of who's on and any unfilled shifts." },
-  { Icon: Link2, t: "One link, or a PDF", d: "Pin the team link in your group chat, or print a one-page A4 roster for the noticeboard." },
+  { Icon: CalendarRange, t: "Spot the gaps", d: "See the week at a glance, or a day hour by hour. Any time with nobody on shows in red, with a button to fill it." },
+  { Icon: Link2, t: "Link, email or PDF", d: "Publish and everyone gets their shifts by email. Pin the team link in your group chat, or print a one-page roster." },
   { Icon: CalendarOff, t: "Time-off requests", d: "Staff ask for days off from their phone. Approve or decline right on the roster." },
-  { Icon: FileSpreadsheet, t: "Hours for payroll", d: "Download every shift's hours as a spreadsheet for your bookkeeper, Xero or MYOB." },
+  { Icon: FileSpreadsheet, t: "Timesheets to Xero", d: "Confirm the hours actually worked, approve the week, and send it to Xero Payroll. Or download a spreadsheet for your bookkeeper." },
   { Icon: CalendarSync, t: "In their calendar", d: "Staff subscribe once and their shifts appear in their phone's calendar — updated when you change the roster." },
 ];
 

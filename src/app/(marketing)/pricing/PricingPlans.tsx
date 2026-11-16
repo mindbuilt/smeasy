@@ -29,7 +29,7 @@ const core: Feature[] = [
 ];
 
 const pro: Feature[] = [
-  { text: "Xero Payroll sync: send approved hours in one click", soon: true },
+  { text: "Xero Payroll sync: send approved hours in one click" },
   { text: "MYOB sync", soon: true },
 ];
 
