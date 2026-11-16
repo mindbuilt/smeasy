@@ -18,7 +18,7 @@ const free: Feature[] = [
   { text: "Personal links and calendar sync for staff" },
   { text: "Staff time-off requests" },
   { text: "Hours export (CSV) for payroll" },
-  { text: "Notify staff when you publish", soon: true },
+  { text: "Staff get their shifts by email when you publish" },
 ];
 
 const core: Feature[] = [

@@ -102,6 +102,9 @@ function TeamPage() {
                   <div style={{ fontSize: 14, color: C.muted }}>
                     {[s.default_role, s.mobile].filter(Boolean).join(" · ") || "No role or mobile yet"}
                   </div>
+                  <div style={{ fontSize: 13, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {s.email ? <>{s.email}{!s.email_roster && " · roster emails off"}</> : <button onClick={() => setEditing(s)} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.shiftText, fontWeight: 650, cursor: "pointer" }}>Add email for roster emails</button>}
+                  </div>
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setEditing(s)} className="app-press" style={small}><Pencil size={15} /> Edit</button>
@@ -215,13 +218,16 @@ function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
       <div style={{ display: "grid", gap: 12 }}>
         <div><label style={label}>Name</label><input style={input} value={f.name} onChange={set("name")} /></div>
         <div><label style={label}>Mobile</label><input style={input} type="tel" value={f.mobile} onChange={set("mobile")} placeholder="04xx xxx xxx" /></div>
+        <div><label style={label} htmlFor="staff-email">Email (for roster emails)</label>
+          <input id="staff-email" style={input} type="email" value={f.email} onChange={set("email")} placeholder="name@example.com" />
+          <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0" }}>They get their shifts by email when you publish. They can also add or change it on their personal link.{!staff.email_roster && " They've turned roster emails off."}</p>
+        </div>
         <div><label style={label}>Usual role</label>
           <select style={input} value={f.default_role} onChange={set("default_role")}>
             <option value="">—</option>
             {roles.map((r) => <option key={r}>{r}</option>)}
           </select>
         </div>
-        <div><label style={label}>Email (optional)</label><input style={input} type="email" value={f.email} onChange={set("email")} /></div>
         <div><label style={label} htmlFor="weekly">Usual hours a week</label>
           <input id="weekly" style={{ ...input, maxWidth: 160 }} inputMode="decimal" value={f.max_weekly_hours} onChange={set("max_weekly_hours")} placeholder={String(DEFAULT_WEEKLY_HOURS)} />
           <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0" }}>{DEFAULT_WEEKLY_HOURS} is a standard full-time week. Use their agreed hours for part-timers. The roster shows when you give them more.</p>

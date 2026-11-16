@@ -9,7 +9,7 @@ import { useManager } from "@/lib/useManager";
 import type { Business, Roster, Shift, Staff, TimeOff } from "@/lib/types";
 import { addDays, dayName, fmtAUD, fmtDay, fmtTime, fmtWeek, shiftHours, thisWeekStart, toISO, weekDates, weekStartOf } from "@/lib/dates";
 import { AppShell, Avatar, C, Loading, Modal, btn, card, haptic, input, label } from "@/components/ui";
-import { CalendarPlus, CalendarDays, Check, ChevronLeft, ChevronRight, Copy, Download, FileText, Info, Link2, Columns3 as Columns, List, MoreHorizontal, Plus, StickyNote, Undo2, UserPlus, X } from "lucide-react";
+import { Mail, CalendarPlus, CalendarDays, Check, ChevronLeft, ChevronRight, Copy, Download, FileText, Info, Link2, Columns3 as Columns, List, MoreHorizontal, Plus, StickyNote, Undo2, UserPlus, X } from "lucide-react";
 import DayTimeline, { dayCover } from "@/components/DayTimeline";
 import { downloadHoursCsv } from "@/lib/worked";
 import { atStaffLimit, hasCore, usePlan } from "@/lib/usePlan";
@@ -33,6 +33,15 @@ type Draft = {
 };
 
 const hhmm = (t: string) => t.slice(0, 5);
+
+type EmailResult = { sent: string[]; noEmail: string[]; off: string[] };
+const firstNames = (names: string[]) => names.map((n) => n.split(" ")[0]).join(", ");
+function emailSummary(r: EmailResult) {
+  const parts = [r.sent.length ? `Emailed ${r.sent.length} ${r.sent.length === 1 ? "person" : "people"} their shifts.` : "No one was emailed."];
+  if (r.noEmail.length) parts.push(`No email for ${firstNames(r.noEmail)}: add it on the Team page, or they can add it on their personal link.`);
+  if (r.off.length) parts.push(`${firstNames(r.off)} turned roster emails off.`);
+  return parts.join(" ");
+}
 const fmtH = (h: number) => h.toFixed(2).replace(/\.?0+$/, "");
 /** Usual weekly paid hours (the roster notes when someone goes above them). */
 const limitOf = (p: Staff | undefined) => Number(p?.max_weekly_hours ?? DEFAULT_WEEKLY_HOURS);
@@ -88,6 +97,7 @@ function WeekPage() {
   const [selDay, setSelDay] = useState<string | null>(null);
   const [slide, setSlide] = useState<"left" | "right">("right");
   const [moreOpen, setMoreOpen] = useState(false);
+  const [emailResult, setEmailResult] = useState<EmailResult | { sending: true } | { error: string } | null>(null);
   const plan = usePlan(business?.id);
   const [hiddenHoursNote, setHiddenHoursNote] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("smeasy-hours-note") ?? "" : ""));
   // Desktop: the week grid or one day as a timeline. Phone: the day as a list or a timeline.
@@ -258,8 +268,26 @@ function WeekPage() {
     if (!roster) return;
     setBusy(true);
     const { data } = await supabase().from("rosters").update({ status: "published" }).eq("id", roster.id).select().single();
-    if (data) { setRoster(data); setJustPublished(true); haptic([12, 60, 24]); }
+    if (data) {
+      setRoster(data); setJustPublished(true); haptic([12, 60, 24]);
+      if (!isPast) emailTeam(data.id, "published"); // each rostered person gets their shifts by email
+    }
     setBusy(false);
+  }
+
+  // Email everyone rostered this week their shifts (notify-roster Edge Function).
+  async function emailTeam(rosterId: string, kind: "published" | "update") {
+    setEmailResult({ sending: true });
+    const { data, error } = await supabase().functions.invoke("notify-roster", { body: { roster_id: rosterId, kind } });
+    if (error || !data) {
+      let msg = "Couldn't send the roster emails.";
+      try { const body = await (error as { context?: Response })?.context?.json(); if (body?.error) msg = body.error; } catch { /* keep default */ }
+      setEmailResult({ error: msg });
+      if (kind === "update") setNotice(msg);
+      return;
+    }
+    setEmailResult(data as EmailResult);
+    if (kind === "update") setNotice(emailSummary(data as EmailResult));
   }
 
   async function unpublish() {
@@ -368,6 +396,8 @@ function WeekPage() {
               </button>
             )}
             {published && <button onClick={copyTeamLink} className="app-press" style={btn()}><Link2 size={17} />{linkCopied ? "Copied" : "Team link"}</button>}
+            {published && !isPast && <button onClick={() => emailTeam(roster!.id, "update")} disabled={!!emailResult && "sending" in emailResult} className="app-press" style={btn()} title="Sends everyone rostered this week their current shifts">
+              <Mail size={17} /> {emailResult && "sending" in emailResult ? "Sending…" : "Email the team"}</button>}
             {shifts.length > 0 && <button onClick={downloadPdf} className="app-press" style={btn()}><FileText size={17} /> PDF</button>}
             {published
               ? <button onClick={unpublish} className="app-press" style={btn("ghost")}>Unpublish</button>
@@ -535,6 +565,7 @@ function WeekPage() {
             {published && <SheetAction icon={linkCopied ? <Check size={19} /> : <Link2 size={19} />} label={linkCopied ? "Team link copied" : "Copy team link"} hint="Paste it in your staff group chat." onClick={copyTeamLink} />}
             {shifts.length > 0 && <SheetAction icon={<FileText size={19} />} label="Download PDF" hint="A4 roster to print or send." onClick={downloadPdf} />}
             {shifts.length > 0 && <SheetAction icon={<Download size={19} />} label="Hours for payroll (CSV)" hint="One row per shift, plus totals by person." onClick={downloadCSV} />}
+            {published && !isPast && <SheetAction icon={<Mail size={19} />} label="Email the team" hint="Sends everyone their current shifts. Use it after changes." onClick={() => { setMoreOpen(false); emailTeam(roster!.id, "update"); }} />}
             {published && <SheetAction icon={<Undo2 size={19} />} label="Unpublish" hint="Your team stops seeing this week." onClick={() => { setMoreOpen(false); unpublish(); }} />}
           </div>
         </Modal>
@@ -559,6 +590,11 @@ function WeekPage() {
             <p style={{ fontSize: 17, fontWeight: 750, color: C.dark, margin: "14px 0 4px" }}>Your team can see {fmtWeek(weekStart)} now.</p>
             <p style={{ fontSize: 15, color: C.secondary, lineHeight: 1.5, margin: 0 }}>Paste the team link in your group chat, or send the PDF. The link stays the same every week.</p>
           </div>
+          {emailResult && (
+            <p role="status" style={{ fontSize: 14, color: "error" in emailResult ? C.danger : C.secondary, background: "#f3f4f6", borderRadius: 12, padding: "10px 12px", margin: "0 0 12px", lineHeight: 1.5 }}>
+              {"sending" in emailResult ? "Emailing your team their shifts…" : "error" in emailResult ? emailResult.error : emailSummary(emailResult)}
+            </p>
+          )}
           {unfilled.length > 0 && (
             <p style={{ fontSize: 14, color: UNFILLED.text, background: UNFILLED.bg, borderRadius: 12, padding: "10px 12px", margin: "0 0 12px" }}>
               {unfilled.length === 1 ? "1 shift still has" : `${unfilled.length} shifts still have`} no one on it. Staff can&apos;t see unfilled shifts, so fill them when you can.

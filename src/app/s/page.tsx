@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { addDays, fmtDay, toISO } from "@/lib/dates";
-import { Plane, Users } from "lucide-react";
+import { Mail, Plane, Users } from "lucide-react";
 import { C, Loading, btn, card, haptic, input, label } from "@/components/ui";
 import { CalendarButtons, DayList, NextShift, StaffFooter, StaffShell, WeekNav, hoursOf, readToken } from "@/components/StaffBits";
 
@@ -17,6 +17,7 @@ type View = {
   business: string; staff_name: string; week_start: string; published: boolean;
   state: string | null; roles: string[]; day_notes: { date: string; note: string }[];
   shifts: StaffShift[]; time_off: StaffTimeOff[];
+  email?: string | null; email_roster?: boolean;
 };
 
 export default function StaffRoster() {
@@ -38,7 +39,7 @@ export default function StaffRoster() {
 
   const validToken = token !== null && /^[0-9a-f-]{36}$/i.test(token);
   const [reload, setReload] = useState(0);
-  const load = () => setReload((n) => n + 1);
+  const load = useCallback(() => setReload((n) => n + 1), []);
 
   useEffect(() => {
     if (!validToken) return;
@@ -107,6 +108,8 @@ export default function StaffRoster() {
           : <button onClick={() => setAsking(true)} className="app-press" style={{ ...btn("primary"), marginTop: 8 }}>Request time off</button>}
       </section>
 
+      <RosterEmails token={token!} email={view.email ?? null} on={view.email_roster ?? true} onChanged={load} />
+
       <CalendarButtons token={token!} />
 
       <StaffFooter hint="This is your personal link. Add it to your home screen and it opens like an app. It stays the same every week, so please don't share it." />
@@ -148,4 +151,64 @@ function TimeOffForm({ token, onDone, onCancel }: { token: string; onDone: () =>
   );
 }
 
+/** Roster emails: add your email, change it, or turn the emails off. "Stop roster emails" links land here with ?stop=1. */
+function RosterEmails({ token, email, on, onChanged }: { token: string; email: string | null; on: boolean; onChanged: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(email ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [stopped, setStopped] = useState(false);
 
+  // Arriving from "Stop roster emails" in an email: turn them off once, then tidy the URL.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("stop") !== "1") return;
+    supabase().rpc("set_roster_emails", { p_token: token, p_on: false }).then(({ error }) => {
+      if (!error) { setStopped(true); onChanged(); }
+      window.history.replaceState(null, "", window.location.pathname + window.location.hash);
+    });
+  }, [token, onChanged]);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true); setError(null);
+    const { error } = await supabase().rpc("set_my_email", { p_token: token, p_email: value });
+    setSaving(false);
+    if (error) { setError(error.message.includes("look right") ? "That email address doesn't look right." : "Couldn't save. Please try again."); return; }
+    setEditing(false); haptic(10); onChanged();
+  }
+
+  async function toggle(next: boolean) {
+    const { error } = await supabase().rpc("set_roster_emails", { p_token: token, p_on: next });
+    if (!error) { setStopped(!next); onChanged(); }
+  }
+
+  const link = { background: "none", border: "none", padding: 0, font: "inherit", color: C.dark, fontWeight: 650, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 } as const;
+
+  return (
+    <section style={{ ...card, padding: "16px 16px 14px", marginTop: 14 }}>
+      <h2 style={{ fontSize: 17, fontWeight: 800, color: C.dark, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 8 }}><Mail size={19} /> Roster by email</h2>
+      {editing || !email ? (
+        <form onSubmit={save} style={{ display: "grid", gap: 10 }}>
+          {!email && <p style={{ fontSize: 14, color: C.secondary, margin: 0 }}>Add your email and you&apos;ll get your shifts when the roster comes out.</p>}
+          <div style={{ display: "flex", gap: 8 }}>
+            <input type="email" required value={value} onChange={(e) => setValue(e.target.value)} placeholder="you@example.com" aria-label="Your email" autoComplete="email" style={input} />
+            <button type="submit" disabled={saving || !value.trim()} className="app-press" style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: value.trim() ? 1 : 0.5 }}>{saving ? "Saving…" : "Save"}</button>
+          </div>
+          {error && <p style={{ color: C.danger, fontSize: 13, margin: 0 }}>{error}</p>}
+          {editing && <button type="button" onClick={() => { setEditing(false); setValue(email ?? ""); }} style={{ ...btn("ghost"), justifySelf: "start", padding: "4px 0" }}>Cancel</button>}
+        </form>
+      ) : on ? (
+        <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.6 }}>
+          Your shifts go to <strong style={{ color: C.dark }}>{email}</strong> when the roster comes out.{" "}
+          <button onClick={() => setEditing(true)} style={link}>Change</button>{" · "}
+          <button onClick={() => toggle(false)} style={link}>Stop roster emails</button>
+        </p>
+      ) : (
+        <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.6 }}>
+          {stopped ? "Done. You won't get roster emails any more." : "Roster emails are off."}{" "}
+          <button onClick={() => toggle(true)} style={link}>Turn them back on</button>
+        </p>
+      )}
+    </section>
+  );
+}

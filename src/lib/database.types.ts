@@ -275,6 +275,7 @@ export type Database = {
           created_at: string
           default_role: string | null
           email: string | null
+          email_roster: boolean
           hourly_rate: number | null
           id: string
           max_weekly_hours: number
@@ -289,6 +290,7 @@ export type Database = {
           created_at?: string
           default_role?: string | null
           email?: string | null
+          email_roster?: boolean
           hourly_rate?: number | null
           id?: string
           max_weekly_hours?: number
@@ -303,6 +305,7 @@ export type Database = {
           created_at?: string
           default_role?: string | null
           email?: string | null
+          email_roster?: boolean
           hourly_rate?: number | null
           id?: string
           max_weekly_hours?: number
@@ -376,6 +379,8 @@ export type Database = {
     Functions: {
       get_staff_calendar: { Args: { p_token: string }; Returns: Json }
       set_week_start_day: { Args: { p_day: number }; Returns: number }
+      set_my_email: { Args: { p_token: string; p_email: string }; Returns: boolean }
+      set_roster_emails: { Args: { p_token: string; p_on: boolean }; Returns: boolean }
       get_staff_roster: {
         Args: { p_token: string; p_week?: string }
         Returns: Json
