@@ -536,7 +536,7 @@ function WeekPage() {
             {staff.length > 0 && !isPast && <SheetAction icon={<Copy size={19} />} label="Copy last week" hint="Adds last week's shifts. Nothing is doubled up." onClick={() => { setMoreOpen(false); copyLastWeek(); }} />}
             {published && <SheetAction icon={linkCopied ? <Check size={19} /> : <Link2 size={19} />} label={linkCopied ? "Team link copied" : "Copy team link"} hint="Paste it in your staff group chat." onClick={copyTeamLink} />}
             {shifts.length > 0 && <SheetAction icon={<FileText size={19} />} label="Download PDF" hint="A4 roster to print or send." onClick={downloadPdf} />}
-            {shifts.length > 0 && <SheetAction icon={<Download size={19} />} label="Hours for payroll (CSV)" hint="One row per shift, plus totals by person." onClick={downloadCSV} />}
+            {published && shifts.length > 0 && <SheetAction icon={<Download size={19} />} label="Hours for payroll (CSV)" hint="One row per shift, plus totals by person." onClick={downloadCSV} />}
             {published && !isPast && <SheetAction icon={<Mail size={19} />} label="Email the team" hint="Sends everyone their current shifts. Use it after changes." onClick={() => { setMoreOpen(false); emailTeam(roster!.id, "update"); }} />}
             {published && <SheetAction icon={<Undo2 size={19} />} label="Unpublish" hint="Your team stops seeing this week." onClick={() => { setMoreOpen(false); unpublish(); }} />}
           </div>
@@ -994,6 +994,25 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, overtimeOn,
             </p>
           )}
           {d.staff_id === "" && <p style={{ margin: "6px 0 0", fontSize: 14, color: UNFILLED.text, background: UNFILLED.bg, borderRadius: 12, padding: "8px 12px", lineHeight: 1.45 }}>Saved as an unfilled shift: a gap you still need to cover. It shows in red on your roster until you give it to someone. Staff can&apos;t see it.</p>}
+        </div>
+        <div>
+          <span style={label}>Day</span>
+          <div role="radiogroup" aria-label="Day" style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 4 }}>
+            {weekDays.map((x) => {
+              const on = x === d.date;
+              return (
+                <button key={x} type="button" role="radio" aria-checked={on} onClick={() => { haptic(4); setD({ ...d, date: x }); setAlsoOn((a) => a.filter((y) => y !== x)); }}
+                  className="app-press" style={{
+                    border: `1.5px solid ${on ? C.dark : C.border}`, borderRadius: 12, padding: "6px 0", background: on ? C.dark : C.white,
+                    color: on ? C.white : C.dark, cursor: "pointer", fontFamily: "inherit",
+                  }}>
+                  <span style={{ display: "block", fontSize: 11, fontWeight: 600, opacity: 0.8 }}>{dayName(x)}</span>
+                  <span style={{ display: "block", fontSize: 16, fontWeight: 800 }}>{Number(x.slice(8))}</span>
+                </button>
+              );
+            })}
+          </div>
+          {draft.id && d.date !== draft.date && <p style={{ margin: "6px 0 0", fontSize: 13, color: C.muted }}>Moves this shift from {fmtDay(draft.date)} to {fmtDay(d.date)}.</p>}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 10 }}>
           <div><label style={label} htmlFor="s-start">Start</label><input id="s-start" style={input} type="time" step={900} required value={d.start_time} onChange={(e) => setD({ ...d, start_time: e.target.value })} /></div>
