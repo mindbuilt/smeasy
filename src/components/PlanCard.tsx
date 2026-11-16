@@ -105,7 +105,7 @@ export default function PlanCard({ businessId }: { businessId: string }) {
         <>
           <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 14px", lineHeight: 1.5 }}>
             Free is for up to {FREE_STAFF_LIMIT} staff. You have <strong style={{ color: overLimit ? "#9b2c25" : C.dark }}>{staffCount ?? "…"}</strong>.
-            {!STAFF_LIMIT_ENFORCED && " There's no staff limit during early access."}
+            {!STAFF_LIMIT_ENFORCED && " There's no staff limit during the beta."}
             {" "}Core gives you unlimited staff for one flat price: ${PRICES.core.month} a month or ${PRICES.core.year} a year (2 months free), plus GST.
           </p>
           {BILLING_ENABLED && (

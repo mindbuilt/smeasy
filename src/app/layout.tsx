@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     template: "%s | SMEasy",
   },
   description:
-    "Build your weekly staff roster in minutes, share it with one link or a PDF, handle time-off requests and download hours for payroll. Free during early access.",
+    "Build your weekly staff roster in minutes, share it with one link or a PDF, handle time-off requests and send hours to payroll. Free for small teams.",
   openGraph: {
     siteName: "SMEasy",
     locale: "en_AU",

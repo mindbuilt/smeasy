@@ -12,7 +12,7 @@ import DeviceShot from "@/components/DeviceShot";
 export const metadata: Metadata = {
   title: { absolute: "SMEasy — simple staff rostering for Australian small businesses" },
   description:
-    "Build the week's roster in minutes and share it with your team on one link or a printable PDF. Free during early access.",
+    "Build the week's roster in minutes and share it with your team by link, email or PDF. Free for small teams.",
   alternates: { canonical: "/" },
   openGraph: {
     url: "/",
@@ -55,7 +55,7 @@ const jsonLd = {
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web browser",
   description: "Simple staff rostering for Australian small businesses.",
-  offers: { "@type": "Offer", price: "0", priceCurrency: "AUD", description: "Free during early access" },
+  offers: { "@type": "Offer", price: "0", priceCurrency: "AUD", description: "Free for up to 6 staff" },
   areaServed: "AU",
 };
 
@@ -73,7 +73,7 @@ export default function Home() {
       {/* Hero */}
       <section style={{ ...wrap, padding: "72px 20px 48px", textAlign: "center" }}>
         <span style={{ ...pill(SIGNUPS_OPEN ? "lime" : "draft"), marginBottom: 22 }}>
-          {SIGNUPS_OPEN ? "Free during early access" : "Coming soon"}
+          {SIGNUPS_OPEN ? "Now in beta" : "Coming soon"}
         </span>
         <h1 style={{ ...display, maxWidth: 820, margin: "0 auto 20px" }}>
           Staff rostering that actually feels easy.
@@ -205,7 +205,7 @@ export default function Home() {
         <div style={{ ...card, textAlign: "center", padding: "52px 24px 46px" }}>
           <h2 style={{ ...sectionTitle, margin: "0 0 12px" }}>Ready to ditch the spreadsheet?</h2>
           <p style={{ ...lead, fontSize: 17, maxWidth: 560, margin: "0 auto 26px" }}>
-            {SIGNUPS_OPEN ? "Free during early access. Your first roster is about five minutes away." : "SMEasy opens soon, free for small teams. Get on the early-access list and we'll email you when it's ready."}
+            {SIGNUPS_OPEN ? "Free for up to 6 staff, no card needed. Your first roster is about five minutes away." : "SMEasy opens soon, free for small teams. Join the waitlist and we'll email you when it's ready."}
           </p>
           <Link href={SIGNUP_HREF} className="app-press" style={button("accent")}>{SIGNUP_CTA}</Link>
           <p style={{ fontSize: 15, color: C.muted, margin: "20px 0 0" }}>Questions? Read the <Link href="/faq/" style={link}>FAQ</Link>.</p>

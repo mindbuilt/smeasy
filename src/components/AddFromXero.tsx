@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Staff } from "@/lib/types";
 import { FREE_STAFF_LIMIT } from "@/lib/site";
+import Link from "next/link";
 import { C, Modal, btn, haptic } from "@/components/ui";
 
 type XeroEmployee = { id: string; name: string; email: string | null; mobile: string | null };
@@ -14,8 +15,10 @@ const norm = (n: string) => n.toLowerCase().replace(/\s+/g, " ").trim();
  * Team → Add from Xero: pick Xero employees to add as staff. Each comes in with
  * their name, email and mobile, already matched to Xero. Nothing changes in Xero.
  */
-export default function AddFromXero({ businessId, defaultRole, staff, onClose, onAdded }: {
+export default function AddFromXero({ businessId, defaultRole, staff, slots, onClose, onAdded }: {
   businessId: string; defaultRole: string | null; staff: Staff[];
+  /** Places left on the Free plan (null = no limit). */
+  slots: number | null;
   onClose: () => void; onAdded: (added: Staff[]) => void;
 }) {
   const [employees, setEmployees] = useState<XeroEmployee[] | null>(null);
@@ -38,10 +41,10 @@ export default function AddFromXero({ businessId, defaultRole, staff, onClose, o
       const names = new Set(staff.filter((s) => s.active).map((s) => norm(s.name)));
       const fresh = (data.employees as XeroEmployee[]).filter((e) => !linked.has(e.id) && !names.has(norm(e.name)));
       setEmployees(fresh);
-      setPicked(new Set(fresh.map((e) => e.id)));
+      setPicked(new Set(fresh.slice(0, slots ?? fresh.length).map((e) => e.id)));
     })();
     return () => { cancelled = true; };
-  }, [staff]);
+  }, [staff, slots]);
 
   async function add() {
     if (!employees) return;
@@ -61,6 +64,8 @@ export default function AddFromXero({ businessId, defaultRole, staff, onClose, o
 
   const toggle = (id: string) => setPicked((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const all = employees ? picked.size === employees.length : false;
+  const full = slots !== null && picked.size >= slots; // no more ticks on Free
+  const capped = slots !== null && !!employees && employees.length > slots;
 
   return (
     <Modal title="Add from Xero" onClose={onClose}>
@@ -69,14 +74,20 @@ export default function AddFromXero({ businessId, defaultRole, staff, onClose, o
         : employees.length === 0 ? <p style={{ fontSize: 15, color: C.secondary, margin: 0 }}>Everyone in Xero is already on your team.</p>
         : (
           <div style={{ display: "grid", gap: 12 }}>
-            <button type="button" onClick={() => setPicked(all ? new Set() : new Set(employees.map((e) => e.id)))}
-              style={{ ...btn("ghost"), justifySelf: "start", padding: "4px 0", minHeight: 30, color: C.dark }}>
-              {all ? "Untick all" : "Tick all"}
-            </button>
+            {capped ? (
+              <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.5, background: C.shiftBg, borderRadius: 12, padding: "10px 12px" }}>
+                The Free plan has room for {slots} more {slots === 1 ? "person" : "people"}. <Link href="/settings/#plan" style={{ color: C.dark, fontWeight: 700 }}>Upgrade</Link> to add everyone.
+              </p>
+            ) : (
+              <button type="button" onClick={() => setPicked(all ? new Set() : new Set(employees.map((e) => e.id)))}
+                style={{ ...btn("ghost"), justifySelf: "start", padding: "4px 0", minHeight: 30, color: C.dark }}>
+                {all ? "Untick all" : "Tick all"}
+              </button>
+            )}
             <div style={{ display: "grid" }}>
               {employees.map((e) => (
                 <label key={e.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderTop: `1px solid ${C.divider}`, cursor: "pointer" }}>
-                  <input type="checkbox" checked={picked.has(e.id)} onChange={() => toggle(e.id)} style={{ width: 20, height: 20, accentColor: C.dark, flex: "none" }} />
+                  <input type="checkbox" checked={picked.has(e.id)} disabled={full && !picked.has(e.id)} onChange={() => toggle(e.id)} style={{ width: 20, height: 20, accentColor: C.dark, flex: "none" }} />
                   <span style={{ minWidth: 0 }}>
                     <span style={{ display: "block", fontSize: 16, fontWeight: 650, color: C.dark }}>{e.name}</span>
                     {(e.email || e.mobile) && <span style={{ display: "block", fontSize: 13, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{[e.email, e.mobile].filter(Boolean).join(" · ")}</span>}

@@ -17,7 +17,7 @@ export function usePlan(businessId: string | undefined) {
   return plan;
 }
 
-/** Core and Pro features. Everyone gets them during early access. */
+/** Paid-plan features. Everyone gets them during the beta. */
 export function hasCore(plan: PlanId | null) {
   return !CORE_FEATURES_ENFORCED || plan === "core" || plan === "pro";
 }

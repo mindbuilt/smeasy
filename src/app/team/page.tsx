@@ -10,7 +10,7 @@ import { AppShell, Avatar, C, Loading, Modal, btn, haptic, input, label } from "
 import { roleSwatch } from "@/lib/roleColors";
 import Link from "next/link";
 import { atStaffLimit, usePlan } from "@/lib/usePlan";
-import { DEFAULT_WEEKLY_HOURS, FREE_STAFF_LIMIT } from "@/lib/site";
+import { DEFAULT_WEEKLY_HOURS, FREE_STAFF_LIMIT, STAFF_LIMIT_ENFORCED } from "@/lib/site";
 import { Check, Copy, MessageSquare, Pencil } from "lucide-react";
 import AddFromXero from "@/components/AddFromXero";
 
@@ -154,6 +154,7 @@ function TeamPage() {
 
       {fromXero && (
         <AddFromXero businessId={business.id} defaultRole={business.roles[0] ?? null} staff={staff}
+          slots={STAFF_LIMIT_ENFORCED && plan === "free" ? Math.max(0, FREE_STAFF_LIMIT - active.length) : null}
           onClose={() => setFromXero(false)}
           onAdded={(added) => { setStaff((all) => [...(all ?? []), ...added].sort((a, b) => a.name.localeCompare(b.name))); setFromXero(false); }} />
       )}

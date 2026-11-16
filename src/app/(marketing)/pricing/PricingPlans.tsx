@@ -77,7 +77,7 @@ export default function PricingPlans() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, alignItems: "start" }}>
         {/* Free */}
         <div style={{ ...card, padding: "28px 26px" }}>
-          <span style={{ ...pill("lime"), marginBottom: 16 }}>Free during early access</span>
+          <span style={{ ...pill("lime"), marginBottom: 16 }}>No card needed</span>
           <h2 style={tierName}>Free</h2>
           <div style={{ fontSize: 15, color: C.secondary, marginBottom: 20 }}>For small teams</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>

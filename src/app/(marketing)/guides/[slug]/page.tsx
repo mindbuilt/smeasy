@@ -92,7 +92,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       <div style={{ ...inkCard, padding: "26px 24px", margin: "48px 0 40px" }}>
         <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.01em", marginBottom: 6 }}>{SIGNUPS_OPEN ? "Try SMEasy free" : "SMEasy is coming soon"}</div>
         <p style={{ margin: "0 0 18px", color: onInk, fontSize: 16, lineHeight: 1.5 }}>
-          {SIGNUPS_OPEN ? "Simple rostering for Australian small businesses. Free during early access." : "Simple rostering for Australian small businesses. Get on the early-access list and we'll email you when it opens."}
+          {SIGNUPS_OPEN ? "Simple rostering for Australian small businesses. Free for up to 6 staff." : "Simple rostering for Australian small businesses. Join the waitlist and we'll let you know when it opens."}
         </p>
         <Link href={SIGNUP_HREF} className="app-press" style={button("onInk", "md")}>{SIGNUP_CTA_SHORT}</Link>
       </div>

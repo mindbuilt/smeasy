@@ -136,7 +136,7 @@ export default function LoginPage() {
             </h1>
             <p style={sub}>
               {mode === "login" && "Welcome back. Rostering, sorted."}
-              {mode === "signup" && "Free during early access. You'll be building your first roster in about five minutes."}
+              {mode === "signup" && "Free for up to 6 staff. You'll be building your first roster in about five minutes."}
               {mode === "forgot" && "Enter your email and we'll send you a link to set a new password."}
             </p>
 
@@ -185,7 +185,7 @@ export default function LoginPage() {
             <p style={{ fontSize: 13, color: C.secondary, margin: "20px 0 0", textAlign: "center" }}>
               {mode === "login" && (SIGNUPS_OPEN
                 ? <>New to SMEasy? <button type="button" onClick={() => switchTo("signup")} style={linkBtn}>Create an account</button></>
-                : <>New to SMEasy? We&apos;re opening soon. <Link href={SIGNUP_HREF} style={{ color: C.dark }}>Get early access</Link></>)}
+                : <>New to SMEasy? <Link href={SIGNUP_HREF} style={{ color: C.dark }}>Join the waitlist</Link></>)}
               {mode === "signup" && <>Already have an account? <button type="button" onClick={() => switchTo("login")} style={linkBtn}>Log in</button></>}
               {mode === "forgot" && <button type="button" onClick={() => switchTo("login")} style={linkBtn}>Back to log in</button>}
             </p>
