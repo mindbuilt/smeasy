@@ -252,5 +252,5 @@ html:has(.app), body:has(.app) { background: #f6f7f9; }
   .hrs-row { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
   .hrs-who { grid-column: 1; grid-row: 1; }
   .hrs-end { grid-column: 2; grid-row: 1; }
-  .hrs-times { grid-column: 1 / -1; grid-row: 2; }
+  .hrs-times, .hrs-times-text { grid-column: 1 / -1; grid-row: 2; }
 }

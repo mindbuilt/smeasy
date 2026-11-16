@@ -48,6 +48,11 @@ export default function HoursRow({ s, first, person, roles, locked, onChange }: 
 
       {s.no_show ? (
         <div className="hrs-times" style={{ fontSize: 14, color: C.secondary, alignSelf: "center" }}>Didn&apos;t work this shift</div>
+      ) : locked ? (
+        <div className="hrs-times-text" style={{ fontSize: 15, color: isChanged ? C.dark : C.secondary, alignSelf: "center" }}>
+          {fmtTime(w.start)} – {fmtTime(w.end)}{w.breakMinutes ? ` · ${w.breakMinutes}m break` : ""}
+          {isChanged && <span style={{ display: "block", fontSize: 12, color: C.muted }}>Changed from the roster</span>}
+        </div>
       ) : (
         <div className="hrs-times">
           <label style={{ display: "grid", gap: 3, fontSize: 12, color: C.muted, fontWeight: 600 }}>Start

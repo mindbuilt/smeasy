@@ -105,6 +105,9 @@ function HoursPage() {
   const totalRostered = people.reduce((h, t) => h + t.rostered, 0);
   const totalWorked = people.reduce((h, t) => h + t.worked, 0);
   const edits = shifts.filter(changed).length;
+  // The last rostered day that hasn't happened yet: approval waits for it.
+  const notYet = shifts.map((s) => s.date).filter((d) => d > today).sort().pop() ?? null;
+  const shortDate = (iso: string) => new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "short" }).format(new Date(iso));
 
   return (
     <AppShell businessName={business.name} email={email}>
@@ -144,9 +147,13 @@ function HoursPage() {
         ) : (
           <>
             {approved && (
-              <p style={{ ...card, boxShadow: "none", background: "#dcfce7", color: "#166534", padding: "10px 14px", fontSize: 14, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <span style={{ flex: 1 }}>Approved {new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "short" }).format(new Date(roster!.hours_approved_at!))}. Download the CSV for payroll.</span>
-                <button onClick={() => setApproved(false)} disabled={busy} className="app-press" style={{ ...btn("ghost"), minHeight: 34, padding: "6px 10px", color: "#166534" }}>Edit hours</button>
+              <p style={{ ...card, padding: "10px 14px", fontSize: 14, color: C.secondary, margin: "0 0 14px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <Check size={17} color="#166534" aria-hidden />
+                <span style={{ flex: 1 }}>
+                  Approved {shortDate(roster!.hours_approved_at!)}
+                  {roster?.xero_sent_at && <> · Sent to {xero?.tenant_name ?? "Xero"} {shortDate(roster.xero_sent_at)}</>}
+                </span>
+                <button onClick={() => { setApproved(false); setSent(null); }} disabled={busy} className="app-press" style={{ ...btn("ghost"), minHeight: 34, padding: "6px 10px", color: C.dark }}>Edit hours</button>
               </p>
             )}
 
@@ -189,8 +196,11 @@ function HoursPage() {
                   <span role="cell" style={{ textAlign: "right" }}>{fmtH(totalWorked)}h</span>
                 </div>
               </div>
+              <p style={{ fontSize: 13, color: C.muted, margin: "10px 0 14px" }}>
+                {edits === 0 ? "Everything as rostered so far." : `${edits} ${edits === 1 ? "shift" : "shifts"} changed from the roster.`} Paid hours, unpaid breaks taken out.
+              </p>
               {sent && (
-                <div role="status" style={{ background: "#f3f4f6", borderRadius: 12, padding: "10px 12px", margin: "10px 0 0", fontSize: 14, lineHeight: 1.55 }}>
+                <div role="status" style={{ background: "#f3f4f6", borderRadius: 12, padding: "10px 12px", margin: "0 0 14px", fontSize: 14, lineHeight: 1.55 }}>
                   <strong style={{ color: C.dark }}>Sent to {xero?.tenant_name ?? "Xero"}:</strong>
                   {sent.map((r) => (
                     <div key={r.name} style={{ color: r.ok ? C.secondary : C.danger }}>{r.ok ? "✓" : "✗"} {r.name}: {r.note}</div>
@@ -198,22 +208,23 @@ function HoursPage() {
                   {sent.some((r) => r.ok) && <div style={{ color: C.muted, marginTop: 4 }}>They&apos;re drafts in Xero Payroll: check them there and approve them in your pay run.</div>}
                 </div>
               )}
-              <p style={{ fontSize: 13, color: C.muted, margin: "10px 0 14px" }}>
-                {edits === 0 ? "Everything as rostered so far." : `${edits} ${edits === 1 ? "shift" : "shifts"} changed from the roster.`} Paid hours, unpaid breaks taken out.
-              </p>
+              {!approved && notYet && (
+                <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 12px" }}>You can approve once {fmtDay(notYet)} is done. Until then, adjust any days that have happened.</p>
+              )}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {!approved && (
-                  <button onClick={() => setApproved(true)} disabled={busy} className="app-press" style={{ ...btn("accent"), padding: "10px 20px" }}>
+                  <button onClick={() => setApproved(true)} disabled={busy || !!notYet} className="app-press" style={{ ...btn("accent"), padding: "10px 20px", opacity: notYet ? 0.45 : 1 }}>
                     <Check size={18} /> {busy ? "Approving…" : "Approve hours"}
                   </button>
                 )}
                 {approved && xero && (
-                  <button onClick={sendToXero} disabled={sending} className="app-press" style={{ ...btn("accent"), padding: "10px 20px" }}>
-                    {sending ? "Sending to Xero…" : roster?.xero_sent_at ? "Send to Xero again" : "Send to Xero"}
+                  <button onClick={sendToXero} disabled={sending} className="app-press" style={roster?.xero_sent_at ? btn() : { ...btn("accent"), padding: "10px 20px" }}>
+                    {sending ? "Sending to Xero…" : roster?.xero_sent_at ? "Send again" : "Send to Xero"}
                   </button>
                 )}
-                <button onClick={() => downloadHoursCsv({ shifts, staff, pay, weekStart })} className="app-press" style={btn()}>
-                  <Download size={17} /> Hours for payroll (CSV)
+                {/* With Xero connected the CSV is only a backup, so it steps back. */}
+                <button onClick={() => downloadHoursCsv({ shifts, staff, pay, weekStart })} className="app-press" style={xero ? { ...btn("ghost"), color: C.secondary } : btn()}>
+                  <Download size={17} /> {xero ? "Download CSV" : "Hours for payroll (CSV)"}
                 </button>
               </div>
             </section>
