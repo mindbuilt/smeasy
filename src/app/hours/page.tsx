@@ -30,6 +30,7 @@ function HoursPage() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [openRow, setOpenRow] = useState<string | null>(null); // one row open at a time
   const [xero, setXero] = useState<{ tenant_name: string | null } | null>(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState<{ name: string; ok: boolean; note: string }[] | null>(null);
@@ -168,7 +169,8 @@ function HoursPage() {
                   <div className="hrs-list" style={{ ...card, overflow: "hidden" }}>
                     {dayShifts.map((s, i) => (
                       <HoursRow key={s.id} s={s} first={i === 0} person={staffById.get(s.staff_id!)} roles={roles}
-                        locked={approved || future} onChange={(patch) => update(s, patch)} />
+                        locked={approved || future} open={openRow === s.id} onToggle={() => setOpenRow((o) => (o === s.id ? null : s.id))}
+                        onChange={(patch) => update(s, patch)} />
                     ))}
                   </div>
                 </section>

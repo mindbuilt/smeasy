@@ -18,11 +18,11 @@ const BREAKS = [0, 15, 30, 45, 60];
  * One shift on the Hours page: a single line (who, what was worked, hours).
  * Tap it to change the times, mark Didn't work, or go back to as rostered.
  */
-export default function HoursRow({ s, first, person, roles, locked, onChange }: {
-  s: Shift; first: boolean; person: Staff | undefined; roles: string[]; locked: boolean; onChange: (p: Patch) => void;
+export default function HoursRow({ s, first, person, roles, locked, open, onToggle, onChange }: {
+  s: Shift; first: boolean; person: Staff | undefined; roles: string[]; locked: boolean;
+  open: boolean; onToggle: () => void; onChange: (p: Patch) => void;
 }) {
   const w = worked(s);
-  const [open, setOpen] = useState(false);
   const [start, setStart] = useState(w.start);
   const [end, setEnd] = useState(w.end);
   const name = person?.name ?? "Removed staff member";
@@ -44,15 +44,18 @@ export default function HoursRow({ s, first, person, roles, locked, onChange }: 
 
   return (
     <div style={{ borderTop: first ? "none" : `1px solid ${C.divider}` }}>
-      <button type="button" onClick={() => !locked && setOpen((o) => !o)} aria-expanded={locked ? undefined : editing} disabled={locked}
+      <button type="button" onClick={() => !locked && onToggle()} aria-expanded={locked ? undefined : editing} disabled={locked}
         className={locked ? undefined : "app-press"}
         style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 14px", background: "none", border: "none", textAlign: "left", fontFamily: "inherit", cursor: locked ? "default" : "pointer", color: "inherit" }}>
         <Avatar name={name} size={34} tone={{ bg: sw.bg, text: sw.text }} />
         <span style={{ flex: 1, minWidth: 0 }}>
           <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: C.dark, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
-          <span style={{ display: "block", fontSize: 14, color: s.no_show ? C.muted : isChanged ? C.dark : C.secondary }}>
-            {summary}{isChanged && !s.no_show && <span style={{ color: C.muted }}> · changed</span>}
-          </span>
+          {/* While editing, the boxes below show the times, so the summary steps aside. */}
+          {!editing && (
+            <span style={{ display: "block", fontSize: 14, color: s.no_show ? C.muted : isChanged ? C.dark : C.secondary }}>
+              {summary}{isChanged && !s.no_show && <span style={{ color: C.muted }}> · changed</span>}
+            </span>
+          )}
         </span>
         <span style={{ textAlign: "right", flex: "none" }}>
           <span style={{ display: "block", fontSize: 16, fontWeight: 800, color: C.dark }}>{fmtH(h)}h</span>
@@ -63,21 +66,23 @@ export default function HoursRow({ s, first, person, roles, locked, onChange }: 
 
       {editing && (
         <div style={{ padding: "0 14px 14px", display: "grid", gap: 10 }}>
-          <div style={{ fontSize: 13, color: C.muted }}>
-            Rostered {fmtTime(s.start_time)} – {fmtTime(s.end_time)}{s.break_minutes ? `, ${s.break_minutes}m break` : ""}
-          </div>
+          {isChanged && (
+            <div style={{ fontSize: 13, color: C.muted }}>
+              Rostered {fmtTime(s.start_time)} – {fmtTime(s.end_time)}{s.break_minutes ? `, ${s.break_minutes}m break` : ""}
+            </div>
+          )}
           {!s.no_show && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
               <label style={{ display: "grid", gap: 3, fontSize: 12, color: C.muted, fontWeight: 600 }}>Start
                 <input type="time" step={900} value={start} onChange={(e) => setStart(e.target.value)}
-                  onBlur={() => saveTime("actual_start", start, s.start_time)} style={{ ...input, minHeight: 40, padding: "8px 10px", fontSize: 15 }} />
+                  onBlur={() => saveTime("actual_start", start, s.start_time)} style={{ ...input, minWidth: 0, minHeight: 40, padding: "8px 10px", fontSize: 15 }} />
               </label>
               <label style={{ display: "grid", gap: 3, fontSize: 12, color: C.muted, fontWeight: 600 }}>Finish
                 <input type="time" step={900} value={end} onChange={(e) => setEnd(e.target.value)}
-                  onBlur={() => saveTime("actual_end", end, s.end_time)} style={{ ...input, minHeight: 40, padding: "8px 10px", fontSize: 15 }} />
+                  onBlur={() => saveTime("actual_end", end, s.end_time)} style={{ ...input, minWidth: 0, minHeight: 40, padding: "8px 10px", fontSize: 15 }} />
               </label>
               <label style={{ display: "grid", gap: 3, fontSize: 12, color: C.muted, fontWeight: 600 }}>Break
-                <select value={w.breakMinutes} style={{ ...input, minHeight: 40, padding: "8px 10px", fontSize: 15 }}
+                <select value={w.breakMinutes} style={{ ...input, minWidth: 0, minHeight: 40, padding: "8px 10px", fontSize: 15 }}
                   onChange={(e) => { const m = Number(e.target.value); onChange({ actual_break_minutes: m === s.break_minutes ? null : m }); }}>
                   {[...new Set([...BREAKS, w.breakMinutes])].sort((a, b) => a - b).map((m) => <option key={m} value={m}>{m ? `${m}m` : "None"}</option>)}
                 </select>
@@ -92,7 +97,6 @@ export default function HoursRow({ s, first, person, roles, locked, onChange }: 
               <button type="button" onClick={() => { setStart(hhmm(s.start_time)); setEnd(hhmm(s.end_time)); onChange({ actual_start: null, actual_end: null, actual_break_minutes: null, no_show: false }); }}
                 className="app-press" style={{ ...btn("ghost"), minHeight: 36, padding: "6px 10px", fontSize: 14 }}>As rostered</button>
             )}
-            <button type="button" onClick={() => setOpen(false)} className="app-press" style={{ ...btn("ghost"), minHeight: 36, padding: "6px 10px", fontSize: 14, marginLeft: "auto", color: C.dark }}>Done</button>
           </div>
         </div>
       )}
