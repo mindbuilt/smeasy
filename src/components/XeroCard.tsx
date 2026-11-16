@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
 import type { Staff } from "@/lib/types";
-import Link from "next/link";
 import { C, Modal, btn, haptic, input } from "@/components/ui";
 
 type Connection = Database["public"]["Tables"]["xero_connections"]["Row"];
@@ -79,19 +78,16 @@ export default function XeroCard({ businessId, pro }: { businessId: string; pro:
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: 0 }}>Payroll</h2>
+        <h3 style={{ fontSize: 16, fontWeight: 750, color: C.dark, margin: 0 }}>Xero Payroll</h3>
         <span style={{ fontSize: 12, fontWeight: 700, borderRadius: 999, padding: "3px 9px", background: "#eef0f3", color: C.secondary }}>Pro</span>
       </div>
-      <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 14px", lineHeight: 1.5 }}>
-        Send approved hours from the Hours page to Xero Payroll as draft timesheets. You still check and approve them in Xero.
-      </p>
+      {pro && <p style={{ fontSize: 13, color: C.muted, margin: "0 0 12px", lineHeight: 1.5 }}>Approved hours go to Xero as draft timesheets for you to check and approve.</p>}
 
       {notice && <p role="status" style={{ fontSize: 14, background: notice.ok ? C.shiftBg : "#fff5f3", color: notice.ok ? C.shiftText : C.danger, borderRadius: 12, padding: "10px 12px", margin: "0 0 12px" }}>{notice.text}</p>}
 
       {!pro ? (
-        <p style={{ fontSize: 15, color: C.secondary, margin: 0, lineHeight: 1.5 }}>
-          Payroll sync is part of Pro, coming soon.{" "}
-          <Link href="/contact/?topic=pro" style={{ color: C.dark, fontWeight: 700 }}>Join the waitlist</Link>
+        <p style={{ fontSize: 13, color: C.muted, margin: 0, lineHeight: 1.5 }}>
+          Send approved hours straight to Xero. Coming to Pro.
           {conn && <> · <button type="button" onClick={disconnectXero} disabled={busy} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.secondary, textDecoration: "underline", cursor: "pointer" }}>Disconnect Xero</button></>}
         </p>
       ) : conn ? (

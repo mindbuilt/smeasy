@@ -428,7 +428,7 @@ function WeekPage() {
       {pay && wagesHelp && wages > 0 && (
         <Banner onClose={() => setWagesHelp(false)}>
           <strong style={{ color: C.dark }}>How this is worked out:</strong> each person&apos;s paid hours this week × the hourly rate you entered for them (Team → Edit).
-          It&apos;s base rates only: no penalty rates, overtime, allowances or super, and people without a rate aren&apos;t counted. Turn it off any time in Settings → Pay details.
+          It&apos;s base rates only: no penalty rates, overtime, allowances or super, and people without a rate aren&apos;t counted. Turn it off any time in Settings → Payroll.
         </Banner>
       )}
       {notice && <Banner onClose={() => setNotice(null)}>{notice}</Banner>}

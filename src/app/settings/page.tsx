@@ -10,7 +10,6 @@ import PlanCard from "@/components/PlanCard";
 import XeroCard from "@/components/XeroCard";
 import { hasPro, usePlan } from "@/lib/usePlan";
 import { STATES, STATE_TIMEZONE, type State } from "@/lib/holidays";
-import { roleSwatch } from "@/lib/roleColors";
 import { payDetailsOn, withPayDetails } from "@/lib/pay";
 import { AppShell, C, Loading, btn, haptic, input, label } from "@/components/ui";
 import { WEEKDAYS, fmtWeek, thisWeekStart } from "@/lib/dates";
@@ -36,7 +35,6 @@ export default function SettingsPage() {
 
         <section style={card}>
           <h2 style={h2}>Your business</h2>
-          <p style={help}>Shown on your roster, the team link and the PDF.</p>
           <BusinessName key={business.name} name={business.name} onSave={(name) => update({ name })} />
           <label style={{ ...label, marginTop: 16 }} htmlFor="state">State or territory</label>
           <select id="state" style={{ ...input, maxWidth: 360 }} value={business.state ?? ""}
@@ -47,7 +45,7 @@ export default function SettingsPage() {
             <option value="">Not set</option>
             {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-          <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0" }}>Used to mark public holidays on your roster and set your time zone.</p>
+          <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0" }}>For public holidays and your time zone.</p>
           <WeekStart day={business.week_start_day} onChanged={(week_start_day) => setBusiness({ ...business, week_start_day })} />
         </section>
 
@@ -55,33 +53,25 @@ export default function SettingsPage() {
           <PlanCard businessId={business.id} />
         </section>
 
+        {/* Payroll: pay rates for the wage estimate and CSV, and (on Pro) the Xero connection. */}
         <section id="payroll" style={card}>
-          <XeroCard businessId={business.id} pro={hasPro(plan)} />
-        </section>
-
-        <section style={card}>
-          <RolesEditor key={business.roles.join("|")} roles={business.roles} onSave={(roles) => update({ roles })} />
-        </section>
-
-        <section id="pay" style={card}>
-          <h2 style={h2}>Pay details <span style={{ fontSize: 12, fontWeight: 500, color: C.muted }}>(optional)</span></h2>
-          <p style={help}>
-            Turn this on to add each person&apos;s hourly rate and payroll ID on the Team page. SMEasy then shows a base-rate wage estimate on the roster,
-            and adds payroll ID, hourly rate and base pay to your hours CSV.
-          </p>
-          <Switch on={payDetailsOn(business)} label="Use pay details"
-            onChange={(on) => update({ payroll_settings: withPayDetails(business, on) })} />
-          <p style={{ fontSize: 12, color: C.muted, margin: "10px 0 0", lineHeight: 1.5 }}>
-            The estimate is hours × the rate you enter. It doesn&apos;t include penalty rates, overtime, allowances or super, and it isn&apos;t award advice.
-            Only you see pay details. They never appear on the team link, personal links or the PDF.
-          </p>
+          <h2 style={h2}>Payroll</h2>
+          <div id="pay" style={{ marginTop: 12 }}>
+            <Switch on={payDetailsOn(business)} label="Pay rates and payroll IDs"
+              onChange={(on) => update({ payroll_settings: withPayDetails(business, on) })} />
+            <p style={{ fontSize: 13, color: C.muted, margin: "8px 0 0", lineHeight: 1.5 }}>
+              Add each person&apos;s hourly rate and payroll ID on the Team page for a base-rate wage estimate and extra columns in your hours CSV.
+              Base rates only: no penalty rates, overtime or super. Only you see them.
+            </p>
+          </div>
+          <div style={{ borderTop: `1px solid ${C.divider}`, marginTop: 18, paddingTop: 18 }}>
+            <XeroCard businessId={business.id} pro={hasPro(plan)} />
+          </div>
         </section>
 
         <section id="login" style={card}>
           <h2 style={h2}>Your login</h2>
-          <p style={help}>
-            You&apos;re logged in as <strong>{email}</strong>. Set a password to log in with your email and password, without waiting for a login link. You can still use a link any time.
-          </p>
+          <p style={help}>You&apos;re logged in as <strong>{email}</strong>.</p>
           <SetPassword />
           <button type="button" onClick={signOut} className="app-press" style={{ ...btn(), marginTop: 16 }}>
             <LogOut size={17} /> Log out
@@ -120,41 +110,6 @@ function BusinessName({ name, onSave }: { name: string; onSave: (n: string) => P
   );
 }
 
-function RolesEditor({ roles, onSave }: { roles: string[]; onSave: (r: string[]) => Promise<void> }) {
-  const [list, setList] = useState(roles);
-  const [next, setNext] = useState("");
-  const dirty = list.join("|") !== roles.join("|");
-  return (
-    <>
-      <h2 style={h2}>Shift roles</h2>
-      <p style={help}>The jobs people can be rostered on. Each role gets its own colour on the roster, in this order.</p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-        {list.map((r) => {
-          const sw = roleSwatch(r, list);
-          return (
-            <span key={r} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 999, background: sw.bg, border: `1px solid ${sw.border}`, color: sw.text, fontSize: 13, fontWeight: 600 }}>
-              {r}
-              <button onClick={() => setList(list.filter((x) => x !== r))} aria-label={`Remove ${r}`}
-                style={{ background: "none", border: "none", cursor: "pointer", color: sw.text, padding: 0 }}>✕</button>
-            </span>
-          );
-        })}
-      </div>
-      <form onSubmit={(e) => { e.preventDefault(); const v = next.trim(); if (v && !list.includes(v)) setList([...list, v]); setNext(""); }}
-        style={{ display: "flex", gap: 8, maxWidth: 360 }}>
-        <input value={next} onChange={(e) => setNext(e.target.value)} placeholder="Add a role, e.g. Delivery" style={input} aria-label="New role" />
-        <button type="submit" style={btn()}>Add</button>
-      </form>
-      {dirty && (
-        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-          <button onClick={() => onSave(list)} style={btn("primary")}>Save roles</button>
-          <button onClick={() => setList(roles)} style={btn("ghost")}>Undo</button>
-        </div>
-      )}
-    </>
-  );
-}
-
 /** "Week starts on": changing it regroups existing shifts into the new weeks (server side). */
 function WeekStart({ day, onChanged }: { day: number; onChanged: (day: number) => void }) {
   const [pending, setPending] = useState<number | null>(null);
@@ -185,7 +140,7 @@ function WeekStart({ day, onChanged }: { day: number; onChanged: (day: number) =
         onChange={(e) => { const d = Number(e.target.value); setMsg(null); setPending(d === day ? null : d); }}>
         {WEEKDAYS.map((name, i) => <option key={name} value={i + 1}>{name}</option>)}
       </select>
-      <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0" }}>Match your pay week, so the hours export lines up with each pay run.</p>
+      <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0" }}>Match your pay week.</p>
       {pending !== null && (
         <div role="status" style={{ marginTop: 12, background: "#fef3c7", color: "#92400e", borderRadius: 12, padding: "12px 14px", fontSize: 14, lineHeight: 1.5 }}>
           Your weeks will run <strong>{range(pending)}</strong>. Shifts you&apos;ve already rostered keep their dates and are regrouped into the new weeks. Any week that ends up mixing published and draft shifts goes back to draft for you to check. Staff links follow straight away.

@@ -13,6 +13,7 @@ import { atStaffLimit, hasPro, usePlan } from "@/lib/usePlan";
 import { DEFAULT_WEEKLY_HOURS, FREE_STAFF_LIMIT, STAFF_LIMIT_ENFORCED } from "@/lib/site";
 import { Check, Copy, MessageSquare, Pencil } from "lucide-react";
 import AddFromXero from "@/components/AddFromXero";
+import RolesEditor from "@/components/RolesEditor";
 
 function staffLink(s: Staff) {
   return `${window.location.origin}/s/#${s.roster_token}`;
@@ -144,6 +145,13 @@ function TeamPage() {
               ))}
             </div>
           )}
+        </section>
+
+        <section style={{ background: C.white, borderRadius: C.r2, boxShadow: C.shadow, padding: 16, marginBottom: 14 }}>
+          <RolesEditor key={business.roles.join("|")} roles={business.roles} onSave={async (roles) => {
+            const { data } = await supabase().from("businesses").update({ roles }).eq("id", business.id).select().single();
+            if (data) setBusiness(data);
+          }} />
         </section>
 
         <TeamLinkCard token={business.team_token} onReset={async () => {

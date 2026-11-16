@@ -82,7 +82,6 @@ const NAV = [
   { href: "/week", label: "Roster", Icon: CalendarDays },
   { href: "/team", label: "Team", Icon: Users },
   { href: "/hours", label: "Hours", Icon: Clock },
-  { href: "/settings", label: "Settings", Icon: Settings },
 ];
 
 function Logo() {
@@ -127,6 +126,11 @@ export function AppShell({ businessName, children }: {
             ))}
           </nav>
           <BusinessName businessName={businessName} />
+          {/* Settings is occasional, so it's an icon up here rather than a main tab. */}
+          <Link href="/settings" aria-label="Settings" title="Settings" aria-current={isActive("/settings") ? "page" : undefined} className="app-press" style={{
+            display: "grid", placeItems: "center", width: 40, height: 40, borderRadius: 999, flex: "none", textDecoration: "none",
+            color: isActive("/settings") ? C.dark : C.secondary, background: isActive("/settings") ? "#eef0f3" : "transparent",
+          }}><Settings size={20} strokeWidth={isActive("/settings") ? 2.4 : 2} /></Link>
         </div>
       </header>
 
