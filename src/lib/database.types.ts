@@ -158,6 +158,7 @@ export type Database = {
         Row: {
           business_id: string
           created_at: string
+          hours_approved_at: string | null
           id: string
           published_at: string | null
           status: string
@@ -166,6 +167,7 @@ export type Database = {
         Insert: {
           business_id: string
           created_at?: string
+          hours_approved_at?: string | null
           id?: string
           published_at?: string | null
           status?: string
@@ -174,6 +176,7 @@ export type Database = {
         Update: {
           business_id?: string
           created_at?: string
+          hours_approved_at?: string | null
           id?: string
           published_at?: string | null
           status?: string
@@ -191,12 +194,16 @@ export type Database = {
       }
       shifts: {
         Row: {
+          actual_break_minutes: number | null
+          actual_end: string | null
+          actual_start: string | null
           break_minutes: number
           business_id: string
           created_at: string
           date: string
           end_time: string
           id: string
+          no_show: boolean
           notes: string | null
           role: string | null
           roster_id: string
@@ -204,12 +211,16 @@ export type Database = {
           start_time: string
         }
         Insert: {
+          actual_break_minutes?: number | null
+          actual_end?: string | null
+          actual_start?: string | null
           break_minutes?: number
           business_id: string
           created_at?: string
           date: string
           end_time: string
           id?: string
+          no_show?: boolean
           notes?: string | null
           role?: string | null
           roster_id: string
@@ -217,12 +228,16 @@ export type Database = {
           start_time: string
         }
         Update: {
+          actual_break_minutes?: number | null
+          actual_end?: string | null
+          actual_start?: string | null
           break_minutes?: number
           business_id?: string
           created_at?: string
           date?: string
           end_time?: string
           id?: string
+          no_show?: boolean
           notes?: string | null
           role?: string | null
           roster_id?: string

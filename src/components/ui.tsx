@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { CalendarDays, ChevronDown, LogOut, Settings, Users, X } from "lucide-react";
+import { CalendarDays, ChevronDown, Clock, LogOut, Settings, Users, X } from "lucide-react";
 import { signOut } from "@/lib/useManager";
 import { APP } from "@/lib/theme";
 
@@ -82,6 +82,7 @@ export function Avatar({ name, size = 36, tone }: { name: string; size?: number;
 const NAV = [
   { href: "/week", label: "Roster", Icon: CalendarDays },
   { href: "/team", label: "Team", Icon: Users },
+  { href: "/hours", label: "Hours", Icon: Clock },
   { href: "/settings", label: "Settings", Icon: Settings },
 ];
 

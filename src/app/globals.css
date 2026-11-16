@@ -242,3 +242,15 @@ html:has(.app), body:has(.app) { background: #f6f7f9; }
 /* Day timeline: empty track space adds a shift */
 .tl-track { transition: background-color 150ms ease; }
 @media (hover: hover) { .tl-track:hover { background: rgba(132,204,22,0.06); } }
+
+/* Hours (timesheets): one row per shift. Wide: who | start finish break | hours. Narrow: stacked.
+   Sized by the list's own width (container query), not the window. */
+.hrs-list { container-type: inline-size; }
+.hrs-row { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr) auto; gap: 14px; align-items: center; padding: 12px 14px; }
+.hrs-times { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@container (max-width: 640px) {
+  .hrs-row { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+  .hrs-who { grid-column: 1; grid-row: 1; }
+  .hrs-end { grid-column: 2; grid-row: 1; }
+  .hrs-times { grid-column: 1 / -1; grid-row: 2; }
+}

@@ -11,6 +11,7 @@ import { addDays, dayName, fmtAUD, fmtDay, fmtTime, fmtWeek, shiftHours, thisWee
 import { AppShell, Avatar, C, Loading, Modal, btn, card, haptic, input, label } from "@/components/ui";
 import { CalendarPlus, CalendarDays, Check, ChevronLeft, ChevronRight, Copy, Download, FileText, Info, Link2, Columns3 as Columns, List, MoreHorizontal, Plus, StickyNote, Undo2, UserPlus, X } from "lucide-react";
 import DayTimeline, { dayCover } from "@/components/DayTimeline";
+import { downloadHoursCsv } from "@/lib/worked";
 import { atStaffLimit, hasCore, usePlan } from "@/lib/usePlan";
 import { DEFAULT_WEEKLY_HOURS, FREE_STAFF_LIMIT } from "@/lib/site";
 import { downloadRosterPdf } from "@/lib/rosterPdf";
@@ -312,39 +313,8 @@ function WeekPage() {
   }
 
   function downloadCSV() {
-    // One row per shift (bookkeepers need the day and times for weekend and
-    // public-holiday rates), then a per-person summary. "Actual hours" starts
-    // equal to rostered hours so the manager can adjust it before sending.
-    // With Pay details on, payroll ID, hourly rate and base pay are added.
-    const head = ["Name", ...(pay ? ["Payroll ID"] : []), "Date", "Day", "Start", "Finish", "Unpaid break (min)", "Rostered hours", "Actual hours", "Role",
-      ...(pay ? ["Hourly rate", "Base pay"] : [])];
-    const money = (n: number) => n.toFixed(2);
-    const rows: string[][] = [head];
-    const sorted = shifts.filter((s) => s.staff_id).sort((a, b) =>
-      (staffById.get(a.staff_id!)?.name ?? "").localeCompare(staffById.get(b.staff_id!)?.name ?? "") ||
-      a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time));
-    for (const s of sorted) {
-      const p = staffById.get(s.staff_id!);
-      const hrs = shiftHours(s.start_time, s.end_time, s.break_minutes).toFixed(2);
-      const rate = p?.hourly_rate == null ? null : Number(p.hourly_rate);
-      rows.push([p?.name ?? "", ...(pay ? [p?.payroll_id ?? ""] : []), s.date, fmtDay(s.date).split(" ")[0],
-        hhmm(s.start_time), hhmm(s.end_time), String(s.break_minutes), hrs, hrs, s.role ?? "",
-        ...(pay ? [rate == null ? "" : money(rate), rate == null ? "" : money(rate * Number(hrs))] : [])]);
-    }
-    rows.push([], ["Totals by person"], ["Name", ...(pay ? ["Payroll ID"] : []), "Rostered hours", "Actual hours", ...(pay ? ["Hourly rate", "Base pay"] : [])]);
-    for (const p of [...(staff ?? [])].sort((a, b) => a.name.localeCompare(b.name))) {
-      const h = hoursByStaff.get(p.id);
-      if (!h) continue;
-      const rate = p.hourly_rate == null ? null : Number(p.hourly_rate);
-      rows.push([p.name, ...(pay ? [p.payroll_id ?? ""] : []), h.toFixed(2), h.toFixed(2),
-        ...(pay ? [rate == null ? "" : money(rate), rate == null ? "" : money(rate * h)] : [])]);
-    }
-    const csv = rows.map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    a.download = `hours-${weekStart}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    // Worked hours where they've been confirmed on the Hours page, rostered hours otherwise.
+    downloadHoursCsv({ shifts, staff: staff ?? [], pay, weekStart });
   }
 
 
