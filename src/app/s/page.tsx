@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { addDays, fmtDay, toISO } from "@/lib/dates";
-import { Mail, Plane } from "lucide-react";
+import { CalendarPlus, Mail, Plane } from "lucide-react";
 import { C, Loading, btn, card, haptic, input, label } from "@/components/ui";
 import { CalendarButtons, DayList, NextShift, StaffFooter, StaffShell, WeekNav, hoursOf, readToken, MineSwitch } from "@/components/StaffBits";
 
@@ -79,7 +79,12 @@ export default function StaffRoster() {
           <NextShift shifts={mine} roles={view.roles ?? []} totalHours={hoursOf(mine)} count={mine.length} />
           {view.shifts.length > 0 && (
             <>
-              <div style={{ marginBottom: 12 }}><MineSwitch mine={!showTeam} onChange={(m) => setShowTeam(!m)} /></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+                <MineSwitch mine={!showTeam} onChange={(m) => setShowTeam(!m)} />
+                <a href="#calendar" className="app-press" style={{ ...btn("ghost"), marginLeft: "auto", minHeight: 38, padding: "6px 10px", color: C.dark, textDecoration: "none" }}>
+                  <CalendarPlus size={17} /> Add to calendar
+                </a>
+              </div>
               <DayList weekStart={view.week_start} shifts={showTeam ? view.shifts : mine} roles={view.roles ?? []} state={view.state}
                 dayNotes={view.day_notes ?? []} isMine={(s) => !!s.mine} youLabel />
             </>

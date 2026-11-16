@@ -223,7 +223,7 @@ export function CalendarButtons({ token }: { token: string }) {
   const webcal = `webcal://${feed}`;
   const google = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}`;
   return (
-    <section style={{ ...card, padding: "16px 16px 14px", marginTop: 14 }}>
+    <section id="calendar" style={{ ...card, padding: "16px 16px 14px", marginTop: 14, scrollMarginTop: 72 }}>
       <h2 style={{ fontSize: 17, fontWeight: 800, color: C.dark, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><CalendarDays size={19} /> Shifts in your phone&apos;s calendar</h2>
       <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 12px", lineHeight: 1.5 }}>
         Subscribe once and your published shifts appear in your calendar, and stay up to date when the roster changes.
