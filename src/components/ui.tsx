@@ -163,6 +163,7 @@ export function AppShell({ businessName, children }: {
         <Link href="/faq/" style={{ color: C.muted }}>FAQ</Link>
         <Link href="/contact/" style={{ color: C.muted }}>Help</Link>
         <Link href="/privacy/" style={{ color: C.muted }}>Privacy</Link>
+        <Link href="/terms/" style={{ color: C.muted }}>Terms</Link>
       </footer>
     </div>
   );

@@ -48,6 +48,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <Link href="/faq/" style={footLink}>FAQ</Link>
             <Link href="/auth/login/" style={footLink}>Log in</Link>
             <Link href="/privacy/" style={footLink}>Privacy</Link>
+            <Link href="/terms/" style={footLink}>Terms</Link>
             <Link href="/contact/" style={footLink}>Contact</Link>
             <CookieSettingsLink style={{ ...footLink, textDecoration: "none", fontWeight: 600 }} />
           </nav>

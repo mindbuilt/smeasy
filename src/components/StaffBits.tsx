@@ -74,6 +74,7 @@ export function StaffFooter({ hint }: { hint: string }) {
       <p style={{ margin: 0 }}>
         <Link href="/" style={{ color: C.secondary }}>Made with SMEasy</Link>{" · "}
         <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>{" · "}
+        <Link href="/terms/" style={{ color: C.secondary }}>Terms</Link>{" · "}
         <Link href="/auth/login/" style={{ color: C.secondary }}>Manager log in</Link>
       </p>
     </div>
