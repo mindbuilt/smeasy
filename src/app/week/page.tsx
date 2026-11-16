@@ -11,6 +11,8 @@ import { addDays, dayName, fmtAUD, fmtDay, fmtTime, fmtWeek, shiftHours, thisWee
 import { AppShell, Avatar, C, Loading, Modal, btn, card, haptic, input, label } from "@/components/ui";
 import { CalendarPlus, CalendarDays, Check, ChevronLeft, ChevronRight, Copy, Download, FileText, Info, Link2, Columns3 as Columns, List, MoreHorizontal, Plus, StickyNote, Undo2, UserPlus, X } from "lucide-react";
 import DayTimeline, { dayCover } from "@/components/DayTimeline";
+import { atStaffLimit, usePlan } from "@/lib/usePlan";
+import { FREE_STAFF_LIMIT } from "@/lib/site";
 import { downloadRosterPdf } from "@/lib/rosterPdf";
 import { roleSwatch, UNFILLED } from "@/lib/roleColors";
 import { holidayOn } from "@/lib/holidays";
@@ -82,6 +84,7 @@ function WeekPage() {
   const [selDay, setSelDay] = useState<string | null>(null);
   const [slide, setSlide] = useState<"left" | "right">("right");
   const [moreOpen, setMoreOpen] = useState(false);
+  const plan = usePlan(business?.id);
   // Desktop: the week grid or one day as a timeline. Phone: the day as a list or a timeline.
   const [deskView, setDeskViewState] = useState<"week" | "day">(() => (typeof window !== "undefined" && localStorage.getItem("smeasy-desk-view") === "day" ? "day" : "week"));
   const [phoneMode, setPhoneModeState] = useState<"list" | "timeline">(() => (typeof window !== "undefined" && localStorage.getItem("smeasy-phone-day") === "timeline" ? "timeline" : "list"));
@@ -187,8 +190,9 @@ function WeekPage() {
 
   async function addStaff(name: string) {
     if (!business) return false;
-    const { data } = await supabase().from("staff")
+    const { data, error } = await supabase().from("staff")
       .insert({ business_id: business.id, name, default_role: business.roles[0] ?? null }).select().single();
+    if (error?.code === "P0001") { setNotice(`The Free plan is for up to ${FREE_STAFF_LIMIT} staff. Upgrade to Core for unlimited staff. See Settings → Plan.`); return false; }
     if (!data) return false;
     setStaff((all) => [...(all ?? []), data].sort((a, b) => a.name.localeCompare(b.name)));
     return true;
@@ -464,7 +468,7 @@ function WeekPage() {
                 {shifts.length === 0 && <button onClick={copyLastWeek} disabled={busy} className="app-press" style={btn()}><Copy size={17} /> Copy last week</button>}
               </>
             )} />
-          <div style={{ ...card, marginTop: 12 }}><AddStaff onAdd={addStaff} /></div>
+          <div style={{ ...card, marginTop: 12 }}><AddStaff onAdd={addStaff} limited={atStaffLimit(plan, staff.length)} /></div>
           {!business.state && !hideStateTip && (
             <div style={{ marginTop: 12 }}>
               <Banner onClose={() => { localStorage.setItem("smeasy-hide-state-tip", "1"); setHideStateTip(true); }}>
@@ -518,7 +522,7 @@ function WeekPage() {
             </p>
           )}
           <Grid days={days} today={today} staff={staff} shifts={shifts} hours={hoursByStaff} offOn={offOn} onAdd={newShift} onEdit={editShift} cascadeIds={cascadeIds}
-            roles={roles} dayInfo={dayInfo} onDay={setEditingDay} addStaff={<AddStaff onAdd={addStaff} />}
+            roles={roles} dayInfo={dayInfo} onDay={setEditingDay} addStaff={<AddStaff onAdd={addStaff} limited={atStaffLimit(plan, staff.length)} />}
             onOpenDay={(d) => { setSelDay(d); setDeskView("day"); }} />
         </>
       )}
@@ -620,10 +624,17 @@ function Stat({ value, label, tone }: { value: string; label: string; tone?: "da
   );
 }
 
-function AddStaff({ onAdd }: { onAdd: (name: string) => Promise<boolean> }) {
+function AddStaff({ onAdd, limited }: { onAdd: (name: string) => Promise<boolean>; limited?: boolean }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
+  if (limited) {
+    return (
+      <div style={{ padding: "14px 16px", fontSize: 14, color: C.secondary, lineHeight: 1.5 }}>
+        The Free plan is for up to {FREE_STAFF_LIMIT} staff. <Link href="/settings/#plan" style={{ color: C.dark, fontWeight: 700 }}>Upgrade to Core</Link> for unlimited staff.
+      </div>
+    );
+  }
   if (!open) {
     return (
       <button onClick={() => setOpen(true)} className="app-press" style={{ background: "none", border: "none", padding: "14px 16px", fontSize: 15, fontWeight: 650, color: C.secondary, cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>

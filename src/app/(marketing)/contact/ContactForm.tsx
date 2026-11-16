@@ -7,8 +7,10 @@ import { SIGNUPS_OPEN } from "@/lib/site";
 const ENDPOINT = "https://formspree.io/f/xwlovdea";
 
 const EARLY_ACCESS = "Early access: tell me when SMEasy opens";
+const PRO_WAITLIST = "Pro waitlist: tell me when Xero and MYOB sync is ready";
 const TOPICS = [
   ...(SIGNUPS_OPEN ? [] : [EARLY_ACCESS]),
+  PRO_WAITLIST,
   "A question before signing up", "Help with my account", "A feature idea", "Delete my account", "Something else",
 ];
 
@@ -18,15 +20,18 @@ const noSubscribe = () => () => {};
 
 export default function ContactForm() {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
-  // "Get early access" buttons link here with ?topic=early-access (false while prerendering).
-  const fromEarlyAccessLink = useSyncExternalStore(
+  // "Get early access" and "Join the waitlist" buttons link here with ?topic=early-access or
+  // ?topic=pro ("" while prerendering).
+  const linkTopic = useSyncExternalStore(
     noSubscribe,
-    () => new URLSearchParams(window.location.search).get("topic") === "early-access",
-    () => false,
+    () => new URLSearchParams(window.location.search).get("topic") ?? "",
+    () => "",
   );
   const [picked, setTopic] = useState<string | null>(null);
-  const topic = picked ?? (!SIGNUPS_OPEN && fromEarlyAccessLink ? EARLY_ACCESS : TOPICS[0]);
-  const earlyAccess = topic === EARLY_ACCESS;
+  const topic = picked ?? (linkTopic === "pro" ? PRO_WAITLIST : !SIGNUPS_OPEN && linkTopic === "early-access" ? EARLY_ACCESS : TOPICS[0]);
+  const pro = topic === PRO_WAITLIST;
+  // Joining a list: the message is optional and the button says what you're signing up for.
+  const earlyAccess = topic === EARLY_ACCESS || pro;
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -55,7 +60,7 @@ export default function ContactForm() {
     return (
       <div role="status" style={{ background: C.shiftBg, color: C.shiftText, borderRadius: C.r2, padding: "20px 22px", fontSize: 16, lineHeight: 1.55 }}>
         {earlyAccess
-          ? <><strong>Thanks, you&apos;re on the list.</strong> We&apos;ll email you as soon as SMEasy opens.</>
+          ? <><strong>Thanks, you&apos;re on the list.</strong> We&apos;ll email you as soon as {pro ? "Pro is ready" : "SMEasy opens"}.</>
           : <><strong>Thanks, your message is on its way.</strong> We&apos;ll reply to the email address you gave, usually within one business day.</>}
       </div>
     );
@@ -85,13 +90,13 @@ export default function ContactForm() {
       </div>
       <div style={field}>
         <label htmlFor="c-message" style={lbl}>
-          Message{earlyAccess && <span style={{ color: C.muted, fontWeight: 400 }}> (optional: what kind of business, how many staff)</span>}
+          Message{earlyAccess && <span style={{ color: C.muted, fontWeight: 400 }}> (optional: what kind of business, how many staff{pro ? ", which payroll you use" : ""})</span>}
         </label>
         <textarea id="c-message" name="message" required={!earlyAccess} rows={earlyAccess ? 3 : 6} maxLength={5000} style={{ ...input, resize: "vertical", fontFamily: "inherit" }} />
       </div>
       {/* Spam trap: hidden from people, bots fill it in and Formspree discards the submission. */}
       <input type="text" name="_gotcha" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ display: "none" }} />
-      <input type="hidden" name="_subject" value={earlyAccess ? "SMEasy early access request" : "SMEasy contact form"} />
+      <input type="hidden" name="_subject" value={pro ? "SMEasy Pro waitlist" : earlyAccess ? "SMEasy early access request" : "SMEasy contact form"} />
       {status.kind === "error" && (
         <p role="alert" style={{ margin: 0, color: C.danger, fontSize: 15 }}>{status.message}</p>
       )}
@@ -99,7 +104,7 @@ export default function ContactForm() {
         Please don&apos;t include passwords or staff details you don&apos;t need to. Your message is delivered to us by Formspree.
       </p>
       <button type="submit" disabled={status.kind === "sending"} className="app-press" style={{ ...btn("accent"), justifySelf: "start", padding: "12px 24px", fontSize: 16, minHeight: 48, fontWeight: 700 }}>
-        {status.kind === "sending" ? "Sending…" : earlyAccess ? "Get early access" : "Send message"}
+        {status.kind === "sending" ? "Sending…" : pro ? "Join the waitlist" : earlyAccess ? "Get early access" : "Send message"}
       </button>
     </form>
   );

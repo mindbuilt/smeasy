@@ -15,11 +15,25 @@ export const SIGNUP_CTA = SIGNUPS_OPEN ? "Get started free" : "Get early access"
 export const SIGNUP_CTA_SHORT = SIGNUPS_OPEN ? "Get started" : "Get early access";
 
 /**
- * Billing (Stripe, via the `billing` and `stripe-webhook` Edge Functions).
+ * Plans and billing (Stripe, via the `billing` and `stripe-webhook` Edge Functions).
+ *   Free  up to FREE_STAFF_LIMIT active staff, all rostering.
+ *   Core  unlimited staff, timesheets, overtime warnings. Monthly or annual.
+ *   Pro   Core + Xero and MYOB payroll sync. Shown as coming soon until sync ships (PRO_AVAILABLE).
+ * Prices are AUD, plus GST, flat per business (no per-user fees).
+ *
  * BILLING_ENABLED shows Upgrade / Manage billing in Settings → Plan.
  * STAFF_LIMIT_ENFORCED stops Free businesses adding more than FREE_STAFF_LIMIT active staff.
  * It stays off during early access (the pricing page promises no limits until we email people).
+ * The database has a matching check: flip both together (see migration 20261116020000_plans).
  */
+export type PlanId = "free" | "core" | "pro";
+export type Interval = "month" | "year";
+export const PLAN_NAMES: Record<PlanId, string> = { free: "Free", core: "Core", pro: "Pro" };
+export const PRICES: Record<"core" | "pro", Record<Interval, number>> = {
+  core: { month: 29, year: 290 },
+  pro: { month: 49, year: 490 },
+};
+export const PRO_AVAILABLE = false;
 export const BILLING_ENABLED = true;
 export const STAFF_LIMIT_ENFORCED = false;
-export const FREE_STAFF_LIMIT = 10;
+export const FREE_STAFF_LIMIT = 6;

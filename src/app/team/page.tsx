@@ -8,6 +8,9 @@ import type { Staff } from "@/lib/types";
 import { payDetailsOn } from "@/lib/pay";
 import { AppShell, Avatar, C, Loading, Modal, btn, haptic, input, label } from "@/components/ui";
 import { roleSwatch } from "@/lib/roleColors";
+import Link from "next/link";
+import { atStaffLimit, usePlan } from "@/lib/usePlan";
+import { FREE_STAFF_LIMIT } from "@/lib/site";
 import { Check, Copy, MessageSquare, Pencil } from "lucide-react";
 
 function staffLink(s: Staff) {
@@ -27,6 +30,8 @@ function TeamPage() {
   const [editing, setEditing] = useState<Staff | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [showFormer, setShowFormer] = useState(false);
+  const [limitHit, setLimitHit] = useState(false);
+  const plan = usePlan(business?.id);
 
   useEffect(() => {
     if (!business) return;
@@ -38,9 +43,10 @@ function TeamPage() {
   async function add(e: React.FormEvent) {
     e.preventDefault();
     if (!business || !newName.trim()) return;
-    const { data } = await supabase().from("staff")
+    const { data, error } = await supabase().from("staff")
       .insert({ business_id: business.id, name: newName.trim(), default_role: business.roles[0] ?? null })
       .select().single();
+    if (error?.code === "P0001") { setLimitHit(true); return; } // the database's Free plan check
     setNewName("");
     if (data) setStaff((s) => [...(s ?? []), data].sort((a, b) => a.name.localeCompare(b.name)));
   }
@@ -69,11 +75,17 @@ function TeamPage() {
           <h2 style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: "0 0 10px" }}>
             Staff {active.length > 0 && <span style={{ color: C.muted, fontWeight: 500 }}>({active.length})</span>}
           </h2>
-          <form onSubmit={add} style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Name, e.g. Sam"
-              style={input} aria-label="New team member name" autoFocus={isNew} />
-            <button type="submit" disabled={!newName.trim()} className="app-press" style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: newName.trim() ? 1 : 0.5 }}>Add</button>
-          </form>
+          {limitHit || atStaffLimit(plan, active.length) ? (
+            <div role="status" style={{ background: C.shiftBg, color: C.shiftText, borderRadius: 12, padding: "12px 14px", fontSize: 15, lineHeight: 1.5, marginBottom: 10 }}>
+              The Free plan is for up to {FREE_STAFF_LIMIT} staff. <Link href="/settings/#plan" style={{ color: C.dark, fontWeight: 700 }}>Upgrade to Core</Link> for unlimited staff at one flat price.
+            </div>
+          ) : (
+            <form onSubmit={add} style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Name, e.g. Sam"
+                style={input} aria-label="New team member name" autoFocus={isNew} />
+              <button type="submit" disabled={!newName.trim()} className="app-press" style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: newName.trim() ? 1 : 0.5 }}>Add</button>
+            </form>
+          )}
 
           <div style={{ background: C.white, borderRadius: C.r2, boxShadow: C.shadow, overflow: "hidden" }}>
             {active.length === 0 && (
@@ -190,7 +202,7 @@ function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
       ...(pay ? { hourly_rate: rate, payroll_id: f.payroll_id.trim() || null } : {}),
       ...patch,
     }).eq("id", staff.id).select().single();
-    if (error) setError(error.code === "23505" ? "Someone else already has that payroll ID." : "Couldn't save. Please try again.");
+    if (error) setError(error.code === "23505" ? "Someone else already has that payroll ID." : error.code === "P0001" ? `The Free plan is for up to ${FREE_STAFF_LIMIT} staff. Upgrade to Core for unlimited staff.` : "Couldn't save. Please try again.");
     else if (data) onSaved(data);
   }
 

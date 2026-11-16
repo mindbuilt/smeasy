@@ -1,17 +1,22 @@
 // Billing actions for the signed-in owner.
-//   POST /functions/v1/billing  { "action": "checkout" | "portal" }  ->  { url }
-// "checkout" starts a Stripe Checkout for Pro; "portal" opens the Stripe customer
+//   POST /functions/v1/billing  { "action": "checkout", "interval": "month" | "year" }  ->  { url }
+//   POST /functions/v1/billing  { "action": "portal" }  ->  { url }
+// "checkout" starts a Stripe Checkout for Core (Pro isn't on sale yet); "portal" opens the Stripe customer
 // portal (change card, invoices, cancel). The caller's own JWT decides which
 // business this is (RLS), and only the service role writes public.billing.
 //
-// Secrets: STRIPE_SECRET_KEY, STRIPE_PRICE_ID, STRIPE_TAX_RATE_ID (GST, optional), SITE_URL (optional).
+// Secrets: STRIPE_SECRET_KEY, STRIPE_PRICE_CORE_MONTHLY, STRIPE_PRICE_CORE_ANNUAL,
+// STRIPE_TAX_RATE_ID (GST, optional), SITE_URL (optional).
 
 import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SITE_URL = Deno.env.get("SITE_URL") ?? "https://www.smeasy.au";
-const PRICE_ID = Deno.env.get("STRIPE_PRICE_ID") ?? "";
+const PRICES: Record<string, string> = {
+  month: Deno.env.get("STRIPE_PRICE_CORE_MONTHLY") ?? "",
+  year: Deno.env.get("STRIPE_PRICE_CORE_ANNUAL") ?? "",
+};
 const TAX_RATE_ID = Deno.env.get("STRIPE_TAX_RATE_ID") ?? "";
 
 
@@ -54,7 +59,7 @@ Deno.serve(async (req) => {
 
     const admin = createClient(SUPABASE_URL, serviceKey());
     const { data: billing } = await admin.from("billing").select("*").eq("business_id", business.id).maybeSingle();
-    const { action } = await req.json().catch(() => ({ action: "" }));
+    const { action, interval = "month", plan = "core" } = await req.json().catch(() => ({ action: "" }));
 
     if (action === "portal") {
       if (!billing?.stripe_customer_id) return json({ error: "There's no billing account yet." }, 400);
@@ -66,8 +71,11 @@ Deno.serve(async (req) => {
     }
 
     if (action === "checkout") {
-      if (!PRICE_ID) return json({ error: "Billing isn't set up yet." }, 500);
-      if (billing?.plan === "pro") return json({ error: "You're already on Pro." }, 400);
+      if (plan !== "core") return json({ error: "Pro isn't available yet." }, 400);
+      if (interval !== "month" && interval !== "year") return json({ error: "Pick monthly or annual." }, 400);
+      const price = PRICES[interval];
+      if (!price) return json({ error: "Billing isn't set up yet." }, 500);
+      if (billing?.plan && billing.plan !== "free") return json({ error: "You're already on a paid plan. Use Manage billing to change it." }, 400);
 
       let customer = billing?.stripe_customer_id;
       if (!customer) {
@@ -84,7 +92,7 @@ Deno.serve(async (req) => {
         mode: "subscription",
         customer,
         client_reference_id: business.id,
-        line_items: [{ price: PRICE_ID, quantity: 1 }],
+        line_items: [{ price, quantity: 1 }],
         subscription_data: {
           metadata: { business_id: business.id },
           ...(TAX_RATE_ID ? { default_tax_rates: [TAX_RATE_ID] } : {}),

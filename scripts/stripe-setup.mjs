@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// One-time Stripe setup for SMEasy Pro. Safe to re-run: it finds what already exists.
+// One-time Stripe setup for SMEasy's paid plans. Safe to re-run: it finds what already exists.
 //
 // Run it in your own Terminal (not through Claude, so your key stays out of chat logs):
 //   STRIPE_SECRET_KEY=sk_test_... node scripts/stripe-setup.mjs
@@ -8,12 +8,13 @@
 // signing secret once, when the endpoint is created).
 //
 // It creates or finds:
-//   - Product "SMEasy Pro", price A$19/month (GST added on top, lookup key smeasy_pro_monthly)
-//   - Tax rate "GST" 10%, Australia, exclusive  ->  $20.90/month in total
+//   - Product "SMEasy Core": A$29/month (smeasy_core_monthly) and A$290/year (smeasy_core_annual), GST on top
+//   - Tax rate "GST" 10%, Australia, exclusive
 //   - Customer portal settings (update card, invoices, cancel at period end)
 //   - Webhook endpoint for the stripe-webhook Edge Function
-// Then it stores STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ID and
-// STRIPE_TAX_RATE_ID as Supabase Edge Function secrets (needs `npx supabase login`).
+// Then it stores STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_CORE_MONTHLY,
+// STRIPE_PRICE_CORE_ANNUAL and STRIPE_TAX_RATE_ID as Supabase Edge Function secrets
+// (needs `npx supabase login`). Pro prices are added when Pro goes on sale.
 // Secrets are never printed.
 
 import { execFileSync } from "node:child_process";
@@ -23,7 +24,10 @@ import { join } from "node:path";
 
 const PROJECT_REF = "jrbjkrukmcqxrthhpdwx";
 const WEBHOOK_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/stripe-webhook`;
-const LOOKUP_KEY = "smeasy_pro_monthly";
+const CORE = [
+  { key: "smeasy_core_monthly", amount: 2900, interval: "month", nickname: "Core monthly", secret: "STRIPE_PRICE_CORE_MONTHLY" },
+  { key: "smeasy_core_annual", amount: 29000, interval: "year", nickname: "Core annual", secret: "STRIPE_PRICE_CORE_ANNUAL" },
+];
 const EVENTS = ["checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"];
 
 const KEY = process.env.STRIPE_SECRET_KEY ?? "";
@@ -60,16 +64,19 @@ async function api(method, path, params) {
   return body;
 }
 
-// 1. Product + price
-let price = (await api("GET", `prices?lookup_keys[]=${LOOKUP_KEY}&active=true`)).data[0];
-if (price) console.log(`✓ Price exists: ${price.id}`);
-else {
-  const product = await api("POST", "products", { name: "SMEasy Pro", description: "More than 10 staff, plus priority email support." });
-  price = await api("POST", "prices", {
-    product: product.id, currency: "aud", unit_amount: 1900, recurring: { interval: "month" },
-    tax_behavior: "exclusive", lookup_key: LOOKUP_KEY, nickname: "Pro monthly",
+// 1. Core product + monthly and annual prices
+const corePrices = {};
+let coreProduct = null;
+for (const p of CORE) {
+  const found = (await api("GET", `prices?lookup_keys[]=${p.key}&active=true`)).data[0];
+  if (found) { corePrices[p.secret] = found.id; coreProduct ??= found.product; console.log(`✓ ${p.nickname} price exists: ${found.id}`); continue; }
+  coreProduct ??= (await api("POST", "products", { name: "SMEasy Core", description: "Unlimited staff, flat rate per business. Timesheets and overtime warnings." })).id;
+  const price = await api("POST", "prices", {
+    product: coreProduct, currency: "aud", unit_amount: p.amount, recurring: { interval: p.interval },
+    tax_behavior: "exclusive", lookup_key: p.key, nickname: p.nickname,
   });
-  console.log(`✓ Created product ${product.id} and price ${price.id} (A$19/month + GST)`);
+  corePrices[p.secret] = price.id;
+  console.log(`✓ Created ${p.nickname} price ${price.id} (A$${p.amount / 100}/${p.interval} + GST)`);
 }
 
 // 2. GST tax rate
@@ -83,8 +90,13 @@ else {
 
 // 3. Customer portal
 const portals = (await api("GET", "billing_portal/configurations", { is_default: true, limit: 1 })).data;
-if (portals.length) console.log(`✓ Customer portal is configured (${portals[0].id})`);
-else {
+// Lets customers switch between Core monthly and annual themselves.
+const switchPlans = { enabled: true, default_allowed_updates: ["price"], proration_behavior: "create_prorations",
+  products: [{ product: coreProduct, prices: Object.values(corePrices) }] };
+if (portals.length) {
+  await api("POST", `billing_portal/configurations/${portals[0].id}`, { features: { subscription_update: switchPlans } });
+  console.log(`✓ Customer portal is configured (${portals[0].id}), with monthly / annual switching`);
+} else {
   const p = await api("POST", "billing_portal/configurations", {
     business_profile: { headline: "SMEasy billing", privacy_policy_url: "https://www.smeasy.au/privacy/" },
     features: {
@@ -92,6 +104,7 @@ else {
       payment_method_update: { enabled: true },
       customer_update: { enabled: true, allowed_updates: ["email", "name", "address", "tax_id"] },
       subscription_cancel: { enabled: true, mode: "at_period_end" },
+      subscription_update: switchPlans,
     },
   });
   console.log(`✓ Created customer portal settings ${p.id}`);
@@ -115,7 +128,7 @@ if (hooks.length) {
 }
 
 // 5. Supabase secrets (written to a private temp file, passed to the CLI, then deleted)
-const lines = [`STRIPE_SECRET_KEY=${KEY}`, `STRIPE_PRICE_ID=${price.id}`, `STRIPE_TAX_RATE_ID=${tax.id}`];
+const lines = [`STRIPE_SECRET_KEY=${KEY}`, ...Object.entries(corePrices).map(([k, v]) => `${k}=${v}`), `STRIPE_TAX_RATE_ID=${tax.id}`];
 if (webhookSecret) lines.push(`STRIPE_WEBHOOK_SECRET=${webhookSecret}`);
 const dir = mkdtempSync(join(tmpdir(), "smeasy-stripe-"));
 const envFile = join(dir, "secrets.env");

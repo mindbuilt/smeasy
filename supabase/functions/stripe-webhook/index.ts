@@ -21,8 +21,10 @@ const WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "";
 let _admin: ReturnType<typeof createClient> | null = null;
 const admin = () => (_admin ??= createClient(Deno.env.get("SUPABASE_URL")!, serviceKey()));
 
-// Statuses that still count as Pro. past_due keeps Pro while Stripe retries the card.
-const PRO_STATUSES = new Set(["active", "trialing", "past_due"]);
+// Statuses that still count as paid. past_due keeps the plan while Stripe retries the card.
+const PAID_STATUSES = new Set(["active", "trialing", "past_due"]);
+// Pro prices, once Pro goes on sale. Any other paid price is Core.
+const PRO_PRICES = new Set([Deno.env.get("STRIPE_PRICE_PRO_MONTHLY"), Deno.env.get("STRIPE_PRICE_PRO_ANNUAL")].filter(Boolean));
 
 async function save(sub: Stripe.Subscription, fallbackBusinessId?: string | null) {
   const businessId = sub.metadata?.business_id || fallbackBusinessId;
@@ -30,11 +32,14 @@ async function save(sub: Stripe.Subscription, fallbackBusinessId?: string | null
   // Newer API versions keep the period on the subscription item.
   const item = sub.items?.data?.[0] as (Stripe.SubscriptionItem & { current_period_end?: number }) | undefined;
   const periodEnd = item?.current_period_end ?? (sub as unknown as { current_period_end?: number }).current_period_end;
+  const paidPlan = item?.price?.id && PRO_PRICES.has(item.price.id) ? "pro" : "core";
+  const interval = item?.price?.recurring?.interval;
 
   const row = {
     stripe_customer_id: customer,
     stripe_subscription_id: sub.id,
-    plan: PRO_STATUSES.has(sub.status) ? "pro" : "free",
+    plan: PAID_STATUSES.has(sub.status) ? paidPlan : "free",
+    billing_interval: interval === "month" || interval === "year" ? interval : null,
     status: sub.status,
     current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
     cancel_at_period_end: sub.cancel_at_period_end,

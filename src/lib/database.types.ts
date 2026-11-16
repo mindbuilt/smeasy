@@ -41,6 +41,7 @@ export type Database = {
     Tables: {
       billing: {
         Row: {
+          billing_interval: string | null
           business_id: string
           cancel_at_period_end: boolean
           current_period_end: string | null
@@ -51,6 +52,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          billing_interval?: string | null
           business_id: string
           cancel_at_period_end?: boolean
           current_period_end?: string | null
@@ -61,6 +63,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          billing_interval?: string | null
           business_id?: string
           cancel_at_period_end?: boolean
           current_period_end?: string | null

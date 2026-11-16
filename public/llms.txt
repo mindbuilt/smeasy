@@ -1,6 +1,6 @@
 # SMEasy
 
-> Simple staff rostering for Australian small businesses — cafés, restaurants, bars, shops and other small teams. Free during early access; afterwards free for up to 10 staff, $19/month + GST for bigger teams.
+> Simple staff rostering for Australian small businesses — cafés, restaurants, bars, shops and other small teams. Free during early access; afterwards free for up to 6 staff, and a flat $29/month + GST (Core) for unlimited staff. No per-user fees.
 
 ## What SMEasy does
 - Managers log in with email and password, or with an emailed login link.
