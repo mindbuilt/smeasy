@@ -11,8 +11,8 @@ import { addDays, dayName, fmtAUD, fmtDay, fmtTime, fmtWeek, shiftHours, thisWee
 import { AppShell, Avatar, C, Loading, Modal, btn, card, haptic, input, label } from "@/components/ui";
 import { CalendarPlus, CalendarDays, Check, ChevronLeft, ChevronRight, Copy, Download, FileText, Info, Link2, Columns3 as Columns, List, MoreHorizontal, Plus, StickyNote, Undo2, UserPlus, X } from "lucide-react";
 import DayTimeline, { dayCover } from "@/components/DayTimeline";
-import { atStaffLimit, usePlan } from "@/lib/usePlan";
-import { FREE_STAFF_LIMIT } from "@/lib/site";
+import { atStaffLimit, hasCore, usePlan } from "@/lib/usePlan";
+import { DEFAULT_WEEKLY_HOURS, FREE_STAFF_LIMIT } from "@/lib/site";
 import { downloadRosterPdf } from "@/lib/rosterPdf";
 import { roleSwatch, UNFILLED } from "@/lib/roleColors";
 import { holidayOn } from "@/lib/holidays";
@@ -32,6 +32,9 @@ type Draft = {
 };
 
 const hhmm = (t: string) => t.slice(0, 5);
+const fmtH = (h: number) => h.toFixed(2).replace(/\.?0+$/, "");
+/** Usual weekly paid hours (the roster notes when someone goes above them). */
+const limitOf = (p: Staff | undefined) => Number(p?.max_weekly_hours ?? DEFAULT_WEEKLY_HOURS);
 
 async function fetchWeek(weekStart: string, days: string[]) {
   const sb = supabase();
@@ -85,6 +88,7 @@ function WeekPage() {
   const [slide, setSlide] = useState<"left" | "right">("right");
   const [moreOpen, setMoreOpen] = useState(false);
   const plan = usePlan(business?.id);
+  const [hiddenHoursNote, setHiddenHoursNote] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("smeasy-hours-note") ?? "" : ""));
   // Desktop: the week grid or one day as a timeline. Phone: the day as a list or a timeline.
   const [deskView, setDeskViewState] = useState<"week" | "day">(() => (typeof window !== "undefined" && localStorage.getItem("smeasy-desk-view") === "day" ? "day" : "week"));
   const [phoneMode, setPhoneModeState] = useState<"list" | "timeline">(() => (typeof window !== "undefined" && localStorage.getItem("smeasy-phone-day") === "timeline" ? "timeline" : "list"));
@@ -131,6 +135,14 @@ function WeekPage() {
   const wages = [...hoursByStaff.entries()].reduce((sum, [id, h]) => sum + h * Number(staffById.get(id)?.hourly_rate ?? 0), 0);
   const missingRate = [...hoursByStaff.keys()].filter((id) => staffById.get(id)?.hourly_rate == null).length;
   const pending = timeOff.filter((t) => t.status === "pending");
+  // Usual hours (Core): who's rostered above their usual weekly hours. Information, not an alarm.
+  const overtimeOn = hasCore(plan);
+  const overtime = overtimeOn ? (staff ?? []).flatMap((p) => {
+    const h = hoursByStaff.get(p.id) ?? 0;
+    return h > limitOf(p) ? [{ p, h, limit: limitOf(p) }] : [];
+  }) : [];
+  // Hiding the note lasts until the numbers change (or another week).
+  const hoursNoteKey = `${weekStart}:${overtime.map(({ p, h }) => `${p.id}=${h}`).join(",")}`;
   const published = roster?.status === "published";
   const isPast = weekStart < thisWeekStart(startDay);
   const roles = business?.roles ?? [];
@@ -421,6 +433,14 @@ function WeekPage() {
       )}
       {notice && <Banner onClose={() => setNotice(null)}>{notice}</Banner>}
 
+      {isMobile && overtime.length > 0 && hoursNoteKey !== hiddenHoursNote && (
+        <p style={{ fontSize: 13, color: C.secondary, margin: "-4px 0 10px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+          <span>Above usual hours: {overtime.map(({ p, h, limit }) => `${p.name.split(" ")[0]} ${fmtH(h)}h (usually ${fmtH(limit)})`).join(", ")}</span>
+          <button onClick={() => { localStorage.setItem("smeasy-hours-note", hoursNoteKey); setHiddenHoursNote(hoursNoteKey); }} aria-label="Hide this note"
+            style={{ background: "none", border: "none", padding: 4, color: C.muted, cursor: "pointer", display: "grid", flex: "none" }}><X size={15} /></button>
+        </p>
+      )}
+
       {/* Time-off requests */}
       {pending.length > 0 && (
         <section style={{ ...card, padding: "14px 16px", marginBottom: 14, background: C.offBg, boxShadow: "none" }}>
@@ -523,7 +543,7 @@ function WeekPage() {
           )}
           <Grid days={days} today={today} staff={staff} shifts={shifts} hours={hoursByStaff} offOn={offOn} onAdd={newShift} onEdit={editShift} cascadeIds={cascadeIds}
             roles={roles} dayInfo={dayInfo} onDay={setEditingDay} addStaff={<AddStaff onAdd={addStaff} limited={atStaffLimit(plan, staff.length)} />}
-            onOpenDay={(d) => { setSelDay(d); setDeskView("day"); }} />
+            onOpenDay={(d) => { setSelDay(d); setDeskView("day"); }} overtimeOn={overtimeOn} />
         </>
       )}
 
@@ -556,7 +576,7 @@ function WeekPage() {
       )}
 
       {draft && (
-        <ShiftEditor draft={draft} staff={staff} roles={business.roles} offOn={offOn} weekDays={days} shifts={shifts}
+        <ShiftEditor draft={draft} staff={staff} roles={business.roles} offOn={offOn} weekDays={days} shifts={shifts} overtimeOn={overtimeOn}
           onClose={() => setDraft(null)} onSave={saveShift} onDelete={deleteShift} />
       )}
 
@@ -848,8 +868,8 @@ function Chip({ s, roles, onClick, cascade, cascadeDelay = 0 }: {
   );
 }
 
-function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascadeIds, roles, dayInfo, onDay, addStaff, onOpenDay }: {
-  days: string[]; today: string; staff: Staff[]; shifts: Shift[]; hours: Map<string, number>; offOn: OffOn;
+function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascadeIds, roles, dayInfo, onDay, addStaff, onOpenDay, overtimeOn }: {
+  days: string[]; today: string; staff: Staff[]; shifts: Shift[]; hours: Map<string, number>; offOn: OffOn; overtimeOn: boolean;
   onAdd: (staffId: string, date: string) => void; onEdit: (s: Shift) => void; cascadeIds: Set<string>;
   roles: string[]; dayInfo: DayInfo; onDay: (d: string) => void; addStaff: React.ReactNode; onOpenDay: (d: string) => void;
 }) {
@@ -901,7 +921,14 @@ function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascade
         <div style={{ padding: "12px 6px", fontSize: 13, fontWeight: 650, color: C.muted, textAlign: "center", alignSelf: "end" }}>Hrs</div>
       </div>
       {row("unfilled", <span title="Shifts you need covered but haven't given to anyone yet. Staff don't see them." style={{ color: UNFILLED.text, display: "flex", alignItems: "center", gap: 10 }}><span aria-hidden style={{ width: 32, height: 32, borderRadius: "50%", border: `1.5px dashed ${UNFILLED.border}`, display: "grid", placeItems: "center", fontWeight: 800, flex: "none" }}>?</span><span style={{ lineHeight: 1.2 }}>Unfilled<span style={{ display: "block", fontSize: 12, fontWeight: 500, color: C.muted }}>Need covering</span></span></span>, "", "", hasUnfilled ? UNFILLED.bg : undefined)}
-      {staff.map((p) => row(p.id, <><Avatar name={p.name} size={32} tone={p.default_role ? (() => { const sw = roleSwatch(p.default_role, roles); return { bg: sw.bg, text: sw.text }; })() : undefined} /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span></>, p.id, hours.get(p.id) ? hours.get(p.id)!.toFixed(1) : <span style={{ color: C.faint }}>—</span>))}
+      {staff.map((p) => {
+        const h = hours.get(p.id) ?? 0;
+        const over = overtimeOn && h > limitOf(p);
+        const total = !h ? <span style={{ color: C.faint }}>—</span>
+          : over ? <span title={`Above ${p.name.split(" ")[0]}'s usual ${fmtH(limitOf(p))}h a week`}>{h.toFixed(1)}<span style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.muted }}>+{fmtH(h - limitOf(p))}</span></span>
+          : h.toFixed(1);
+        return row(p.id, <><Avatar name={p.name} size={32} tone={p.default_role ? (() => { const sw = roleSwatch(p.default_role, roles); return { bg: sw.bg, text: sw.text }; })() : undefined} /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span></>, p.id, total);
+      })}
       <div style={{ borderTop: `1px solid ${C.divider}`, minWidth: 960 }}>{addStaff}</div>
       <div style={{ display: "grid", gridTemplateColumns: cols, minWidth: 960, background: "#fafbfc", borderTop: `1px solid ${C.divider}`, borderRadius: `0 0 ${C.r2}px ${C.r2}px` }}>
         <div style={{ padding: "10px 14px", fontSize: 13, fontWeight: 650, color: C.muted }}>Cover<span style={{ display: "block", fontSize: 12, fontWeight: 500 }}>Red = nobody on</span></div>
@@ -961,8 +988,8 @@ function Pill({ on, onClick, children, tone }: { on: boolean; onClick: () => voi
   );
 }
 
-function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, onClose, onSave, onDelete }: {
-  draft: Draft; staff: Staff[]; roles: string[]; offOn: OffOn; weekDays: string[]; shifts: Shift[];
+function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, overtimeOn, onClose, onSave, onDelete }: {
+  draft: Draft; staff: Staff[]; roles: string[]; offOn: OffOn; weekDays: string[]; shifts: Shift[]; overtimeOn: boolean;
   onClose: () => void; onSave: (d: Draft, alsoOn: string[]) => Promise<void>; onDelete: (id: string) => Promise<void>;
 }) {
   const [d, setD] = useState(draft);
@@ -976,6 +1003,12 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, onClose, on
   const hours = d.start_time && d.end_time && d.start_time !== d.end_time ? shiftHours(d.start_time, d.end_time, d.break_minutes) : 0;
   const overnight = d.end_time && d.start_time && d.end_time < d.start_time;
   const off = d.staff_id ? offOn(d.staff_id, d.date) : undefined;
+  // What this person's week comes to if this is saved (on every chosen day).
+  const person = staff.find((p) => p.id === d.staff_id);
+  const days = 1 + alsoOn.filter((x) => !sameShiftOn(x)).length;
+  const weekHours = person ? shifts.filter((s) => s.staff_id === person.id && s.id !== d.id)
+    .reduce((h, s) => h + shiftHours(s.start_time, s.end_time, s.break_minutes), 0) + hours * days : 0;
+  const overBy = overtimeOn && person ? weekHours - limitOf(person) : 0;
 
   return (
     <Modal title={`${d.id ? "Edit" : "Add"} shift · ${fmtDay(d.date)}`} onClose={onClose}>
@@ -1005,6 +1038,11 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, onClose, on
             </button>
           </div>
           {off && <p style={{ margin: "4px 0 0", fontSize: 14, color: C.offText }}>Heads up: they have approved time off this day.</p>}
+          {overBy > 0 && person && (
+            <p style={{ margin: "4px 0 0", fontSize: 13, color: C.muted }}>
+              Brings {person.name.split(" ")[0]} to {fmtH(weekHours)}h this week (usually {fmtH(limitOf(person))}h).
+            </p>
+          )}
           {d.staff_id === "" && <p style={{ margin: "6px 0 0", fontSize: 14, color: UNFILLED.text, background: UNFILLED.bg, borderRadius: 12, padding: "8px 12px", lineHeight: 1.45 }}>Saved as an unfilled shift: a gap you still need to cover. It shows in red on your roster until you give it to someone. Staff can&apos;t see it.</p>}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 10 }}>

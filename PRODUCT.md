@@ -28,7 +28,7 @@ penalty-rate costing, multiple managers/locations, the Free staff limit (switch 
 ## Pricing
 Free during early access. Decided 2026-11-16, flat per business, AUD plus GST, no per-user fees:
 - **Free:** up to 6 active staff, all rostering, publish notifications (when built).
-- **Core:** $29/month or $290/year. Unlimited staff, timesheets and overtime warnings (being built), priority email support.
+- **Core:** $29/month or $290/year. Unlimited staff, usual-hours notes (built) and timesheets (being built), priority email support.
 - **Pro:** $49/month or $490/year. Core plus Xero and MYOB payroll sync. Shown as "coming soon" with a waitlist (`PRO_AVAILABLE` in src/lib/site.ts) until sync ships.
 - Multiple locations later. No SMS (WhatsApp is an option later). Don't name competitors in marketing copy.
  Billing is built with Stripe (Settings → Plan: Upgrade via Stripe Checkout, Manage billing via the Stripe portal; `billing` + `stripe-webhook` Edge Functions; `public.billing` table, written only by the webhook). Running in Stripe test mode. The 6-staff limit is not enforced during early access (`STAFF_LIMIT_ENFORCED` in src/lib/site.ts, plus `v_enforce` in the `private.check_staff_limit` database trigger) — see ROADMAP.md.

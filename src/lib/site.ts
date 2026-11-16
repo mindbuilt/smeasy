@@ -17,7 +17,7 @@ export const SIGNUP_CTA_SHORT = SIGNUPS_OPEN ? "Get started" : "Get early access
 /**
  * Plans and billing (Stripe, via the `billing` and `stripe-webhook` Edge Functions).
  *   Free  up to FREE_STAFF_LIMIT active staff, all rostering.
- *   Core  unlimited staff, timesheets, overtime warnings. Monthly or annual.
+ *   Core  unlimited staff, timesheets, usual-hours notes. Monthly or annual.
  *   Pro   Core + Xero and MYOB payroll sync. Shown as coming soon until sync ships (PRO_AVAILABLE).
  * Prices are AUD, plus GST, flat per business (no per-user fees).
  *
@@ -37,3 +37,7 @@ export const PRO_AVAILABLE = false;
 export const BILLING_ENABLED = true;
 export const STAFF_LIMIT_ENFORCED = false;
 export const FREE_STAFF_LIMIT = 6;
+/** Core features (usual-hours notes, timesheets) for everyone during early access. Turn on at launch. */
+export const CORE_FEATURES_ENFORCED = false;
+/** Usual weekly hours, unless set per person on the Team page. */
+export const DEFAULT_WEEKLY_HOURS = 38;

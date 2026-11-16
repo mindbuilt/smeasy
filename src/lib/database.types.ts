@@ -262,6 +262,7 @@ export type Database = {
           email: string | null
           hourly_rate: number | null
           id: string
+          max_weekly_hours: number
           mobile: string | null
           name: string
           payroll_id: string | null
@@ -275,6 +276,7 @@ export type Database = {
           email?: string | null
           hourly_rate?: number | null
           id?: string
+          max_weekly_hours?: number
           mobile?: string | null
           name: string
           payroll_id?: string | null
@@ -288,6 +290,7 @@ export type Database = {
           email?: string | null
           hourly_rate?: number | null
           id?: string
+          max_weekly_hours?: number
           mobile?: string | null
           name?: string
           payroll_id?: string | null

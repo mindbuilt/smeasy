@@ -24,7 +24,7 @@ const free: Feature[] = [
 const core: Feature[] = [
   { text: "Unlimited staff" },
   { text: "Timesheets: confirm the hours actually worked", soon: true },
-  { text: "Overtime warnings when someone goes over their hours", soon: true },
+  { text: "See when someone's rostered above their usual hours" },
   { text: "Priority email support" },
 ];
 

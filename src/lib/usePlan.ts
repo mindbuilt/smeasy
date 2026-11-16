@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { FREE_STAFF_LIMIT, STAFF_LIMIT_ENFORCED, type PlanId } from "./site";
+import { CORE_FEATURES_ENFORCED, FREE_STAFF_LIMIT, STAFF_LIMIT_ENFORCED, type PlanId } from "./site";
 
 /** The business's current plan (Free until Stripe says otherwise). null while loading. */
 export function usePlan(businessId: string | undefined) {
@@ -15,6 +15,11 @@ export function usePlan(businessId: string | undefined) {
     return () => { cancelled = true; };
   }, [businessId]);
   return plan;
+}
+
+/** Core and Pro features. Everyone gets them during early access. */
+export function hasCore(plan: PlanId | null) {
+  return !CORE_FEATURES_ENFORCED || plan === "core" || plan === "pro";
 }
 
 /** True when a Free business already has as many active staff as the plan allows. */

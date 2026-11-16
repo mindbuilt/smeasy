@@ -70,7 +70,7 @@ let coreProduct = null;
 for (const p of CORE) {
   const found = (await api("GET", `prices?lookup_keys[]=${p.key}&active=true`)).data[0];
   if (found) { corePrices[p.secret] = found.id; coreProduct ??= found.product; console.log(`✓ ${p.nickname} price exists: ${found.id}`); continue; }
-  coreProduct ??= (await api("POST", "products", { name: "SMEasy Core", description: "Unlimited staff, flat rate per business. Timesheets and overtime warnings." })).id;
+  coreProduct ??= (await api("POST", "products", { name: "SMEasy Core", description: "Unlimited staff, flat rate per business. Timesheets and usual-hours notes." })).id;
   const price = await api("POST", "prices", {
     product: coreProduct, currency: "aud", unit_amount: p.amount, recurring: { interval: p.interval },
     tax_behavior: "exclusive", lookup_key: p.key, nickname: p.nickname,

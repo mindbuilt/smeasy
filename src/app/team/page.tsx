@@ -10,7 +10,7 @@ import { AppShell, Avatar, C, Loading, Modal, btn, haptic, input, label } from "
 import { roleSwatch } from "@/lib/roleColors";
 import Link from "next/link";
 import { atStaffLimit, usePlan } from "@/lib/usePlan";
-import { FREE_STAFF_LIMIT } from "@/lib/site";
+import { DEFAULT_WEEKLY_HOURS, FREE_STAFF_LIMIT } from "@/lib/site";
 import { Check, Copy, MessageSquare, Pencil } from "lucide-react";
 
 function staffLink(s: Staff) {
@@ -187,6 +187,7 @@ function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
     name: staff.name, mobile: staff.mobile ?? "", email: staff.email ?? "",
     default_role: staff.default_role ?? "", hourly_rate: staff.hourly_rate?.toString() ?? "",
     payroll_id: staff.payroll_id ?? "",
+    max_weekly_hours: String(staff.max_weekly_hours ?? DEFAULT_WEEKLY_HOURS),
   });
   const [error, setError] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
@@ -195,9 +196,12 @@ function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
     setError(null);
     const rate = f.hourly_rate.trim() === "" ? null : Number(f.hourly_rate);
     if (rate != null && (Number.isNaN(rate) || rate < 0)) { setError("Hourly rate should be a number."); return; }
+    const weekly = f.max_weekly_hours.trim() === "" ? DEFAULT_WEEKLY_HOURS : Number(f.max_weekly_hours);
+    if (Number.isNaN(weekly) || weekly <= 0 || weekly > 100) { setError("Weekly hours should be a number from 1 to 100."); return; }
     const { data, error } = await supabase().from("staff").update({
       name: f.name.trim(), mobile: f.mobile.trim() || null, email: f.email.trim() || null,
       default_role: f.default_role || null,
+      max_weekly_hours: Math.round(weekly * 10) / 10,
       // Pay fields are only edited (and so only saved) when Pay details is on.
       ...(pay ? { hourly_rate: rate, payroll_id: f.payroll_id.trim() || null } : {}),
       ...patch,
@@ -218,6 +222,10 @@ function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
           </select>
         </div>
         <div><label style={label}>Email (optional)</label><input style={input} type="email" value={f.email} onChange={set("email")} /></div>
+        <div><label style={label} htmlFor="weekly">Usual hours a week</label>
+          <input id="weekly" style={{ ...input, maxWidth: 160 }} inputMode="decimal" value={f.max_weekly_hours} onChange={set("max_weekly_hours")} placeholder={String(DEFAULT_WEEKLY_HOURS)} />
+          <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0" }}>{DEFAULT_WEEKLY_HOURS} is a standard full-time week. Use their agreed hours for part-timers. The roster shows when you give them more.</p>
+        </div>
         {pay && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div><label style={label}>Hourly rate ($)</label>
