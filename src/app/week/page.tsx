@@ -12,8 +12,8 @@ import { AppShell, Avatar, C, Loading, Modal, btn, card, haptic, input, label } 
 import { Mail, CalendarPlus, CalendarDays, Check, ChevronLeft, ChevronRight, Copy, Download, FileText, Info, Link2, Columns3 as Columns, List, MoreHorizontal, Plus, StickyNote, Undo2, UserPlus, X } from "lucide-react";
 import DayTimeline, { dayCover } from "@/components/DayTimeline";
 import { downloadHoursCsv } from "@/lib/worked";
-import { atStaffLimit, hasCore, usePlan } from "@/lib/usePlan";
-import { DEFAULT_WEEKLY_HOURS, FREE_STAFF_LIMIT } from "@/lib/site";
+import { hasCore, usePlan } from "@/lib/usePlan";
+import { DEFAULT_WEEKLY_HOURS } from "@/lib/site";
 import { downloadRosterPdf } from "@/lib/rosterPdf";
 import { roleSwatch, UNFILLED } from "@/lib/roleColors";
 import { holidayOn } from "@/lib/holidays";
@@ -206,14 +206,27 @@ function WeekPage() {
     setDraft(null);
   }
 
-  async function addStaff(name: string) {
-    if (!business) return false;
-    const { data, error } = await supabase().from("staff")
-      .insert({ business_id: business.id, name, default_role: business.roles[0] ?? null }).select().single();
-    if (error?.code === "P0001") { setNotice(`The Free plan is for up to ${FREE_STAFF_LIMIT} staff. Upgrade to Plus for unlimited staff. See Settings → Plan.`); return false; }
-    if (!data) return false;
-    setStaff((all) => [...(all ?? []), data].sort((a, b) => a.name.localeCompare(b.name)));
-    return true;
+  // Desktop drag and drop: move a shift to another person or day, or copy it (Option/Alt held).
+  async function dropShift(id: string, staffId: string, date: string, copy: boolean) {
+    const src = shifts.find((x) => x.id === id);
+    if (!src || !business) return;
+    if (!copy && (src.staff_id ?? "") === staffId && src.date === date) return;
+    const sb = supabase();
+    if (copy) {
+      const { data, error } = await sb.from("shifts").insert({
+        business_id: business.id, roster_id: src.roster_id, staff_id: staffId || null, date,
+        start_time: src.start_time, end_time: src.end_time, break_minutes: src.break_minutes, role: src.role, notes: src.notes,
+      }).select().single();
+      if (error || !data) { setNotice(error?.code === "P0003" ? error.message : "Couldn't copy that shift. Please try again."); return; }
+      setShifts((all) => [...all, data]);
+      setCascadeIds(new Set([data.id])); setTimeout(() => setCascadeIds(new Set()), 1200);
+    } else {
+      const { data, error } = await sb.from("shifts").update({ staff_id: staffId || null, date }).eq("id", id).select().single();
+      if (error || !data) { setNotice(error?.code === "P0003" ? error.message : "Couldn't move that shift. Please try again."); return; }
+      setShifts((all) => all.map((x) => (x.id === id ? data : x)));
+    }
+    haptic(8);
+    if (staffId && offOn(staffId, date)) setNotice("Heads up: that person has approved time off that day.");
   }
 
   async function deleteShift(id: string) {
@@ -377,9 +390,7 @@ function WeekPage() {
           </h1>
           <div style={{ fontSize: isMobile ? 13 : 14, color: C.muted, marginTop: 2 }}>
             {weekStart === thisWeekStart(startDay) ? "This week" : <Link href="/week" style={{ color: C.secondary }}>Back to this week</Link>}
-            {isMobile && shifts.length > 0 && <> · {totalHours.toFixed(1).replace(/\.0$/, "")}h · {filled} {filled === 1 ? "shift" : "shifts"}{unfilled.length > 0 && <span style={{ color: UNFILLED.text, fontWeight: 700 }}> · {unfilled.length} unfilled</span>}</>}
-            {!isMobile && !published && <> · your team can&apos;t see this week until you publish</>}
-            {!isMobile && published && !isPast && <> · your team can see this week, and changes show straight away</>}
+            {shifts.length > 0 && <> · {totalHours.toFixed(1).replace(/\.0$/, "")}h · {filled} {filled === 1 ? "shift" : "shifts"}{unfilled.length > 0 && <span style={{ color: UNFILLED.text, fontWeight: 700 }}> · {unfilled.length} unfilled</span>}</>}
           </div>
         </div>
         {isMobile && <button onClick={() => goWeek(1)} className="app-press" style={{ ...btn(), width: 42, padding: 0, borderRadius: 999, flex: "none" }} aria-label="Next week"><ChevronRight size={20} /></button>}
@@ -387,33 +398,15 @@ function WeekPage() {
         {!isMobile && (
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
             {staff.length > 0 && <ViewToggle value={deskView} onChange={setDeskView} options={[["week", "Week", <Columns size={16} key="w" />], ["day", "Day", <CalendarDays size={16} key="d" />]]} />}
-            {staff.length > 0 && !isPast && (
-              <button onClick={copyLastWeek} disabled={busy} className="app-press" style={btn()} title="Adds last week's shifts to this week. Shifts already here aren't doubled up.">
-                <Copy size={17} /> Copy last week
+            {!published && !isPast && (
+              <button onClick={publish} disabled={busy || shifts.length === 0} className="app-press" style={{ ...btn("accent"), opacity: shifts.length ? 1 : 0.45, padding: "10px 20px" }}>
+                {busy ? "Publishing…" : "Publish to team"}
               </button>
             )}
-            {published && <button onClick={copyTeamLink} className="app-press" style={btn()}><Link2 size={17} />{linkCopied ? "Copied" : "Team link"}</button>}
-            {published && !isPast && <button onClick={() => emailTeam(roster!.id, "update")} disabled={!!emailResult && "sending" in emailResult} className="app-press" style={btn()} title="Sends everyone rostered this week their current shifts">
-              <Mail size={17} /> {emailResult && "sending" in emailResult ? "Sending…" : "Email the team"}</button>}
-            {shifts.length > 0 && <button onClick={downloadPdf} className="app-press" style={btn()}><FileText size={17} /> PDF</button>}
-            {published
-              ? <button onClick={unpublish} className="app-press" style={btn("ghost")}>Unpublish</button>
-              : <button onClick={publish} disabled={busy || shifts.length === 0} className="app-press" style={{ ...btn("accent"), opacity: shifts.length ? 1 : 0.45, padding: "10px 20px" }}>
-                  {busy ? "Publishing…" : "Publish to team"}
-                </button>}
+            <button onClick={() => setMoreOpen(true)} className="app-press" style={btn()} aria-label="More: copy last week, team link, email the team, PDF, hours"><MoreHorizontal size={18} /> More</button>
           </div>
         )}
       </div>
-      {/* Summary */}
-      {!isMobile && shifts.length > 0 && (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
-          <Stat value={totalHours.toFixed(1)} label="paid hours" />
-          <Stat value={String(filled)} label={filled === 1 ? "shift" : "shifts"} />
-          {unfilled.length > 0 && <Stat value={String(unfilled.length)} label="unfilled" tone="danger" />}
-          {!isMobile && <button onClick={downloadCSV} className="app-press" style={{ ...btn("ghost"), marginLeft: "auto", color: C.dark }}
-            title="One row per shift, plus totals by person. Open in Excel or send to your bookkeeper."><Download size={17} /> Hours for payroll (CSV)</button>}
-        </div>
-      )}
       {notice && <Banner onClose={() => setNotice(null)}>{notice}</Banner>}
 
       {isMobile && overtime.length > 0 && hoursNoteKey !== hiddenHoursNote && (
@@ -519,12 +512,13 @@ function WeekPage() {
       ) : (
         <>
           {shifts.length === 0 && (
-            <p style={{ fontSize: 14, color: C.muted, margin: "0 0 10px" }}>
-              Click any empty cell to give someone a shift{!isPast && <>, or use <strong style={{ color: C.dark }}>Copy last week</strong></>}.
+            <p style={{ fontSize: 14, color: C.muted, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              Click any empty cell to add a shift.
+              {!isPast && <button onClick={copyLastWeek} disabled={busy} className="app-press" style={{ ...btn(), minHeight: 34, padding: "6px 12px" }}><Copy size={16} /> Copy last week</button>}
             </p>
           )}
           <Grid days={days} today={today} staff={staff} shifts={shifts} hours={hoursByStaff} offOn={offOn} onAdd={newShift} onEdit={editShift} cascadeIds={cascadeIds}
-            roles={roles} dayInfo={dayInfo} onDay={setEditingDay} addStaff={<AddStaff onAdd={addStaff} limited={atStaffLimit(plan, staff.length)} />}
+            roles={roles} dayInfo={dayInfo} onDay={setEditingDay} onDropShift={dropShift}
             onOpenDay={(d) => { setSelDay(d); setDeskView("day"); }} overtimeOn={overtimeOn} />
         </>
       )}
@@ -625,43 +619,6 @@ function Stat({ value, label, tone }: { value: string; label: string; tone?: "da
     <span style={{ ...card, display: "inline-flex", alignItems: "baseline", gap: 5, padding: "8px 12px", fontSize: 14, color: danger ? UNFILLED.text : C.secondary, background: danger ? UNFILLED.bg : C.white, boxShadow: danger ? "none" : C.shadow }}>
       <strong style={{ fontSize: 17, fontWeight: 800, color: danger ? UNFILLED.text : C.dark }}>{value}</strong>{label}
     </span>
-  );
-}
-
-function AddStaff({ onAdd, limited }: { onAdd: (name: string) => Promise<boolean>; limited?: boolean }) {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [saving, setSaving] = useState(false);
-  if (limited) {
-    return (
-      <div style={{ padding: "14px 16px", fontSize: 14, color: C.secondary, lineHeight: 1.5 }}>
-        The Free plan is for up to {FREE_STAFF_LIMIT} staff. <Link href="/settings/#plan" style={{ color: C.dark, fontWeight: 700 }}>Upgrade to Plus</Link> for unlimited staff.
-      </div>
-    );
-  }
-  if (!open) {
-    return (
-      <button onClick={() => setOpen(true)} className="app-press" style={{ background: "none", border: "none", padding: "14px 16px", fontSize: 15, fontWeight: 650, color: C.secondary, cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ display: "inline-grid", placeItems: "center", width: 34, height: 34, borderRadius: "50%", border: `1.5px dashed ${C.faint}` }}><UserPlus size={17} /></span>
-        Add someone to the team
-      </button>
-    );
-  }
-  return (
-    <form onSubmit={async (e) => {
-      e.preventDefault();
-      if (!name.trim()) return;
-      setSaving(true);
-      const ok = await onAdd(name.trim());
-      setSaving(false);
-      if (ok) { haptic(10); setName(""); setOpen(false); }
-    }} style={{ display: "flex", gap: 8, padding: 10, alignItems: "center", flexWrap: "wrap" }}>
-      <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Name, e.g. Sam Nguyen" aria-label="New team member name"
-        style={{ ...input, flex: "1 1 200px", maxWidth: 320 }} />
-      <button type="submit" disabled={saving || !name.trim()} className="app-press" style={{ ...btn("primary"), opacity: name.trim() ? 1 : 0.5 }}>{saving ? "Adding…" : "Add"}</button>
-      <button type="button" onClick={() => { setOpen(false); setName(""); }} className="app-press" style={btn("ghost")}>Cancel</button>
-      <span style={{ fontSize: 13, color: C.muted, flexBasis: "100%" }}>Add their mobile and role later on the Team page.</span>
-    </form>
   );
 }
 
@@ -837,10 +794,12 @@ function ShiftCard({ s, staff, roles, onEdit, fresh }: { s: Shift; staff: Staff[
 function Chip({ s, roles, onClick, cascade, cascadeDelay = 0 }: {
   s: Shift; roles: string[]; onClick: () => void; cascade?: boolean; cascadeDelay?: number;
 }) {
+  const onDragStart = (e: React.DragEvent) => { e.dataTransfer.setData("text/plain", s.id); e.dataTransfer.effectAllowed = "copyMove"; };
   const open = !s.staff_id;
   const sw = open ? UNFILLED : roleSwatch(s.role, roles);
   return (
-    <button onClick={(e) => { e.stopPropagation(); onClick(); }} className={`app-press${cascade ? " cascade-in" : ""}`} title={s.notes ?? undefined} style={{
+    <button draggable onDragStart={onDragStart} onClick={(e) => { e.stopPropagation(); onClick(); }} className={`app-press grid-chip${cascade ? " cascade-in" : ""}`}
+      title={`${s.notes ? `${s.notes}\n` : ""}Drag to move. Hold Option (Alt) to copy.`} style={{
       display: "block", width: "100%", textAlign: "left", background: sw.bg, border: open ? `1.5px dashed ${sw.border}` : "1px solid transparent",
       color: sw.text, borderRadius: 10, padding: "6px 8px", fontSize: 13, fontWeight: 750, cursor: "pointer", lineHeight: 1.3, fontFamily: "inherit",
       ...(cascade ? { animationDelay: `${cascadeDelay}ms` } : {}),
@@ -852,11 +811,13 @@ function Chip({ s, roles, onClick, cascade, cascadeDelay = 0 }: {
   );
 }
 
-function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascadeIds, roles, dayInfo, onDay, addStaff, onOpenDay, overtimeOn }: {
+function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascadeIds, roles, dayInfo, onDay, onDropShift, onOpenDay, overtimeOn }: {
   days: string[]; today: string; staff: Staff[]; shifts: Shift[]; hours: Map<string, number>; offOn: OffOn; overtimeOn: boolean;
   onAdd: (staffId: string, date: string) => void; onEdit: (s: Shift) => void; cascadeIds: Set<string>;
-  roles: string[]; dayInfo: DayInfo; onDay: (d: string) => void; addStaff: React.ReactNode; onOpenDay: (d: string) => void;
+  roles: string[]; dayInfo: DayInfo; onDay: (d: string) => void; onOpenDay: (d: string) => void;
+  onDropShift: (id: string, staffId: string, date: string, copy: boolean) => void;
 }) {
+  const [dropAt, setDropAt] = useState<string | null>(null); // the cell a shift is being dragged over
   // One shared time scale for the week's cover bars, so days line up.
   const covers = days.map((d) => dayCover(shifts.filter((s) => s.date === d)));
   const withShifts = covers.filter((c, i) => shifts.some((s) => s.date === days[i]));
@@ -874,7 +835,12 @@ function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascade
         return (
           <div key={d} className="grid-cell" role="button" tabIndex={0} aria-label={`Add shift ${fmtDay(d)}`}
             onClick={() => onAdd(staffId, d)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAdd(staffId, d); } }} title="Add shift"
-            style={{ padding: 5, minHeight: 60, cursor: "pointer", display: "flex", flexDirection: "column", gap: 4, justifyContent: "center", minWidth: 0, background: d === today ? "rgba(183,224,33,0.06)" : undefined }}>
+            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = e.altKey ? "copy" : "move"; if (dropAt !== `${staffId}|${d}`) setDropAt(`${staffId}|${d}`); }}
+            onDragLeave={() => setDropAt((k) => (k === `${staffId}|${d}` ? null : k))}
+            onDrop={(e) => { e.preventDefault(); setDropAt(null); const id = e.dataTransfer.getData("text/plain"); if (id) onDropShift(id, staffId, d, e.altKey); }}
+            style={{ padding: 5, minHeight: 60, cursor: "pointer", display: "flex", flexDirection: "column", gap: 4, justifyContent: "center", minWidth: 0,
+              background: dropAt === `${staffId}|${d}` ? "rgba(17,24,39,0.06)" : d === today ? "rgba(183,224,33,0.06)" : undefined,
+              boxShadow: dropAt === `${staffId}|${d}` ? `inset 0 0 0 2px ${C.dark}` : "none", borderRadius: 10 }}>
             {off && <div style={{ background: C.offBg, color: C.offText, borderRadius: 10, padding: "6px 8px", fontSize: 13, fontWeight: 700 }}>Off{off.reason ? ` · ${off.reason}` : ""}</div>}
             {mine.map((s) => { const isCascade = cascadeIds.has(s.id); const delay = isCascade ? cascadeIdx++ * 40 : 0; return <Chip key={s.id} s={s} roles={roles} onClick={() => onEdit(s)} cascade={isCascade} cascadeDelay={delay} />; })}
             {!off && mine.length === 0 && <span className="grid-plus" aria-hidden><Plus size={18} /></span>}
@@ -904,16 +870,16 @@ function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascade
         })}
         <div style={{ padding: "12px 6px", fontSize: 13, fontWeight: 650, color: C.muted, textAlign: "center", alignSelf: "end" }}>Hrs</div>
       </div>
-      {row("unfilled", <span title="Shifts you need covered but haven't given to anyone yet. Staff don't see them." style={{ color: UNFILLED.text, display: "flex", alignItems: "center", gap: 10 }}><span aria-hidden style={{ width: 32, height: 32, borderRadius: "50%", border: `1.5px dashed ${UNFILLED.border}`, display: "grid", placeItems: "center", fontWeight: 800, flex: "none" }}>?</span><span style={{ lineHeight: 1.2 }}>Unfilled<span style={{ display: "block", fontSize: 12, fontWeight: 500, color: C.muted }}>Need covering</span></span></span>, "", "", hasUnfilled ? UNFILLED.bg : undefined)}
+      {/* Only there when you've added a shift with "No one yet". Drag it onto someone's row to give it to them. */}
+      {hasUnfilled && row("unfilled", <span title="Shifts with no one on them yet. Drag one onto someone's row, or click it, to give it to them. Staff don't see these." style={{ color: UNFILLED.text, display: "flex", alignItems: "center", gap: 10 }}><span aria-hidden style={{ width: 32, height: 32, borderRadius: "50%", border: `1.5px dashed ${UNFILLED.border}`, display: "grid", placeItems: "center", fontWeight: 800, flex: "none" }}>?</span>Unfilled</span>, "", "", UNFILLED.bg)}
       {staff.map((p) => {
         const h = hours.get(p.id) ?? 0;
         const over = overtimeOn && h > limitOf(p);
-        const total = !h ? <span style={{ color: C.faint }}>—</span>
+        const total = !h ? null
           : over ? <span title={`Above ${p.name.split(" ")[0]}'s usual ${fmtH(limitOf(p))}h a week`}>{h.toFixed(1)}<span style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.muted }}>+{fmtH(h - limitOf(p))}</span></span>
           : h.toFixed(1);
         return row(p.id, <><Avatar name={p.name} size={32} tone={p.default_role ? (() => { const sw = roleSwatch(p.default_role, roles); return { bg: sw.bg, text: sw.text }; })() : undefined} /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span></>, p.id, total);
       })}
-      <div style={{ borderTop: `1px solid ${C.divider}`, minWidth: 960 }}>{addStaff}</div>
       <div style={{ display: "grid", gridTemplateColumns: cols, minWidth: 960, background: "#fafbfc", borderTop: `1px solid ${C.divider}`, borderRadius: `0 0 ${C.r2}px ${C.r2}px` }}>
         <div style={{ padding: "10px 14px", fontSize: 13, fontWeight: 650, color: C.muted }}>Cover<span style={{ display: "block", fontSize: 12, fontWeight: 500 }}>Red = nobody on</span></div>
         {days.map((d, i) => {
