@@ -48,7 +48,7 @@ function ManagerLink() {
     return () => { cancelled = true; };
   }, []);
   if (!signedIn) return null;
-  return <Link href="/week/" className="app-press" style={{ ...btn(), marginLeft: "auto", minHeight: 36, padding: "6px 12px", fontSize: 14, textDecoration: "none" }}>Open SMEasy</Link>;
+  return <Link href="/week/" className="app-press" style={{ ...btn(), marginLeft: "auto", minHeight: 36, padding: "6px 12px", fontSize: 14, textDecoration: "none" }}>Edit roster</Link>;
 }
 
 /** Header + centred column for the staff pages. */
