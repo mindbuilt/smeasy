@@ -11,7 +11,6 @@ import type { Roster, Shift, Staff } from "@/lib/types";
 import { addDays, fmtDay, fmtWeek, thisWeekStart, toISO, weekDates, weekStartOf } from "@/lib/dates";
 import { changed, downloadHoursCsv, rosteredHours, workedHours } from "@/lib/worked";
 import HoursRow, { type Patch } from "@/components/HoursRow";
-import { payDetailsOn } from "@/lib/pay";
 import { AppShell, C, Loading, Modal, btn, card, haptic, input, label } from "@/components/ui";
 import type { Database } from "@/lib/database.types";
 
@@ -128,7 +127,6 @@ function HoursPage() {
   const approved = !!roster?.hours_approved_at;
   const goWeek = (n: number) => router.push(`/hours?w=${addDays(weekStart, n * 7)}`);
   const roles = business.roles ?? [];
-  const pay = payDetailsOn(business);
 
   // Totals by person, rostered vs worked.
   const people = [...new Set(shifts.map((s) => s.staff_id!))]
@@ -270,7 +268,7 @@ function HoursPage() {
                   </button>
                 )}
                 {/* With Xero connected the CSV is only a backup, so it steps back. */}
-                <button onClick={() => downloadHoursCsv({ shifts, staff, pay, weekStart })} className="app-press" style={xero && hasPro(plan) ? { ...btn("ghost"), color: C.secondary } : btn()}>
+                <button onClick={() => downloadHoursCsv({ shifts, staff, weekStart })} className="app-press" style={xero && hasPro(plan) ? { ...btn("ghost"), color: C.secondary } : btn()}>
                   <Download size={17} /> {xero && hasPro(plan) ? "Download CSV" : "Hours for payroll (CSV)"}
                 </button>
                 <button onClick={() => setExporting(true)} className="app-press" style={{ ...btn("ghost"), color: C.secondary }}>Export dates…</button>
@@ -305,7 +303,7 @@ function HoursPage() {
             )}
           </>
         )}
-        {exporting && <ExportRange staff={staff} pay={pay} onClose={() => setExporting(false)} />}
+        {exporting && <ExportRange staff={staff} onClose={() => setExporting(false)} />}
       </div>
     </AppShell>
   );
@@ -316,7 +314,7 @@ export default function Page() {
 }
 
 /** Export a date range of hours (e.g. a financial year) in one CSV, for keeping records. */
-function ExportRange({ staff, pay, onClose }: { staff: Staff[]; pay: boolean; onClose: () => void }) {
+function ExportRange({ staff, onClose }: { staff: Staff[]; onClose: () => void }) {
   const today = toISO(new Date());
   const fyStart = `${Number(today.slice(0, 4)) - (Number(today.slice(5, 7)) < 7 ? 1 : 0)}-07-01`;
   const [from, setFrom] = useState(fyStart);
@@ -335,7 +333,7 @@ function ExportRange({ staff, pay, onClose }: { staff: Staff[]; pay: boolean; on
       .map((s) => { const copy = { ...s } as Partial<typeof s>; delete copy.rosters; return copy as Shift; });
     setBusy(false);
     if (!rows.length) { setMsg("No hours in those dates."); return; }
-    downloadHoursCsv({ shifts: rows, staff, pay, weekStart: from, fileName: `hours-${from}-to-${to}.csv` });
+    downloadHoursCsv({ shifts: rows, staff, weekStart: from, fileName: `hours-${from}-to-${to}.csv` });
     onClose();
   }
 

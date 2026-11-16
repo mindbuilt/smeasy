@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useManager } from "@/lib/useManager";
 import type { Business, Roster, Shift, Staff, TimeOff } from "@/lib/types";
-import { addDays, dayName, fmtAUD, fmtDay, fmtTime, fmtWeek, shiftHours, thisWeekStart, toISO, weekDates, weekStartOf } from "@/lib/dates";
+import { addDays, dayName, fmtDay, fmtTime, fmtWeek, shiftHours, thisWeekStart, toISO, weekDates, weekStartOf } from "@/lib/dates";
 import { AppShell, Avatar, C, Loading, Modal, btn, card, haptic, input, label } from "@/components/ui";
 import { Mail, CalendarPlus, CalendarDays, Check, ChevronLeft, ChevronRight, Copy, Download, FileText, Info, Link2, Columns3 as Columns, List, MoreHorizontal, Plus, StickyNote, Undo2, UserPlus, X } from "lucide-react";
 import DayTimeline, { dayCover } from "@/components/DayTimeline";
@@ -17,7 +17,6 @@ import { DEFAULT_WEEKLY_HOURS, FREE_STAFF_LIMIT } from "@/lib/site";
 import { downloadRosterPdf } from "@/lib/rosterPdf";
 import { roleSwatch, UNFILLED } from "@/lib/roleColors";
 import { holidayOn } from "@/lib/holidays";
-import { payDetailsOn } from "@/lib/pay";
 
 type DayNote = { id: string; date: string; note: string };
 
@@ -93,7 +92,6 @@ function WeekPage() {
   const [dayNotes, setDayNotes] = useState<DayNote[]>([]);
   const [editingDay, setEditingDay] = useState<string | null>(null);
   const [hideStateTip, setHideStateTip] = useState(() => typeof window !== "undefined" && localStorage.getItem("smeasy-hide-state-tip") === "1");
-  const [wagesHelp, setWagesHelp] = useState(false);
   const [selDay, setSelDay] = useState<string | null>(null);
   const [slide, setSlide] = useState<"left" | "right">("right");
   const [moreOpen, setMoreOpen] = useState(false);
@@ -142,9 +140,6 @@ function WeekPage() {
   const unfilled = shifts.filter((s) => !s.staff_id);
   const totalHours = [...hoursByStaff.values()].reduce((a, b) => a + b, 0);
   const staffById = useMemo(() => new Map((staff ?? []).map((s) => [s.id, s])), [staff]);
-  const pay = payDetailsOn(business);
-  const wages = [...hoursByStaff.entries()].reduce((sum, [id, h]) => sum + h * Number(staffById.get(id)?.hourly_rate ?? 0), 0);
-  const missingRate = [...hoursByStaff.keys()].filter((id) => staffById.get(id)?.hourly_rate == null).length;
   const pending = timeOff.filter((t) => t.status === "pending");
   // Usual hours (Plus): who's rostered above their usual weekly hours. Information, not an alarm.
   const overtimeOn = hasCore(plan);
@@ -344,7 +339,7 @@ function WeekPage() {
 
   function downloadCSV() {
     // Worked hours where they've been confirmed on the Hours page, rostered hours otherwise.
-    downloadHoursCsv({ shifts, staff: staff ?? [], pay, weekStart });
+    downloadHoursCsv({ shifts, staff: staff ?? [], weekStart });
   }
 
 
@@ -415,23 +410,9 @@ function WeekPage() {
           <Stat value={totalHours.toFixed(1)} label="paid hours" />
           <Stat value={String(filled)} label={filled === 1 ? "shift" : "shifts"} />
           {unfilled.length > 0 && <Stat value={String(unfilled.length)} label="unfilled" tone="danger" />}
-          {pay && wages > 0 && (
-            <span style={{ ...card, display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 12px", fontSize: 14, color: C.secondary }}>
-              Base wages <strong style={{ color: C.dark }}>≈ {fmtAUD(wages)}</strong>
-              {missingRate > 0 && <span style={{ color: C.muted }}>(excl. {missingRate} without a rate)</span>}
-              <button onClick={() => setWagesHelp((v) => !v)} aria-expanded={wagesHelp} aria-label="How wages are worked out"
-                style={{ background: "none", border: "none", padding: 0, color: C.muted, cursor: "pointer", display: "grid" }}><Info size={16} /></button>
-            </span>
-          )}
           {!isMobile && <button onClick={downloadCSV} className="app-press" style={{ ...btn("ghost"), marginLeft: "auto", color: C.dark }}
             title="One row per shift, plus totals by person. Open in Excel or send to your bookkeeper."><Download size={17} /> Hours for payroll (CSV)</button>}
         </div>
-      )}
-      {pay && wagesHelp && wages > 0 && (
-        <Banner onClose={() => setWagesHelp(false)}>
-          <strong style={{ color: C.dark }}>How this is worked out:</strong> each person&apos;s paid hours this week × the hourly rate you entered for them (Team → Edit).
-          It&apos;s base rates only: no penalty rates, overtime, allowances or super, and people without a rate aren&apos;t counted. Turn it off any time in Settings → Payroll.
-        </Banner>
       )}
       {notice && <Banner onClose={() => setNotice(null)}>{notice}</Banner>}
 
@@ -555,11 +536,7 @@ function WeekPage() {
               <Stat value={totalHours.toFixed(1)} label="paid hours" />
               <Stat value={String(filled)} label={filled === 1 ? "shift" : "shifts"} />
               {unfilled.length > 0 && <Stat value={String(unfilled.length)} label="unfilled" tone="danger" />}
-              {pay && wages > 0 && <Stat value={`≈ ${fmtAUD(wages)}`} label="base wages" />}
             </div>
-          )}
-          {pay && wages > 0 && (
-            <p style={{ fontSize: 13, color: C.muted, margin: "0 0 14px", lineHeight: 1.5 }}>Base wages are paid hours × each person&apos;s hourly rate. No penalty rates, overtime, allowances or super.{missingRate > 0 && ` Excludes ${missingRate} without a rate.`}</p>
           )}
           <div style={{ display: "grid" }}>
             {staff.length > 0 && !isPast && <SheetAction icon={<Copy size={19} />} label="Copy last week" hint="Adds last week's shifts. Nothing is doubled up." onClick={() => { setMoreOpen(false); copyLastWeek(); }} />}

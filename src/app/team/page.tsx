@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useManager } from "@/lib/useManager";
 import type { Staff } from "@/lib/types";
-import { payDetailsOn } from "@/lib/pay";
 import { AppShell, Avatar, C, Loading, Modal, btn, haptic, input, label } from "@/components/ui";
 import { roleSwatch } from "@/lib/roleColors";
 import Link from "next/link";
@@ -168,7 +167,7 @@ function TeamPage() {
           onAdded={(added) => { setStaff((all) => [...(all ?? []), ...added].sort((a, b) => a.name.localeCompare(b.name))); setFromXero(false); }} />
       )}
       {editing && (
-        <StaffEditor staff={editing} roles={business.roles} pay={payDetailsOn(business)} onClose={() => setEditing(null)}
+        <StaffEditor staff={editing} roles={business.roles} onClose={() => setEditing(null)}
           onSaved={(s) => { setStaff((all) => all!.map((x) => (x.id === s.id ? s : x))); setEditing(null); }} />
       )}
     </AppShell>
@@ -207,13 +206,12 @@ function TeamLinkCard({ token, onReset }: { token: string; onReset: () => Promis
   );
 }
 
-function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
-  staff: Staff; roles: string[]; pay: boolean; onClose: () => void; onSaved: (s: Staff) => void;
+function StaffEditor({ staff, roles, onClose, onSaved }: {
+  staff: Staff; roles: string[]; onClose: () => void; onSaved: (s: Staff) => void;
 }) {
   const [f, setF] = useState({
     name: staff.name, mobile: staff.mobile ?? "", email: staff.email ?? "",
-    default_role: staff.default_role ?? "", hourly_rate: staff.hourly_rate?.toString() ?? "",
-    payroll_id: staff.payroll_id ?? "",
+    default_role: staff.default_role ?? "",
     max_weekly_hours: String(staff.max_weekly_hours ?? DEFAULT_WEEKLY_HOURS),
     employment_basis: staff.employment_basis ?? "",
   });
@@ -222,8 +220,6 @@ function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
 
   async function save(patch?: Partial<Staff>) {
     setError(null);
-    const rate = f.hourly_rate.trim() === "" ? null : Number(f.hourly_rate);
-    if (rate != null && (Number.isNaN(rate) || rate < 0)) { setError("Hourly rate should be a number."); return; }
     const weekly = f.max_weekly_hours.trim() === "" ? DEFAULT_WEEKLY_HOURS : Number(f.max_weekly_hours);
     if (Number.isNaN(weekly) || weekly <= 0 || weekly > 100) { setError("Weekly hours should be a number from 1 to 100."); return; }
     const { data, error } = await supabase().from("staff").update({
@@ -231,11 +227,9 @@ function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
       default_role: f.default_role || null,
       max_weekly_hours: Math.round(weekly * 10) / 10,
       employment_basis: f.employment_basis || null,
-      // Pay fields are only edited (and so only saved) when Pay details is on.
-      ...(pay ? { hourly_rate: rate, payroll_id: f.payroll_id.trim() || null } : {}),
       ...patch,
     }).eq("id", staff.id).select().single();
-    if (error) setError(error.code === "23505" ? "Someone else already has that payroll ID." : error.code === "P0001" ? `The Free plan is for up to ${FREE_STAFF_LIMIT} staff. Upgrade to Plus for unlimited staff.` : "Couldn't save. Please try again.");
+    if (error) setError(error.code === "P0001" ? `The Free plan is for up to ${FREE_STAFF_LIMIT} staff. Upgrade to Plus for unlimited staff.` : "Couldn't save. Please try again.");
     else if (data) onSaved(data);
   }
 
@@ -266,16 +260,6 @@ function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
           <input id="weekly" style={{ ...input, maxWidth: 160 }} inputMode="decimal" value={f.max_weekly_hours} onChange={set("max_weekly_hours")} placeholder={String(DEFAULT_WEEKLY_HOURS)} />
           <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0" }}>{DEFAULT_WEEKLY_HOURS} is a standard full-time week. Use their agreed hours for part-timers. The roster shows when you give them more.</p>
         </div>
-        {pay && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div><label style={label}>Hourly rate ($)</label>
-              <input style={input} inputMode="decimal" value={f.hourly_rate} onChange={set("hourly_rate")} placeholder="e.g. 32.50" />
-            </div>
-            <div><label style={label}>Payroll ID</label>
-              <input style={input} value={f.payroll_id} onChange={set("payroll_id")} maxLength={40} placeholder="From Xero, MYOB…" />
-            </div>
-          </div>
-        )}
         {error && <p style={{ color: C.danger, fontSize: 13, margin: 0 }}>{error}</p>}
         <button onClick={() => save()} disabled={!f.name.trim()} style={btn("primary")}>Save</button>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

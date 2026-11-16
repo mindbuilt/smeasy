@@ -9,7 +9,7 @@
 - Shifts are colour-coded by role; shifts and days can carry notes; shifts can be left unfilled ("no one yet"); a daily cover line shows people on, hours and gaps.
 - Australian public holidays are marked by state.
 - Staff can subscribe to their published shifts in Apple, Google or Outlook calendars from their personal link.
-- See paid hours per person and for the team. Each person has usual weekly hours (default 38); the roster quietly notes when someone is rostered above them. Optional "Pay details" setting (off by default) adds hourly rates, payroll IDs, a base-rate wage estimate and extra payroll CSV columns.
+- See paid hours per person and for the team. Each person has usual weekly hours (default 38); the roster quietly notes when someone is rostered above them. SMEasy works out hours, not pay: no wage estimates or pay rates.
 - Day view: a calendar-style day (hours down the page) with gaps in cover shown in red; the week grid shows a gap bar under each day.
 - The week can start on any day (Settings).
 - Timesheets (Hours tab): confirm or adjust the hours actually worked, mark no-shows, approve the week.

@@ -78,7 +78,7 @@ export default function XeroCard({ businessId, pro }: { businessId: string; pro:
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-        <h3 style={{ fontSize: 16, fontWeight: 750, color: C.dark, margin: 0 }}>Xero Payroll</h3>
+        <h2 style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: 0 }}>Xero Payroll</h2>
         <span style={{ fontSize: 12, fontWeight: 700, borderRadius: 999, padding: "3px 9px", background: "#eef0f3", color: C.secondary }}>Pro</span>
       </div>
       {pro && <p style={{ fontSize: 13, color: C.muted, margin: "0 0 12px", lineHeight: 1.5 }}>Approved hours go to Xero as draft timesheets for you to check and approve.</p>}

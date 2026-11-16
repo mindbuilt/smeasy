@@ -60,7 +60,7 @@ export default function Privacy() {
       <h3 style={h3}>About staff (entered by the account holder)</h3>
       <ul style={ul}>
         <L>Name. This is the only required field.</L>
-        <L>Optional: mobile number, email address and usual role. If the account holder turns on Pay details, also hourly rate and payroll ID.</L>
+        <L>Optional: mobile number, email address, usual role, usual hours a week and employment type (casual, part-time or full-time).</L>
         <L>Roster information: shifts (dates, times, breaks and roles) and whether a roster has been published.</L>
         <L>Time-off requests: dates, the optional reason given, and whether the request was approved or declined.</L>
       </ul>
@@ -85,7 +85,7 @@ export default function Privacy() {
 
       <h2 style={h2}>How we use information</h2>
       <ul style={ul}>
-        <L>To provide SMEasy: signing in, building, publishing and sharing rosters, calculating hours and (if turned on) wage estimates, and handling time-off requests.</L>
+        <L>To provide SMEasy: signing in, building, publishing and sharing rosters, calculating hours, recording the hours actually worked, and handling time-off requests.</L>
         <L>To send sign-in emails.</L>
         <L>To keep SMEasy secure and fix problems.</L>
         <L>To improve our public website, using analytics from public pages only, where you&apos;ve agreed to it.</L>
@@ -96,7 +96,7 @@ export default function Privacy() {
       <h2 style={h2}>Who can see what</h2>
       <ul style={ul}>
         <L><strong>Account holders</strong> can see and change everything about their own business, and nothing about any other business.</L>
-        <L><strong>Anyone with a business&apos;s team roster link</strong> can see that business&apos;s published rosters: names, days, shift times and roles only. Not hourly rates, contact details or drafts. Account holders can reset the link at any time, which stops the old link working.</L>
+        <L><strong>Anyone with a business&apos;s team roster link</strong> can see that business&apos;s published rosters: names, days, shift times and roles only. Not contact details or drafts. Account holders can reset the link at any time, which stops the old link working.</L>
         <L><strong>Anyone with a staff member&apos;s personal link</strong> can see that business&apos;s published rosters and that staff member&apos;s time-off requests, and can submit time-off requests in their name. Account holders can reset a personal link at any time.</L>
         <L><strong>Our team</strong> accesses account data only when needed to provide support, fix problems or meet legal obligations.</L>
       </ul>

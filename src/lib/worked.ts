@@ -35,14 +35,12 @@ export const EMPLOYMENT: Record<string, string> = { full_time: "Full-time", part
 /**
  * Hours for payroll: one row per shift (bookkeepers need the day and times for
  * weekend and public-holiday rates), then totals by person. Start, finish and
- * break are what was worked. With Pay details on, payroll ID, rate and base pay are added.
+ * break are what was worked. Pay is worked out by payroll software, not here.
  */
-export function downloadHoursCsv({ shifts, staff, pay, weekStart, fileName }: { shifts: Shift[]; staff: Staff[]; pay: boolean; weekStart: string; fileName?: string }) {
+export function downloadHoursCsv({ shifts, staff, weekStart, fileName }: { shifts: Shift[]; staff: Staff[]; weekStart: string; fileName?: string }) {
   const byId = new Map(staff.map((p) => [p.id, p]));
-  const money = (n: number) => n.toFixed(2);
   const rows: string[][] = [[
-    "Name", ...(pay ? ["Payroll ID"] : []), "Employment type", "Date", "Day", "Start", "Finish", "Unpaid break (min)", "Rostered hours", "Worked hours", "Role", "Note",
-    ...(pay ? ["Hourly rate", "Base pay"] : []),
+    "Name", "Employment type", "Date", "Day", "Start", "Finish", "Unpaid break (min)", "Rostered hours", "Worked hours", "Role", "Note",
   ]];
   const sorted = shifts.filter((s) => s.staff_id).sort((a, b) =>
     (byId.get(a.staff_id!)?.name ?? "").localeCompare(byId.get(b.staff_id!)?.name ?? "") ||
@@ -55,19 +53,15 @@ export function downloadHoursCsv({ shifts, staff, pay, weekStart, fileName }: { 
     const h = workedHours(s);
     const t = totals.get(s.staff_id!) ?? { rostered: 0, worked: 0 };
     totals.set(s.staff_id!, { rostered: t.rostered + r, worked: t.worked + h });
-    const rate = p?.hourly_rate == null ? null : Number(p.hourly_rate);
-    rows.push([p?.name ?? "", ...(pay ? [p?.payroll_id ?? ""] : []), EMPLOYMENT[p?.employment_basis ?? ""] ?? "", s.date, fmtDay(s.date).split(" ")[0],
+    rows.push([p?.name ?? "", EMPLOYMENT[p?.employment_basis ?? ""] ?? "", s.date, fmtDay(s.date).split(" ")[0],
       s.no_show ? "" : w.start, s.no_show ? "" : w.end, s.no_show ? "" : String(w.breakMinutes), r.toFixed(2), h.toFixed(2), s.role ?? "",
-      s.no_show ? "Didn't work" : changed(s) ? "Times changed" : "",
-      ...(pay ? [rate == null ? "" : money(rate), rate == null ? "" : money(rate * h)] : [])]);
+      s.no_show ? "Didn't work" : changed(s) ? "Times changed" : ""]);
   }
-  rows.push([], ["Totals by person"], ["Name", ...(pay ? ["Payroll ID"] : []), "Employment type", "Rostered hours", "Worked hours", ...(pay ? ["Hourly rate", "Base pay"] : [])]);
+  rows.push([], ["Totals by person"], ["Name", "Employment type", "Rostered hours", "Worked hours"]);
   for (const p of [...staff].sort((a, b) => a.name.localeCompare(b.name))) {
     const t = totals.get(p.id);
     if (!t) continue;
-    const rate = p.hourly_rate == null ? null : Number(p.hourly_rate);
-    rows.push([p.name, ...(pay ? [p.payroll_id ?? ""] : []), EMPLOYMENT[p.employment_basis ?? ""] ?? "", t.rostered.toFixed(2), t.worked.toFixed(2),
-      ...(pay ? [rate == null ? "" : money(rate), rate == null ? "" : money(rate * t.worked)] : [])]);
+    rows.push([p.name, EMPLOYMENT[p.employment_basis ?? ""] ?? "", t.rostered.toFixed(2), t.worked.toFixed(2)]);
   }
   const csv = rows.map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
   const a = document.createElement("a");

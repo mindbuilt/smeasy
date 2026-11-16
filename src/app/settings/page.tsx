@@ -10,7 +10,6 @@ import PlanCard from "@/components/PlanCard";
 import XeroCard from "@/components/XeroCard";
 import { hasPro, usePlan } from "@/lib/usePlan";
 import { STATES, STATE_TIMEZONE, type State } from "@/lib/holidays";
-import { payDetailsOn, withPayDetails } from "@/lib/pay";
 import { AppShell, C, Loading, btn, haptic, input, label } from "@/components/ui";
 import { WEEKDAYS, fmtWeek, thisWeekStart } from "@/lib/dates";
 
@@ -53,20 +52,8 @@ export default function SettingsPage() {
           <PlanCard businessId={business.id} />
         </section>
 
-        {/* Payroll: pay rates for the wage estimate and CSV, and (on Pro) the Xero connection. */}
         <section id="payroll" style={card}>
-          <h2 style={h2}>Payroll</h2>
-          <div id="pay" style={{ marginTop: 12 }}>
-            <Switch on={payDetailsOn(business)} label="Pay rates and payroll IDs"
-              onChange={(on) => update({ payroll_settings: withPayDetails(business, on) })} />
-            <p style={{ fontSize: 13, color: C.muted, margin: "8px 0 0", lineHeight: 1.5 }}>
-              Add each person&apos;s hourly rate and payroll ID on the Team page for a base-rate wage estimate and extra columns in your hours CSV.
-              Base rates only: no penalty rates, overtime or super. Only you see them.
-            </p>
-          </div>
-          <div style={{ borderTop: `1px solid ${C.divider}`, marginTop: 18, paddingTop: 18 }}>
-            <XeroCard businessId={business.id} pro={hasPro(plan)} />
-          </div>
+          <XeroCard businessId={business.id} pro={hasPro(plan)} />
         </section>
 
         <section id="login" style={card}>
@@ -79,18 +66,6 @@ export default function SettingsPage() {
         </section>
       </div>
     </AppShell>
-  );
-}
-
-function Switch({ on, label: text, onChange }: { on: boolean; label: string; onChange: (on: boolean) => void }) {
-  return (
-    <button type="button" role="switch" aria-checked={on} onClick={() => { haptic(6); onChange(!on); }} className="app-press"
-      style={{ display: "flex", alignItems: "center", gap: 12, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", fontSize: 16, fontWeight: 650, color: C.dark }}>
-      <span aria-hidden style={{ width: 50, height: 30, borderRadius: 999, background: on ? C.accent : "#d1d5db", position: "relative", transition: "background-color 200ms ease", flex: "none" }}>
-        <span style={{ position: "absolute", top: 3, left: on ? 23 : 3, width: 24, height: 24, borderRadius: "50%", background: C.white, boxShadow: "0 1px 3px rgba(17,24,39,0.25)", transition: "left 220ms cubic-bezier(.16,1,.3,1)" }} />
-      </span>
-      {text}
-    </button>
   );
 }
 
