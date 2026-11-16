@@ -146,7 +146,7 @@ function WeekPage() {
   const wages = [...hoursByStaff.entries()].reduce((sum, [id, h]) => sum + h * Number(staffById.get(id)?.hourly_rate ?? 0), 0);
   const missingRate = [...hoursByStaff.keys()].filter((id) => staffById.get(id)?.hourly_rate == null).length;
   const pending = timeOff.filter((t) => t.status === "pending");
-  // Usual hours (Core): who's rostered above their usual weekly hours. Information, not an alarm.
+  // Usual hours (Plus): who's rostered above their usual weekly hours. Information, not an alarm.
   const overtimeOn = hasCore(plan);
   const overtime = overtimeOn ? (staff ?? []).flatMap((p) => {
     const h = hoursByStaff.get(p.id) ?? 0;
@@ -215,7 +215,7 @@ function WeekPage() {
     if (!business) return false;
     const { data, error } = await supabase().from("staff")
       .insert({ business_id: business.id, name, default_role: business.roles[0] ?? null }).select().single();
-    if (error?.code === "P0001") { setNotice(`The Free plan is for up to ${FREE_STAFF_LIMIT} staff. Upgrade to Core for unlimited staff. See Settings → Plan.`); return false; }
+    if (error?.code === "P0001") { setNotice(`The Free plan is for up to ${FREE_STAFF_LIMIT} staff. Upgrade to Plus for unlimited staff. See Settings → Plan.`); return false; }
     if (!data) return false;
     setStaff((all) => [...(all ?? []), data].sort((a, b) => a.name.localeCompare(b.name)));
     return true;
@@ -656,7 +656,7 @@ function AddStaff({ onAdd, limited }: { onAdd: (name: string) => Promise<boolean
   if (limited) {
     return (
       <div style={{ padding: "14px 16px", fontSize: 14, color: C.secondary, lineHeight: 1.5 }}>
-        The Free plan is for up to {FREE_STAFF_LIMIT} staff. <Link href="/settings/#plan" style={{ color: C.dark, fontWeight: 700 }}>Upgrade to Core</Link> for unlimited staff.
+        The Free plan is for up to {FREE_STAFF_LIMIT} staff. <Link href="/settings/#plan" style={{ color: C.dark, fontWeight: 700 }}>Upgrade to Plus</Link> for unlimited staff.
       </div>
     );
   }

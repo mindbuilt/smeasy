@@ -17,8 +17,8 @@ export const SIGNUP_CTA_SHORT = SIGNUPS_OPEN ? "Get started" : "Join the waitlis
 /**
  * Plans and billing (Stripe, via the `billing` and `stripe-webhook` Edge Functions).
  *   Free  up to FREE_STAFF_LIMIT active staff, all rostering.
- *   Core  unlimited staff, timesheets, usual-hours notes. Monthly or annual.
- *   Pro   Core + Xero and MYOB payroll sync. Shown as coming soon until sync ships (PRO_AVAILABLE).
+ *   Plus  unlimited staff, timesheets, usual-hours notes. Monthly or annual.
+ *   Pro   Plus + Xero and MYOB payroll sync. Shown as coming soon until sync ships (PRO_AVAILABLE).
  * Prices are AUD, plus GST, flat per business (no per-user fees).
  *
  * BILLING_ENABLED shows Upgrade / Manage billing in Settings → Plan.
@@ -28,7 +28,7 @@ export const SIGNUP_CTA_SHORT = SIGNUPS_OPEN ? "Get started" : "Join the waitlis
  */
 export type PlanId = "free" | "core" | "pro";
 export type Interval = "month" | "year";
-export const PLAN_NAMES: Record<PlanId, string> = { free: "Free", core: "Core", pro: "Pro" };
+export const PLAN_NAMES: Record<PlanId, string> = { free: "Free", core: "Plus", pro: "Pro" };
 export const PRICES: Record<"core" | "pro", Record<Interval, number>> = {
   core: { month: 29, year: 290 },
   pro: { month: 49, year: 490 },

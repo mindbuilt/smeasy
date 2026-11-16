@@ -7,7 +7,7 @@ import PricingPlans from "./PricingPlans";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    `Flat-rate rostering for Australian small businesses. Free for up to ${FREE_STAFF_LIMIT} staff. Core is $${PRICES.core.month} a month plus GST for unlimited staff.`,
+    `Flat-rate rostering for Australian small businesses. Free for up to ${FREE_STAFF_LIMIT} staff. Plus is $${PRICES.core.month} a month plus GST for unlimited staff.`,
   alternates: { canonical: "/pricing/" },
 };
 

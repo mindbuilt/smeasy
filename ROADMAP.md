@@ -15,10 +15,10 @@ have been removed from the site until built.
 
 ## 2. Core value — next
 - [x] Role colours, shift notes, day notes, daily cover line, unfilled shifts, staff calendar subscription (Nov 2026).
-Build order agreed 2026-11-16 (pricing: Free ≤6 staff, Core $29/$290, Pro $49/$490 with payroll sync):
-- [x] **1. Plans and billing** — Free/Core/Pro in src/lib/site.ts, monthly/annual Core prices in Stripe, 6-staff limit in the app and database (both off during early access), new pricing page with a Pro waitlist.
-- [x] **2. Usual hours (Core)** — usual weekly hours per person (default 38). A quiet, neutral note when someone's rostered above them: muted "+3.5" under their total in the week grid, a line in the shift editor, and a dismissable line on phones. Not a warning (extra hours aren't necessarily bad), no award or pay calculation.
-- [x] **3. Timesheets (Core)** — after the day, the manager confirms or adjusts each shift's actual start/finish and approves the week; approved hours feed the CSV and, later, payroll sync. No clock-in app.
+Build order agreed 2026-11-16 (pricing: Free ≤6 staff, Plus $29/$290, Pro $49/$490 with payroll sync; Plus was called Core until 2026-11-16, and its internal id is still `core`):
+- [x] **1. Plans and billing** — Free/Plus/Pro in src/lib/site.ts, monthly/annual Plus prices in Stripe, 6-staff limit in the app and database (on since the open beta), new pricing page with a Pro waitlist.
+- [x] **2. Usual hours (Plus)** — usual weekly hours per person (default 38). A quiet, neutral note when someone's rostered above them: muted "+3.5" under their total in the week grid, a line in the shift editor, and a dismissable line on phones. Not a warning (extra hours aren't necessarily bad), no award or pay calculation.
+- [x] **3. Timesheets (Plus)** — after the day, the manager confirms or adjusts each shift's actual start/finish and approves the week; approved hours feed the CSV and, later, payroll sync. No clock-in app.
 - [x] **4a. Roster emails (Free)** — on publish, each rostered person with an email gets their shifts and personal link (notify-roster Edge Function, Resend, from hello@smeasy.au, reply-to the manager). "Email the team" on published weeks for updates. Staff add/change their email and stop emails on their personal link; every email has a stop link.
 - [ ] **4b. Web push** — needs a service worker, VAPID keys, a subscriptions table and an "allow notifications" prompt on the staff link (iPhone: only once added to the home screen). No SMS. WhatsApp maybe later.
 - [x] **5. Xero Payroll sync (Pro)**: built and tested against Demo Company (AU) on 2026-11-16.
@@ -52,7 +52,7 @@ Build order agreed 2026-11-16 (pricing: Free ≤6 staff, Core $29/$290, Pro $49/
 - [ ] **Customer billing emails** — turn on Stripe's receipts, invoice, failed-payment, upcoming-renewal (annual) and expiring-card emails; branding; ABN on invoices so they work as tax invoices; a support email that actually receives mail. Optional: our own "You're on Core" / "Your plan ends" emails from the webhook via Resend.
 
 ## Content to update as features ship
-- [ ] **Guides, FAQ and help** — update every guide, the FAQ, llms.txt and in-app help text for the new pricing (Free ≤6, Core, Pro), the day view, week start day, and each feature in the build order (usual-hours notes, timesheets, publish notifications, payroll sync) as it ships. Remove "Coming soon" labels on the pricing page as items land.
+- [ ] **Guides, FAQ and help** — update every guide, the FAQ, llms.txt and in-app help text for the new pricing (Free ≤6, Plus, Pro), the day view, week start day, and each feature in the build order (usual-hours notes, timesheets, publish notifications, payroll sync) as it ships. Remove "Coming soon" labels on the pricing page as items land.
 
 ## SEO and content
 - [ ] More guides: printable/free roster template (could use the PDF), rostering around public holidays, how to roster a small café, casual vs part-time rostering basics (link to Fair Work, no legal advice).

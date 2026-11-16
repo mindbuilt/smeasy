@@ -81,7 +81,7 @@ function TeamPage() {
           </h2>
           {limitHit || atStaffLimit(plan, active.length) ? (
             <div role="status" style={{ background: C.shiftBg, color: C.shiftText, borderRadius: 12, padding: "12px 14px", fontSize: 15, lineHeight: 1.5, marginBottom: 10 }}>
-              The Free plan is for up to {FREE_STAFF_LIMIT} staff. <Link href="/settings/#plan" style={{ color: C.dark, fontWeight: 700 }}>Upgrade to Core</Link> for unlimited staff at one flat price.
+              The Free plan is for up to {FREE_STAFF_LIMIT} staff. <Link href="/settings/#plan" style={{ color: C.dark, fontWeight: 700 }}>Upgrade to Plus</Link> for unlimited staff at one flat price.
             </div>
           ) : (
             <form onSubmit={add} style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -224,7 +224,7 @@ function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
       ...(pay ? { hourly_rate: rate, payroll_id: f.payroll_id.trim() || null } : {}),
       ...patch,
     }).eq("id", staff.id).select().single();
-    if (error) setError(error.code === "23505" ? "Someone else already has that payroll ID." : error.code === "P0001" ? `The Free plan is for up to ${FREE_STAFF_LIMIT} staff. Upgrade to Core for unlimited staff.` : "Couldn't save. Please try again.");
+    if (error) setError(error.code === "23505" ? "Someone else already has that payroll ID." : error.code === "P0001" ? `The Free plan is for up to ${FREE_STAFF_LIMIT} staff. Upgrade to Plus for unlimited staff.` : "Couldn't save. Please try again.");
     else if (data) onSaved(data);
   }
 

@@ -106,7 +106,7 @@ export default function PlanCard({ businessId }: { businessId: string }) {
           <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 14px", lineHeight: 1.5 }}>
             Free is for up to {FREE_STAFF_LIMIT} staff. You have <strong style={{ color: overLimit ? "#9b2c25" : C.dark }}>{staffCount ?? "…"}</strong>.
             {!STAFF_LIMIT_ENFORCED && " There's no staff limit during the beta."}
-            {" "}Core gives you unlimited staff for one flat price: ${PRICES.core.month} a month or ${PRICES.core.year} a year (2 months free), plus GST.
+            {" "}Plus gives you unlimited staff for one flat price: ${PRICES.core.month} a month or ${PRICES.core.year} a year (2 months free), plus GST.
           </p>
           {BILLING_ENABLED && (
             <>
@@ -120,7 +120,7 @@ export default function PlanCard({ businessId }: { businessId: string }) {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                 <button type="button" onClick={() => go("checkout")} disabled={busy} className="app-press" style={{ ...btn("accent"), opacity: busy ? 0.6 : 1 }}>
-                  {busy ? "Opening checkout…" : `Upgrade to Core · ${priceText(interval)}`}
+                  {busy ? "Opening checkout…" : `Upgrade to Plus · ${priceText(interval)}`}
                 </button>
                 {billing?.stripe_customer_id && (
                   <button type="button" onClick={() => go("portal")} disabled={busy} style={btn("ghost")}>Billing history</button>

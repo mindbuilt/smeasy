@@ -88,10 +88,10 @@ export default function PricingPlans() {
           <List items={free} />
         </div>
 
-        {/* Core: the page's one dark surface */}
+        {/* Plus: the page's one dark surface */}
         <div style={{ ...inkCard, padding: "28px 26px" }}>
           <span style={{ ...pill("lime"), marginBottom: 16 }}>Most popular</span>
-          <h2 style={tierName}>Core</h2>
+          <h2 style={tierName}>Plus</h2>
           <div style={{ fontSize: 15, color: onInk, marginBottom: 20 }}>For growing teams</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
             <span style={price}>{amount("core")}</span>
@@ -117,7 +117,7 @@ export default function PricingPlans() {
           <Link href={PRO_AVAILABLE ? SIGNUP_HREF : "/contact/?topic=pro"} className="app-press" style={{ ...button("secondary"), display: "flex", marginBottom: 22 }}>
             {PRO_AVAILABLE ? SIGNUP_CTA_SHORT : "Join the waitlist"}
           </Link>
-          <List items={pro} lead="Everything in Core, plus:" />
+          <List items={pro} lead="Everything in Plus, plus:" />
         </div>
       </div>
     </>

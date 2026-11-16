@@ -136,7 +136,7 @@ function HoursPage() {
 
         {!hasCore(plan) ? (
           <div style={{ ...card, padding: "28px 24px", textAlign: "center" }}>
-            <p style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: "0 0 6px" }}>Timesheets are part of Core</p>
+            <p style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: "0 0 6px" }}>Timesheets are part of Plus</p>
             <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 16px", lineHeight: 1.5 }}>Confirm the hours people actually worked and approve them for payroll.</p>
             <Link href="/settings/#plan" className="app-press" style={{ ...btn("accent"), textDecoration: "none" }}>See plans</Link>
           </div>

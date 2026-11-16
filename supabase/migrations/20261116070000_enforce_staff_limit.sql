@@ -28,7 +28,7 @@ begin
   select count(*) into v_count from public.staff
    where business_id = new.business_id and active and id <> new.id;
   if v_count >= v_limit then
-    raise exception 'The Free plan is for up to % staff. Upgrade to Core for unlimited staff.', v_limit
+    raise exception 'The Free plan is for up to % staff. Upgrade to Plus for unlimited staff.', v_limit
       using errcode = 'P0001';
   end if;
   return new;

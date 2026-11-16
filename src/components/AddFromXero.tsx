@@ -55,7 +55,7 @@ export default function AddFromXero({ businessId, defaultRole, staff, slots, onC
     const { data, error: err } = await supabase().from("staff").insert(rows).select();
     setSaving(false);
     if (err) {
-      setError(err.code === "P0001" ? `The Free plan is for up to ${FREE_STAFF_LIMIT} staff. Upgrade to Core for unlimited staff.` : "Couldn't add them. Please try again.");
+      setError(err.code === "P0001" ? `The Free plan is for up to ${FREE_STAFF_LIMIT} staff. Upgrade to Plus for unlimited staff.` : "Couldn't add them. Please try again.");
       return;
     }
     haptic([10, 40, 16]);

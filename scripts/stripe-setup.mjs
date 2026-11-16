@@ -8,7 +8,7 @@
 // signing secret once, when the endpoint is created).
 //
 // It creates or finds:
-//   - Product "SMEasy Core": A$29/month (smeasy_core_monthly) and A$290/year (smeasy_core_annual), GST on top
+//   - Product "SMEasy Plus": A$29/month (smeasy_core_monthly) and A$290/year (smeasy_core_annual), GST on top
 //   - Tax rate "GST" 10%, Australia, exclusive
 //   - Customer portal settings (update card, invoices, cancel at period end)
 //   - Webhook endpoint for the stripe-webhook Edge Function
@@ -25,8 +25,8 @@ import { join } from "node:path";
 const PROJECT_REF = "jrbjkrukmcqxrthhpdwx";
 const WEBHOOK_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/stripe-webhook`;
 const CORE = [
-  { key: "smeasy_core_monthly", amount: 2900, interval: "month", nickname: "Core monthly", secret: "STRIPE_PRICE_CORE_MONTHLY" },
-  { key: "smeasy_core_annual", amount: 29000, interval: "year", nickname: "Core annual", secret: "STRIPE_PRICE_CORE_ANNUAL" },
+  { key: "smeasy_core_monthly", amount: 2900, interval: "month", nickname: "Plus monthly", secret: "STRIPE_PRICE_CORE_MONTHLY" },
+  { key: "smeasy_core_annual", amount: 29000, interval: "year", nickname: "Plus annual", secret: "STRIPE_PRICE_CORE_ANNUAL" },
 ];
 const EVENTS = ["checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"];
 
@@ -64,13 +64,13 @@ async function api(method, path, params) {
   return body;
 }
 
-// 1. Core product + monthly and annual prices
+// 1. Plus product (internal plan id: core) + monthly and annual prices
 const corePrices = {};
 let coreProduct = null;
 for (const p of CORE) {
   const found = (await api("GET", `prices?lookup_keys[]=${p.key}&active=true`)).data[0];
   if (found) { corePrices[p.secret] = found.id; coreProduct ??= found.product; console.log(`✓ ${p.nickname} price exists: ${found.id}`); continue; }
-  coreProduct ??= (await api("POST", "products", { name: "SMEasy Core", description: "Unlimited staff, flat rate per business. Timesheets and usual-hours notes." })).id;
+  coreProduct ??= (await api("POST", "products", { name: "SMEasy Plus", description: "Unlimited staff, flat rate per business. Timesheets and usual-hours notes." })).id;
   const price = await api("POST", "prices", {
     product: coreProduct, currency: "aud", unit_amount: p.amount, recurring: { interval: p.interval },
     tax_behavior: "exclusive", lookup_key: p.key, nickname: p.nickname,
@@ -90,7 +90,7 @@ else {
 
 // 3. Customer portal
 const portals = (await api("GET", "billing_portal/configurations", { is_default: true, limit: 1 })).data;
-// Lets customers switch between Core monthly and annual themselves.
+// Lets customers switch between Plus monthly and annual themselves.
 const switchPlans = { enabled: true, default_allowed_updates: ["price"], proration_behavior: "create_prorations",
   products: [{ product: coreProduct, prices: Object.values(corePrices) }] };
 if (portals.length) {
