@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
-import { BILLING_ENABLED, FREE_STAFF_LIMIT, PLAN_NAMES, PRICES, STAFF_LIMIT_ENFORCED, type Interval, type PlanId } from "@/lib/site";
+import { BILLING_ENABLED, FREE_STAFF_LIMIT, PLAN_NAMES, PRICES, type Interval, type PlanId } from "@/lib/site";
 import { C, btn } from "@/components/ui";
 
 type Billing = Database["public"]["Tables"]["billing"]["Row"];
@@ -105,7 +105,6 @@ export default function PlanCard({ businessId }: { businessId: string }) {
         <>
           <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 14px", lineHeight: 1.5 }}>
             Free is for up to {FREE_STAFF_LIMIT} staff. You have <strong style={{ color: overLimit ? "#9b2c25" : C.dark }}>{staffCount ?? "…"}</strong>.
-            {!STAFF_LIMIT_ENFORCED && " There's no staff limit during the beta."}
             {" "}Plus gives you unlimited staff for one flat price: ${PRICES.core.month} a month or ${PRICES.core.year} a year (2 months free), plus GST.
           </p>
           {BILLING_ENABLED && (

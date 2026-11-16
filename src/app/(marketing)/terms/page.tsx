@@ -56,7 +56,7 @@ export default function Terms() {
         You are responsible for who you share team and personal roster links with. Anyone with a link can see the rosters it covers. You can reset links at any time in SMEasy.
       </p>
 
-      <h2 style={h2}>4. Plans, fees and the beta</h2>
+      <h2 style={h2}>4. Plans and fees</h2>
       <ul style={ul}>
         <L><strong>Free</strong>: up to 6 active staff, with all rostering features.</L>
         <L><strong>Plus</strong>: unlimited staff, plus timesheets and usual-hours notes. $29 a month or $290 a year.</L>
@@ -69,7 +69,7 @@ export default function Terms() {
         We may change prices or plans with at least 30 days&apos; notice. Changes don&apos;t affect a paid period you&apos;ve already started.
       </p>
       <p style={p}>
-        While SMEasy is in beta, some features are free on every plan, and paid plans may not yet charge. We may change, add or remove features during the beta, and we&apos;ll give notice before paid plans begin charging. Refunds for amounts you have paid are handled as required by the Australian Consumer Law and otherwise at our discretion; contact us at <Mail />.
+        Refunds for amounts you have paid are handled as required by the Australian Consumer Law and otherwise at our discretion; contact us at <Mail />.
       </p>
       <p style={p}>
         If a plan has a staff limit, we&apos;ll stop you adding staff beyond it until you upgrade or remove staff. Your data is kept in either case.

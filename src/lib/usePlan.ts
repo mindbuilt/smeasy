@@ -17,12 +17,12 @@ export function usePlan(businessId: string | undefined) {
   return plan;
 }
 
-/** Paid-plan features. Everyone gets them during the beta. */
+/** Paid-plan features: timesheets and usual-hours notes need Plus or Pro. */
 export function hasCore(plan: PlanId | null) {
   return !CORE_FEATURES_ENFORCED || plan === "core" || plan === "pro";
 }
 
-/** Xero/MYOB payroll sync: top tier only (locked even during the beta). */
+/** Xero/MYOB payroll sync: top tier only. */
 export function hasPro(plan: PlanId | null) {
   return plan === "pro";
 }

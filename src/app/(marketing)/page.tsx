@@ -73,7 +73,7 @@ export default function Home() {
       {/* Hero */}
       <section style={{ ...wrap, padding: "72px 20px 48px", textAlign: "center" }}>
         <span style={{ ...pill(SIGNUPS_OPEN ? "lime" : "draft"), marginBottom: 22 }}>
-          {SIGNUPS_OPEN ? "Now in beta" : "Coming soon"}
+          {SIGNUPS_OPEN ? "Now available" : "Coming soon"}
         </span>
         <h1 style={{ ...display, maxWidth: 820, margin: "0 auto 20px" }}>
           Staff rostering that actually feels easy.
