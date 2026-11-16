@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
-import { useManager } from "@/lib/useManager";
+import { signOut, useManager } from "@/lib/useManager";
+import { LogOut } from "lucide-react";
 import SetPassword from "@/components/SetPassword";
 import PlanCard from "@/components/PlanCard";
 import XeroCard from "@/components/XeroCard";
@@ -82,6 +83,9 @@ export default function SettingsPage() {
             You&apos;re logged in as <strong>{email}</strong>. Set a password to log in with your email and password, without waiting for a login link. You can still use a link any time.
           </p>
           <SetPassword />
+          <button type="button" onClick={signOut} className="app-press" style={{ ...btn(), marginTop: 16 }}>
+            <LogOut size={17} /> Log out
+          </button>
         </section>
       </div>
     </AppShell>

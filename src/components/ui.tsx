@@ -4,8 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { CalendarDays, ChevronDown, Clock, LogOut, Settings, Users, X } from "lucide-react";
-import { signOut } from "@/lib/useManager";
+import { CalendarDays, Clock, Settings, Users, X } from "lucide-react";
 import { APP } from "@/lib/theme";
 
 // App screens use the app palette under the familiar name.
@@ -95,38 +94,17 @@ function Logo() {
   );
 }
 
-function AccountMenu({ businessName, email }: { businessName?: string; email?: string }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [open]);
+/** The business you're in, as plain text. Your login and Log out live in Settings → Your login. */
+function BusinessName({ businessName }: { businessName?: string }) {
+  if (!businessName) return null;
   return (
-    <div ref={ref} style={{ marginLeft: "auto", position: "relative" }}>
-      <button onClick={() => setOpen((m) => !m)} aria-expanded={open} className="app-press"
-        style={{ ...btn("ghost"), padding: "6px 10px", color: C.dark, maxWidth: 200 }}>
-        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{businessName ?? "Account"}</span>
-        <ChevronDown size={16} strokeWidth={2.2} />
-      </button>
-      {open && (
-        <div className="sheet" style={{
-          position: "absolute", right: 0, top: 48, background: C.white, minWidth: 240, zIndex: 50,
-          borderRadius: 14, padding: 6, boxShadow: C.shadowLift,
-        }}>
-          {email && <div style={{ fontSize: 13, color: C.muted, padding: "10px 12px 8px" }}>{email}</div>}
-          <button onClick={signOut} style={{ ...btn("ghost"), width: "100%", justifyContent: "flex-start", color: C.dark }}>
-            <LogOut size={18} strokeWidth={2} /> Log out
-          </button>
-        </div>
-      )}
-    </div>
+    <span style={{ marginLeft: "auto", fontSize: 15, fontWeight: 650, color: C.secondary, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      {businessName}
+    </span>
   );
 }
 
-export function AppShell({ businessName, email, children }: {
+export function AppShell({ businessName, children }: {
   businessName?: string; email?: string; children: ReactNode;
 }) {
   const path = usePathname();
@@ -148,7 +126,7 @@ export function AppShell({ businessName, email, children }: {
               }}><Icon size={18} strokeWidth={isActive(href) ? 2.4 : 2} />{label}</Link>
             ))}
           </nav>
-          <AccountMenu businessName={businessName} email={email} />
+          <BusinessName businessName={businessName} />
         </div>
       </header>
 

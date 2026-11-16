@@ -5,11 +5,21 @@ export const LEGAL_ENTITY = "Open County Pty Ltd";
 export const ABN = "19 679 154 557";
 
 /**
+ * Holding page: public pages show "coming soon" with a preview password for
+ * testers; the app, login and staff links work as normal, and search engines are
+ * told not to index. It's a soft gate (static site), not security: the real lock
+ * on new accounts is SIGNUPS_OPEN plus "Allow new users to sign up" off in Supabase.
+ * Preview password: SHA-256 below (currently "flatwhite").
+ */
+export const HOLDING_PAGE = true;
+export const PREVIEW_PASSWORD_SHA256 = "c9a6dd3f5be65518575c261fc6f96b719622a09547968ac850c34cfa290450a8";
+
+/**
  * Sign-ups. Open since the beta started (2026-11-16); "Allow new users to sign up"
  * must also be on in Supabase Auth. When false, "Get started" buttons become a
  * waitlist request and the login page only logs in existing accounts.
  */
-export const SIGNUPS_OPEN = true;
+export const SIGNUPS_OPEN = false; // closed again while the holding page is up (2026-11-16)
 export const SIGNUP_HREF = SIGNUPS_OPEN ? "/auth/login/?signup" : "/contact/";
 export const SIGNUP_CTA = SIGNUPS_OPEN ? "Get started free" : "Join the waitlist";
 export const SIGNUP_CTA_SHORT = SIGNUPS_OPEN ? "Get started" : "Join the waitlist";

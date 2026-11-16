@@ -5,6 +5,7 @@ import { LEGAL_ENTITY } from "@/lib/site";
 import AccountLinks from "@/components/AccountLinks";
 import MarketingNav from "@/components/MarketingNav";
 import CookieNotice, { CookieSettingsLink } from "@/components/CookieNotice";
+import HoldingGate from "@/components/HoldingGate";
 
 // Public, pre-login pages: landing, guides, FAQ. Analytics loads here only,
 // after consent — never on manager or staff pages, whose URLs carry private links.
@@ -12,6 +13,7 @@ import CookieNotice, { CookieSettingsLink } from "@/components/CookieNotice";
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   const footLink = { color: C.secondary, textDecoration: "none" } as const;
   return (
+    <HoldingGate>
     <div className="app" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <CookieNotice />
 
@@ -52,5 +54,6 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
         </div>
       </footer>
     </div>
+    </HoldingGate>
   );
 }

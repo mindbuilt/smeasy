@@ -9,7 +9,7 @@ import { SIGNUP_HREF, SIGNUP_CTA_SHORT } from "@/lib/site";
 // Ink, not lime: the page's own hero or closing button is the one lime action.
 const primary = button("primary", "md");
 
-/** Header links on public pages: "Log in / Get started", or "Go to my roster" when already logged in. */
+/** Header links on public pages: "Log in / Get started", or "Open SMEasy" when already logged in. */
 export default function AccountLinks() {
   const [signedIn, setSignedIn] = useState(false);
 
@@ -21,7 +21,7 @@ export default function AccountLinks() {
     return () => { cancelled = true; };
   }, []);
 
-  if (signedIn) return <Link href="/week/" className="app-press" style={primary}>Go to my roster</Link>;
+  if (signedIn) return <Link href="/week/" className="app-press" style={primary}>Open SMEasy</Link>;
   return (
     <>
       <Link href="/auth/login/" className="mkt-navlink" style={{ color: C.secondary }}>Log in</Link>
