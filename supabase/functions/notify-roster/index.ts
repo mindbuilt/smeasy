@@ -65,14 +65,14 @@ function emailFor(p: Person, business: string, weekStart: string, shifts: Shift[
       <h1 style="font-size:22px;line-height:1.25;margin:0 0 6px;color:#111827">Hi ${esc(first)}</h1>
       <p style="font-size:16px;color:#4b5563;margin:0 0 14px;line-height:1.5">${esc(intro)}</p>
       <table role="presentation" style="width:100%;border-collapse:collapse;font-size:16px;line-height:1.4">${rows}</table>
-      <p style="margin:22px 0 0"><a href="${link}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:12px 20px;border-radius:10px">See the full roster</a></p>
-      <p style="font-size:14px;color:#6b7280;margin:14px 0 0;line-height:1.5">Your link also lets you request time off and add shifts to your phone calendar. Questions? Just reply to this email.</p>
+      <p style="margin:22px 0 0"><a href="${link}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:12px 20px;border-radius:10px">Open my shifts</a></p>
+      <p style="font-size:14px;color:#6b7280;margin:14px 0 0;line-height:1.5">This link is just for you: it shows your shifts, the whole team's roster, and lets you request time off and add shifts to your phone's calendar. Questions? Just reply to this email.</p>
     </div>
     <p style="font-size:12px;color:#6b7280;margin:16px 4px 0;line-height:1.5">Sent by SMEasy for ${esc(business)}. <a href="${stop}" style="color:#6b7280">Stop roster emails</a></p>
   </div></body></html>`;
 
   const text = [`Hi ${first},`, "", intro, "", ...mine.map((s) => `${fmtDay(s.date)}: ${line(s)}${s.notes ? ` (${s.notes})` : ""}`), "",
-    `See the full roster: ${link}`, "", `Sent by SMEasy for ${business}. Stop roster emails: ${stop}`].join("\n");
+    `Open my shifts: ${link}`, "", `Sent by SMEasy for ${business}. Stop roster emails: ${stop}`].join("\n");
 
   return { subject, html, text, stop };
 }

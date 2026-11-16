@@ -5,8 +5,7 @@ import { FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { addDays, toISO } from "@/lib/dates";
 import { downloadRosterPdf, PdfShift } from "@/lib/rosterPdf";
-import { C, Loading, btn, card, haptic, input } from "@/components/ui";
-import { Mail } from "lucide-react";
+import { C, Loading, btn, card, haptic } from "@/components/ui";
 import { DayList, StaffFooter, StaffShell, WeekNav, readToken } from "@/components/StaffBits";
 
 type TeamShift = PdfShift & { id: string };
@@ -18,7 +17,8 @@ type View = {
 const TOKEN_KEY = "smeasy_team_token";
 
 // Shared team roster: /r/#<team_token>. Read-only, published weeks only. It's one link for the
-// whole team, so it can't know who's looking: "my shifts" lives on each person's personal link.
+// whole team, so it can't know who's looking: "my shifts" lives on each person's personal link,
+// which they get in their roster emails.
 export default function TeamRoster() {
   const [token, setToken] = useState<string | null>(null);
   // Any date in the week will do: the server rounds it to the business's week start.
@@ -74,40 +74,7 @@ export default function TeamRoster() {
         </>
       )}
 
-      {validToken && <SendMyLink token={token!} />}
-
       <StaffFooter hint="Add this page to your home screen and it opens like an app, always showing the latest published roster." />
     </StaffShell>
-  );
-}
-
-/** "Just my shifts": email yourself your personal link (only works for an email on the team). */
-function SendMyLink({ token }: { token: string }) {
-  const [email, setEmail] = useState("");
-  const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setState("sending");
-    await supabase().functions.invoke("send-my-link", { body: { team_token: token, email } });
-    haptic(10);
-    setState("sent");
-  }
-  return (
-    <section style={{ ...card, padding: "16px 16px 14px", marginTop: 14 }}>
-      <h2 style={{ fontSize: 17, fontWeight: 800, color: C.dark, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Mail size={19} /> Just your shifts</h2>
-      {state === "sent" ? (
-        <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.5 }}>
-          If that email is on the team, your personal link is on its way. It shows your shifts first, and lets you request time off and add shifts to your calendar.
-        </p>
-      ) : (
-        <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
-          <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.5 }}>Get your personal link by email. It opens on your own shifts.</p>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="The email your manager has for you" aria-label="Your email" autoComplete="email" style={input} />
-            <button type="submit" disabled={state === "sending" || !email.trim()} className="app-press" style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: email.trim() ? 1 : 0.5 }}>{state === "sending" ? "Sending…" : "Email me"}</button>
-          </div>
-        </form>
-      )}
-    </section>
   );
 }
