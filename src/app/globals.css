@@ -257,7 +257,7 @@ html:has(.app), body:has(.app) { background: #f6f7f9; }
 
 /* Staff links: the week as a list on phones, as Mon → Sun columns on wide screens. */
 .staff-week-grid { display: none; }
-@media (min-width: 900px) {
+@media (min-width: 720px) {
   .staff-week-grid { display: grid; }
   .staff-week-list { display: none !important; }
 }

@@ -167,15 +167,12 @@ export function DayList({ weekStart, shifts, roles, state, dayNotes, isMine, you
             {day.map((s) => {
               const me = isMine(s);
               return (
-                <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 8px", margin: "0 -8px", borderRadius: 12, background: me ? C.shiftBg : "transparent" }}>
-                  <Avatar name={s.staff_name} size={32} tone={me ? { bg: C.accent, text: C.dark } : undefined} />
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: "block", fontSize: 15, fontWeight: me ? 800 : 600, color: C.dark }}>{me && youLabel ? "You" : s.staff_name}</span>
-                    <span style={{ display: "block", fontSize: 14, color: C.secondary }}>
-                      {fmtTime(s.start_time)} – {fmtTime(s.end_time)}{s.notes ? ` · ${s.notes}` : ""}
-                    </span>
-                  </span>
-                  <RolePill role={s.role} roles={roles} />
+                // One compact line per shift, so busy days stay short on a phone.
+                <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", margin: "0 -8px", borderRadius: 10, background: me ? C.shiftBg : "transparent", fontSize: 15 }}>
+                  <span style={{ fontWeight: me ? 800 : 650, color: C.dark, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: "0 1 auto" }}>{me && youLabel ? "You" : s.staff_name}</span>
+                  <span style={{ color: C.secondary, whiteSpace: "nowrap", flex: "none" }}>{fmtTime(s.start_time)} – {fmtTime(s.end_time)}</span>
+                  {s.notes && <span title={s.notes} style={{ color: C.muted, fontSize: 13, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: "1 1 0" }}>{s.notes}</span>}
+                  <span style={{ marginLeft: "auto", flex: "none" }}><RolePill role={s.role} roles={roles} /></span>
                 </div>
               );
             })}
