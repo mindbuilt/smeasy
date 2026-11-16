@@ -7,7 +7,7 @@ import { FREE_STAFF_LIMIT } from "@/lib/site";
 import Link from "next/link";
 import { C, Modal, btn, haptic } from "@/components/ui";
 
-type XeroEmployee = { id: string; name: string; email: string | null; mobile: string | null };
+type XeroEmployee = { id: string; name: string; email: string | null; mobile: string | null; basis?: string | null };
 
 const norm = (n: string) => n.toLowerCase().replace(/\s+/g, " ").trim();
 
@@ -29,7 +29,7 @@ export default function AddFromXero({ businessId, defaultRole, staff, slots, onC
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data, error: err } = await supabase().functions.invoke("xero", { body: { action: "employees" } });
+      const { data, error: err } = await supabase().functions.invoke("xero", { body: { action: "employees", details: true } });
       if (cancelled) return;
       if (err || !data) {
         let msg = "Couldn't load your Xero employees. Please try again.";
@@ -51,6 +51,7 @@ export default function AddFromXero({ businessId, defaultRole, staff, slots, onC
     setSaving(true); setError(null);
     const rows = employees.filter((e) => picked.has(e.id)).map((e) => ({
       business_id: businessId, name: e.name, email: e.email, mobile: e.mobile, xero_employee_id: e.id, default_role: defaultRole,
+      employment_basis: e.basis ?? null,
     }));
     const { data, error: err } = await supabase().from("staff").insert(rows).select();
     setSaving(false);

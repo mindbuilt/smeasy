@@ -48,6 +48,10 @@ Build order agreed 2026-11-16 (pricing: Free ≤6 staff, Plus $29/$290, Pro $49/
 - [ ] **Pay details as a Pro feature?** — Settings → Pay details (hourly rates, payroll IDs, base-rate estimate, pay columns in CSV) is built and free for now. Decide whether it moves to Pro when billing exists.
 - [ ] **Before charging anyone** — turn on the staff limit (`STAFF_LIMIT_ENFORCED` + the database trigger's `v_enforce`), switch Stripe to live keys, email early-access users well in advance (Free drops from 10 to 6 staff), terms of service. Put Pro on sale (`PRO_AVAILABLE`, Pro prices in Stripe) when Xero sync ships.
 
+## Record-keeping (Fair Work), 2026-11-16
+- [x] Employment type per person (filled from Xero EmploymentBasis), approved weeks freeze worked times, approved shifts can't be deleted, reopening needs a reason and every change is kept in hours_changes, date-range export, FAQ/privacy wording (7-year rule, the employer is responsible), "Published <date>" on the roster.
+- [ ] Later: a change log for published rosters (what changed and when staff were told); break start times if awards need them; keep approval state when the week start day is changed (regrouping currently drops it).
+
 ## Billing follow-ups (parked 2026-11-16)
 - [ ] **Customer billing emails** — turn on Stripe's receipts, invoice, failed-payment, upcoming-renewal (annual) and expiring-card emails; branding; ABN on invoices so they work as tax invoices; a support email that actually receives mail. Optional: our own "You're on Core" / "Your plan ends" emails from the webhook via Resend.
 

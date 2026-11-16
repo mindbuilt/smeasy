@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     const { data: business } = await sb.from("businesses").select("id").maybeSingle();
     if (!business) return json({ error: "Set up your business first." }, 400);
 
-    const { action, roster_id } = await req.json().catch(() => ({}));
+    const { action, roster_id, details } = await req.json().catch(() => ({}));
 
 
     if (action === "disconnect") { await disconnect(business.id); return json({ ok: true }); }
@@ -70,6 +70,20 @@ Deno.serve(async (req) => {
           email: e.Email?.trim() || null, mobile: (e.Mobile || e.Phone)?.trim() || null,
         });
         if (list.length < 100) break;
+      }
+      // details: also read each employee's employment basis (in their tax declaration), a few at a time
+      // to stay inside Xero's limit of 5 calls at once.
+      if (details) {
+        const BASIS: Record<string, string> = { FULLTIME: "full_time", PARTTIME: "part_time", CASUAL: "casual" };
+        const list = employees.slice(0, 60);
+        for (let i = 0; i < list.length; i += 4) {
+          await Promise.all(list.slice(i, i + 4).map(async (e) => {
+            try {
+              const emp = (await payroll(a, `Employees/${e.id}`)).Employees?.[0];
+              (e as Record<string, unknown>).basis = BASIS[emp?.TaxDeclaration?.EmploymentBasis ?? ""] ?? null;
+            } catch { /* leave it blank */ }
+          }));
+        }
       }
       return json({ employees: employees.sort((x, y) => x.name.localeCompare(y.name)) });
     }

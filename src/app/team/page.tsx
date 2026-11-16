@@ -14,6 +14,7 @@ import { DEFAULT_WEEKLY_HOURS, FREE_STAFF_LIMIT, STAFF_LIMIT_ENFORCED } from "@/
 import { Check, Copy, MessageSquare, Pencil } from "lucide-react";
 import AddFromXero from "@/components/AddFromXero";
 import RolesEditor from "@/components/RolesEditor";
+import { EMPLOYMENT } from "@/lib/worked";
 
 function staffLink(s: Staff) {
   return `${window.location.origin}/s/#${s.roster_token}`;
@@ -110,7 +111,7 @@ function TeamPage() {
                 <div style={{ flex: 1, minWidth: 130 }}>
                   <div style={{ fontSize: 16, fontWeight: 700, color: C.dark }}>{s.name}</div>
                   <div style={{ fontSize: 14, color: C.muted }}>
-                    {[s.default_role, s.mobile].filter(Boolean).join(" · ") || "No role or mobile yet"}
+                    {[s.default_role, EMPLOYMENT[s.employment_basis ?? ""], s.mobile].filter(Boolean).join(" · ") || "No role or mobile yet"}
                   </div>
                   <div style={{ fontSize: 13, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {s.email ? <>{s.email}{!s.email_roster && " · roster emails off"}</> : <button onClick={() => setEditing(s)} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.shiftText, fontWeight: 650, cursor: "pointer" }}>Add email for roster emails</button>}
@@ -214,6 +215,7 @@ function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
     default_role: staff.default_role ?? "", hourly_rate: staff.hourly_rate?.toString() ?? "",
     payroll_id: staff.payroll_id ?? "",
     max_weekly_hours: String(staff.max_weekly_hours ?? DEFAULT_WEEKLY_HOURS),
+    employment_basis: staff.employment_basis ?? "",
   });
   const [error, setError] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
@@ -228,6 +230,7 @@ function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
       name: f.name.trim(), mobile: f.mobile.trim() || null, email: f.email.trim() || null,
       default_role: f.default_role || null,
       max_weekly_hours: Math.round(weekly * 10) / 10,
+      employment_basis: f.employment_basis || null,
       // Pay fields are only edited (and so only saved) when Pay details is on.
       ...(pay ? { hourly_rate: rate, payroll_id: f.payroll_id.trim() || null } : {}),
       ...patch,
@@ -244,6 +247,14 @@ function StaffEditor({ staff, roles, pay, onClose, onSaved }: {
         <div><label style={label} htmlFor="staff-email">Email (for roster emails)</label>
           <input id="staff-email" style={input} type="email" value={f.email} onChange={set("email")} placeholder="name@example.com" />
           <p style={{ fontSize: 12, color: C.muted, margin: "6px 0 0" }}>They get their shifts by email when you publish. They can also add or change it on their personal link.{!staff.email_roster && " They've turned roster emails off."}</p>
+        </div>
+        <div><label style={label} htmlFor="employment">Employment type</label>
+          <select id="employment" style={input} value={f.employment_basis} onChange={set("employment_basis")}>
+            <option value="">Not set</option>
+            <option value="casual">Casual</option>
+            <option value="part_time">Part-time</option>
+            <option value="full_time">Full-time</option>
+          </select>
         </div>
         <div><label style={label}>Usual role</label>
           <select style={input} value={f.default_role} onChange={set("default_role")}>

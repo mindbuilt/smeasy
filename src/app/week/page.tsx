@@ -192,7 +192,7 @@ function WeekPage() {
     const { data, error } = d.id
       ? await sb.from("shifts").update(row).eq("id", d.id).select().single()
       : await sb.from("shifts").insert(row).select().single();
-    if (error || !data) { setNotice("Couldn't save that shift. Check the times and try again."); return; }
+    if (error || !data) { setNotice(error?.code === "P0003" ? error.message : "Couldn't save that shift. Check the times and try again."); return; }
     let copies: Shift[] = [];
     const extra = alsoOn.filter((x) => x !== d.date);
     if (extra.length) {
@@ -222,9 +222,11 @@ function WeekPage() {
   }
 
   async function deleteShift(id: string) {
-    await supabase().from("shifts").delete().eq("id", id);
-    setShifts((all) => all.filter((s) => s.id !== id));
+    const { error } = await supabase().from("shifts").delete().eq("id", id);
     setDraft(null);
+    // Approved hours are time records, so the database keeps them (P0003 explains why).
+    if (error) { setNotice(error.code === "P0003" ? error.message : "Couldn't delete that shift. Please try again."); return; }
+    setShifts((all) => all.filter((s) => s.id !== id));
   }
 
   async function copyLastWeek() {
@@ -364,7 +366,7 @@ function WeekPage() {
   };
   const filled = shifts.length - unfilled.length;
   const statusTone = published
-    ? { bg: "#dcfce7", text: "#166534", label: isPast ? "Done" : "Published" }
+    ? { bg: "#dcfce7", text: "#166534", label: roster?.published_at ? `Published ${new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "short" }).format(new Date(roster.published_at))}` : "Published" }
     : { bg: "#fef3c7", text: "#92400e", label: "Draft" };
 
   return (

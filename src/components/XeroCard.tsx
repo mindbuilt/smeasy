@@ -7,7 +7,7 @@ import type { Staff } from "@/lib/types";
 import { C, Modal, btn, haptic, input } from "@/components/ui";
 
 type Connection = Database["public"]["Tables"]["xero_connections"]["Row"];
-type XeroEmployee = { id: string; name: string };
+type XeroEmployee = { id: string; name: string; basis?: string | null };
 
 async function callXero<T>(body: Record<string, unknown>): Promise<{ data?: T; error?: string }> {
   const { data, error } = await supabase().functions.invoke("xero", { body });
@@ -126,7 +126,7 @@ function MatchStaff({ onClose }: { onClose: (unmatched?: number) => void }) {
     (async () => {
       const [{ data: st }, res] = await Promise.all([
         supabase().from("staff").select("*").eq("active", true).order("name"),
-        callXero<{ employees: XeroEmployee[] }>({ action: "employees" }),
+        callXero<{ employees: XeroEmployee[] }>({ action: "employees", details: true }),
       ]);
       if (cancelled) return;
       if (res.error || !res.data) { setError(res.error ?? "Couldn't load Xero employees."); return; }
@@ -148,7 +148,12 @@ function MatchStaff({ onClose }: { onClose: (unmatched?: number) => void }) {
     setSaving(true);
     const sb = supabase();
     const changed = staff.filter((p) => (p.xero_employee_id ?? "") !== (picks[p.id] ?? ""));
-    const results = await Promise.all(changed.map((p) => sb.from("staff").update({ xero_employee_id: picks[p.id] || null }).eq("id", p.id)));
+    // Matching also fills in employment type from Xero where it isn't set yet.
+    const basisOf = (id: string) => employees?.find((e) => e.id === id)?.basis ?? null;
+    const results = await Promise.all(changed.map((p) => sb.from("staff").update({
+      xero_employee_id: picks[p.id] || null,
+      ...(picks[p.id] && !p.employment_basis && basisOf(picks[p.id]) ? { employment_basis: basisOf(picks[p.id]) } : {}),
+    }).eq("id", p.id)));
     setSaving(false);
     if (results.some((r) => r.error)) { setError("Couldn't save every match. Please try again."); return; }
     haptic(10);

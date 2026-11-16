@@ -159,7 +159,9 @@ export type Database = {
           business_id: string
           created_at: string
           hours_approved_at: string | null
+          hours_first_approved_at: string | null
           id: string
+          reopen_reason: string | null
           published_at: string | null
           status: string
           week_start: string
@@ -169,7 +171,9 @@ export type Database = {
           business_id: string
           created_at?: string
           hours_approved_at?: string | null
+          hours_first_approved_at?: string | null
           id?: string
+          reopen_reason?: string | null
           published_at?: string | null
           status?: string
           week_start: string
@@ -179,7 +183,9 @@ export type Database = {
           business_id?: string
           created_at?: string
           hours_approved_at?: string | null
+          hours_first_approved_at?: string | null
           id?: string
+          reopen_reason?: string | null
           published_at?: string | null
           status?: string
           week_start?: string
@@ -279,6 +285,7 @@ export type Database = {
           default_role: string | null
           email: string | null
           email_roster: boolean
+          employment_basis: string | null
           hourly_rate: number | null
           id: string
           max_weekly_hours: number
@@ -295,6 +302,7 @@ export type Database = {
           default_role?: string | null
           email?: string | null
           email_roster?: boolean
+          employment_basis?: string | null
           hourly_rate?: number | null
           id?: string
           max_weekly_hours?: number
@@ -311,6 +319,7 @@ export type Database = {
           default_role?: string | null
           email?: string | null
           email_roster?: boolean
+          employment_basis?: string | null
           hourly_rate?: number | null
           id?: string
           max_weekly_hours?: number
@@ -377,6 +386,12 @@ export type Database = {
             referencedColumns: ["id", "business_id"]
           },
         ]
+      }
+      hours_changes: {
+        Row: { id: string; business_id: string; roster_id: string; shift_id: string | null; person: string | null; shift_date: string | null; kind: string; reason: string | null; before: Json | null; after: Json | null; changed_by: string | null; changed_at: string }
+        Insert: { id?: string; business_id: string; roster_id: string; shift_id?: string | null; person?: string | null; shift_date?: string | null; kind: string; reason?: string | null; before?: Json | null; after?: Json | null; changed_by?: string | null; changed_at?: string }
+        Update: { id?: string; business_id?: string; roster_id?: string; shift_id?: string | null; person?: string | null; shift_date?: string | null; kind?: string; reason?: string | null; before?: Json | null; after?: Json | null; changed_by?: string | null; changed_at?: string }
+        Relationships: []
       }
       xero_connections: {
         Row: { business_id: string; connected_at: string; connection_id: string | null; last_sent_at: string | null; tenant_id: string; tenant_name: string | null }

@@ -135,6 +135,7 @@ export default function Privacy() {
       <p style={p}>
         We keep account and roster information for as long as the account is active. Account holders can delete staff records, and can ask us to delete their whole account by emailing <Mail />.
         We delete account data within 30 days of a deletion request, except where we must keep it longer by law. Backups are overwritten on our providers&apos; normal cycles.
+        Employers must keep time and wage records for 7 years, and that responsibility stays with the employer: before asking us to delete an account, download your hours (Hours → Export dates) and keep them with your payroll records.
       </p>
 
       <h2 style={h2}>Access, correction and deletion</h2>
