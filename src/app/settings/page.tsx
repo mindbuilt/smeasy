@@ -7,6 +7,7 @@ import { useManager } from "@/lib/useManager";
 import SetPassword from "@/components/SetPassword";
 import PlanCard from "@/components/PlanCard";
 import XeroCard from "@/components/XeroCard";
+import { hasPro, usePlan } from "@/lib/usePlan";
 import { STATES, STATE_TIMEZONE, type State } from "@/lib/holidays";
 import { roleSwatch } from "@/lib/roleColors";
 import { payDetailsOn, withPayDetails } from "@/lib/pay";
@@ -19,6 +20,7 @@ const help = { fontSize: 15, color: C.secondary, margin: "0 0 14px", lineHeight:
 
 export default function SettingsPage() {
   const { business, setBusiness, email } = useManager();
+  const plan = usePlan(business?.id);
   if (!business) return <AppShell><Loading /></AppShell>;
 
   async function update(patch: Database["public"]["Tables"]["businesses"]["Update"]) {
@@ -53,7 +55,7 @@ export default function SettingsPage() {
         </section>
 
         <section id="payroll" style={card}>
-          <XeroCard businessId={business.id} />
+          <XeroCard businessId={business.id} pro={hasPro(plan)} />
         </section>
 
         <section style={card}>

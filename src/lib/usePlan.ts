@@ -22,6 +22,11 @@ export function hasCore(plan: PlanId | null) {
   return !CORE_FEATURES_ENFORCED || plan === "core" || plan === "pro";
 }
 
+/** Xero/MYOB payroll sync: top tier only (locked even during the beta). */
+export function hasPro(plan: PlanId | null) {
+  return plan === "pro";
+}
+
 /** True when a Free business already has as many active staff as the plan allows. */
 export function atStaffLimit(plan: PlanId | null, activeCount: number) {
   return STAFF_LIMIT_ENFORCED && plan === "free" && activeCount >= FREE_STAFF_LIMIT;

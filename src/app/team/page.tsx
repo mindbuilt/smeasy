@@ -9,7 +9,7 @@ import { payDetailsOn } from "@/lib/pay";
 import { AppShell, Avatar, C, Loading, Modal, btn, haptic, input, label } from "@/components/ui";
 import { roleSwatch } from "@/lib/roleColors";
 import Link from "next/link";
-import { atStaffLimit, usePlan } from "@/lib/usePlan";
+import { atStaffLimit, hasPro, usePlan } from "@/lib/usePlan";
 import { DEFAULT_WEEKLY_HOURS, FREE_STAFF_LIMIT, STAFF_LIMIT_ENFORCED } from "@/lib/site";
 import { Check, Copy, MessageSquare, Pencil } from "lucide-react";
 import AddFromXero from "@/components/AddFromXero";
@@ -90,7 +90,7 @@ function TeamPage() {
               <button type="submit" disabled={!newName.trim()} className="app-press" style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: newName.trim() ? 1 : 0.5 }}>Add</button>
             </form>
           )}
-          {xeroConnected && !(limitHit || atStaffLimit(plan, active.length)) && (
+          {xeroConnected && hasPro(plan) && !(limitHit || atStaffLimit(plan, active.length)) && (
             <button type="button" onClick={() => setFromXero(true)} className="app-press" style={{ ...btn("ghost"), padding: "2px 0", minHeight: 30, marginBottom: 10, color: C.dark, fontWeight: 650 }}>
               Add from Xero
             </button>

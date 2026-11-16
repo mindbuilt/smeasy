@@ -9,7 +9,7 @@ export const faqGroups: FaqGroup[] = [
     items: [
       { q: "What is SMEasy?", a: "SMEasy is simple rostering for Australian small businesses. You build the week's roster, see any gaps in cover, share it with your team by link, email or PDF, handle time-off requests, confirm the hours actually worked, and send them to payroll." },
       { q: "Who is it for?", a: "Owners and managers of small teams — cafés, restaurants, bars, shops and other businesses rostering a handful to a few dozen people, often casuals. If you want rostering without a big HR system, it's built for you." },
-      { q: "How much does it cost?", a: "SMEasy is free for up to 6 staff, and no credit card is needed. Core is one flat price for unlimited staff: $29 a month or $290 a year, plus GST. There are no per-user fees. Pro adds payroll sync with Xero (MYOB is coming) for $49 a month or $490 a year, plus GST. SMEasy is in beta: while we test, timesheets and Xero sync are included free on every plan." },
+      { q: "How much does it cost?", a: "SMEasy is free for up to 6 staff, and no credit card is needed. Core is one flat price for unlimited staff: $29 a month or $290 a year, plus GST. There are no per-user fees. Pro adds payroll sync with Xero (MYOB is coming) for $49 a month or $490 a year, plus GST. SMEasy is in beta: while we test, timesheets are included free on every plan." },
       { q: "Do I need to install anything?", a: "No. SMEasy runs in the browser on your phone, tablet or computer. You can add it to your phone's home screen so it opens like an app." },
       { q: "Where is my data stored?", a: "In Australia. SMEasy's database is hosted in Sydney. Our privacy policy explains what we collect and which providers we use." },
       { q: "How do I get help, or delete my account?", a: "Email hello@smeasy.au. We'll delete your account and your business's data within 30 days of your request." },
@@ -51,7 +51,7 @@ export const faqGroups: FaqGroup[] = [
     title: "Payroll",
     items: [
       { q: "How do timesheets work?", a: "After the day, open Hours. Every shift starts as rostered, so you only change what was different, like someone staying late, or mark that they didn't work. When the week's done, approve the hours. Then send them to Xero or download them as a spreadsheet (CSV)." },
-      { q: "Does SMEasy work with Xero or MYOB?", a: "Xero, yes. Connect Xero Payroll under Settings → Payroll, match your staff to their Xero employees once, and approved hours go to Xero as draft timesheets in the right pay period, ready for you to check and approve in your pay run. MYOB sync is on our roadmap; for now, download the hours as a spreadsheet (CSV) for MYOB or your bookkeeper." },
+      { q: "Does SMEasy work with Xero or MYOB?", a: "Xero, yes, on Pro (coming soon). Connect Xero Payroll under Settings → Payroll, match your staff to their Xero employees once, and approved hours go to Xero as draft timesheets in the right pay period, ready for you to check and approve in your pay run. MYOB sync is on our roadmap; for now, download the hours as a spreadsheet (CSV) for MYOB or your bookkeeper." },
       { q: "Does SMEasy run payroll?", a: "No. SMEasy handles the roster and the hours; your payroll software pays your staff." },
       { q: "Can I have more than one manager or location?", a: "Not yet — each business has one owner login and one location for now." },
     ],

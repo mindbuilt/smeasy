@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
 import type { Staff } from "@/lib/types";
+import Link from "next/link";
 import { C, Modal, btn, haptic, input } from "@/components/ui";
 
 type Connection = Database["public"]["Tables"]["xero_connections"]["Row"];
@@ -28,7 +29,7 @@ const RESULT_TEXT: Record<string, string> = {
 };
 
 /** Settings → Payroll: connect Xero, match staff to Xero employees, disconnect. */
-export default function XeroCard({ businessId }: { businessId: string }) {
+export default function XeroCard({ businessId, pro }: { businessId: string; pro: boolean }) {
   const [conn, setConn] = useState<Connection | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(null);
@@ -87,7 +88,13 @@ export default function XeroCard({ businessId }: { businessId: string }) {
 
       {notice && <p role="status" style={{ fontSize: 14, background: notice.ok ? C.shiftBg : "#fff5f3", color: notice.ok ? C.shiftText : C.danger, borderRadius: 12, padding: "10px 12px", margin: "0 0 12px" }}>{notice.text}</p>}
 
-      {conn ? (
+      {!pro ? (
+        <p style={{ fontSize: 15, color: C.secondary, margin: 0, lineHeight: 1.5 }}>
+          Payroll sync is part of Pro, coming soon.{" "}
+          <Link href="/contact/?topic=pro" style={{ color: C.dark, fontWeight: 700 }}>Join the waitlist</Link>
+          {conn && <> · <button type="button" onClick={disconnectXero} disabled={busy} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.secondary, textDecoration: "underline", cursor: "pointer" }}>Disconnect Xero</button></>}
+        </p>
+      ) : conn ? (
         <>
           <p style={{ fontSize: 15, color: C.dark, margin: "0 0 4px" }}>Connected to <strong>{conn.tenant_name ?? "your Xero organisation"}</strong></p>
           <p style={{ fontSize: 13, color: C.muted, margin: "0 0 12px" }}>
@@ -105,7 +112,7 @@ export default function XeroCard({ businessId }: { businessId: string }) {
         }}>{busy ? "Opening Xero…" : "Connect to Xero"}</button>
       )}
 
-      {matching && conn && <MatchStaff onClose={(n) => { setMatching(false); if (n !== undefined) setUnmatched(n); }} />}
+      {matching && conn && pro && <MatchStaff onClose={(n) => { setMatching(false); if (n !== undefined) setUnmatched(n); }} />}
     </>
   );
 }

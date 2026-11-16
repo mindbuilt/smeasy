@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Check, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useManager } from "@/lib/useManager";
-import { hasCore, usePlan } from "@/lib/usePlan";
+import { hasCore, hasPro, usePlan } from "@/lib/usePlan";
 import type { Roster, Shift, Staff } from "@/lib/types";
 import { addDays, fmtDay, fmtWeek, thisWeekStart, toISO, weekDates, weekStartOf } from "@/lib/dates";
 import { changed, downloadHoursCsv, rosteredHours, workedHours } from "@/lib/worked";
@@ -218,14 +218,14 @@ function HoursPage() {
                     <Check size={18} /> {busy ? "Approving…" : "Approve hours"}
                   </button>
                 )}
-                {approved && xero && (
+                {approved && xero && hasPro(plan) && (
                   <button onClick={sendToXero} disabled={sending} className="app-press" style={roster?.xero_sent_at ? btn() : { ...btn("accent"), padding: "10px 20px" }}>
                     {sending ? "Sending to Xero…" : roster?.xero_sent_at ? "Send again" : "Send to Xero"}
                   </button>
                 )}
                 {/* With Xero connected the CSV is only a backup, so it steps back. */}
-                <button onClick={() => downloadHoursCsv({ shifts, staff, pay, weekStart })} className="app-press" style={xero ? { ...btn("ghost"), color: C.secondary } : btn()}>
-                  <Download size={17} /> {xero ? "Download CSV" : "Hours for payroll (CSV)"}
+                <button onClick={() => downloadHoursCsv({ shifts, staff, pay, weekStart })} className="app-press" style={xero && hasPro(plan) ? { ...btn("ghost"), color: C.secondary } : btn()}>
+                  <Download size={17} /> {xero && hasPro(plan) ? "Download CSV" : "Hours for payroll (CSV)"}
                 </button>
               </div>
             </section>

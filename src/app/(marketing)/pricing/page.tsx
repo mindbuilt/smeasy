@@ -27,7 +27,7 @@ export default function PricingPage() {
 
       <div style={{ textAlign: "center", marginTop: 40, fontSize: 15, color: C.secondary, lineHeight: 1.6, maxWidth: 640, marginLeft: "auto", marginRight: "auto" }}>
         <p style={{ margin: "0 0 8px" }}>
-          <strong style={{ color: C.dark }}>SMEasy is in beta.</strong> While we test, timesheets, usual-hours notes and Xero sync are included free on every plan.</p>
+          <strong style={{ color: C.dark }}>SMEasy is in beta.</strong> While we test, timesheets and usual-hours notes are included free on every plan.</p>
         <p style={{ margin: "0 0 8px" }}>Prices are in Australian dollars, plus GST. One price per business, cancel any time.</p>
         <p style={{ margin: 0 }}>
           Questions? Read the <Link href="/faq/" style={link}>FAQ</Link> or <a href="mailto:hello@smeasy.au" style={link}>get in touch</a>.

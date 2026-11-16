@@ -48,9 +48,14 @@ Deno.serve(async (req) => {
 
     const { action, roster_id } = await req.json().catch(() => ({}));
 
-    if (action === "start") return json({ url: authorizeUrl(await makeState(business.id)) });
 
     if (action === "disconnect") { await disconnect(business.id); return json({ ok: true }); }
+
+    // Payroll sync is a top-tier feature.
+    const { data: bill } = await admin().from("billing").select("plan").eq("business_id", business.id).maybeSingle();
+    if (bill?.plan !== "pro") return json({ error: "Payroll sync is part of Pro." }, 403);
+
+    if (action === "start") return json({ url: authorizeUrl(await makeState(business.id)) });
 
     const a = await accessFor(business.id);
 
