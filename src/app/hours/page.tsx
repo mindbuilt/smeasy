@@ -115,18 +115,17 @@ function HoursPage() {
         {/* Week header */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
           <button onClick={() => goWeek(-1)} className="app-press" style={{ ...btn(), width: 42, padding: 0, borderRadius: 999, flex: "none" }} aria-label="Previous week"><ChevronLeft size={20} /></button>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: C.dark, margin: 0, letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              Hours · {fmtWeek(weekStart)}
+          <div style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
+            <h1 style={{ fontSize: "clamp(18px, 4.6vw, 22px)", fontWeight: 800, color: C.dark, margin: 0, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>
+              {fmtWeek(weekStart)}
+            </h1>
+            <div style={{ fontSize: 13, color: C.muted, marginTop: 3, display: "flex", gap: 8, justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
+              {weekStart === thisWeekStart(startDay) ? "This week" : <Link href="/hours" style={{ color: C.secondary }}>Back to this week</Link>}
               {shifts.length > 0 && (
-                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0, padding: "3px 9px", borderRadius: 999, background: approved ? "#dcfce7" : "#eef0f3", color: approved ? "#166534" : C.secondary }}>
+                <span style={{ fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: approved ? "#dcfce7" : "#eef0f3", color: approved ? "#166534" : C.secondary }}>
                   {approved ? "Approved" : "Not approved"}
                 </span>
               )}
-            </h1>
-            <div style={{ fontSize: 14, color: C.muted, marginTop: 2 }}>
-              {weekStart === thisWeekStart(startDay) ? "This week" : <Link href="/hours" style={{ color: C.secondary }}>Back to this week</Link>}
-              {" · "}Confirm what was actually worked, then approve for payroll
             </div>
           </div>
           <button onClick={() => goWeek(1)} className="app-press" style={{ ...btn(), width: 42, padding: 0, borderRadius: 999, flex: "none" }} aria-label="Next week"><ChevronRight size={20} /></button>

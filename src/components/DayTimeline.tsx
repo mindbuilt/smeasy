@@ -98,7 +98,6 @@ export default function DayTimeline({ dayShifts, staff, roles, offs, isToday, co
   const hours = Array.from({ length: (hi - lo) / 60 + 1 }, (_, i) => lo + i * 60);
   const gutter = compact ? 46 : 58;
   const blocks = layout(dayShifts);
-  const unfilled = dayShifts.filter((s) => !s.staff_id);
   const onIds = new Set(dayShifts.map((s) => s.staff_id));
   const offIds = new Set(offs.map((o) => o.p.id));
   const notOn = staff.filter((p) => !onIds.has(p.id) && !offIds.has(p.id));
@@ -119,12 +118,8 @@ export default function DayTimeline({ dayShifts, staff, roles, offs, isToday, co
   return (
     <div style={{ display: "grid", gap: 12 }}>
       {/* What needs doing */}
-      {cov.gaps.length === 0 ? (
-        <div role="status" style={{ ...card, boxShadow: "none", background: C.shiftBg, color: C.shiftText, padding: "10px 14px", fontSize: 14, fontWeight: 650 }}>
-          Someone&apos;s on all day, {label(cov.first)} to {label(cov.last)}.
-          {unfilled.length > 0 && <span style={{ color: UNFILLED.text }}> {unfilled.length === 1 ? "1 unfilled shift" : `${unfilled.length} unfilled shifts`} still to give out.</span>}
-        </div>
-      ) : (
+      {/* Only speak up when there's a gap: the day header already says who's on and what's unfilled. */}
+      {cov.gaps.length > 0 && (
         <div style={{ ...card, boxShadow: "none", background: UNFILLED.bg, padding: "10px 14px", display: "grid", gap: 6 }}>
           <div style={{ fontSize: 14, fontWeight: 750, color: UNFILLED.text }}>
             {cov.gaps.length === 1 ? "1 gap" : `${cov.gaps.length} gaps`} with nobody on
@@ -196,9 +191,10 @@ export default function DayTimeline({ dayShifts, staff, roles, offs, isToday, co
                     {open ? "Unfilled" : first(who)}
                   </span>
                   <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.9, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>
-                    {fmtTime(s.start_time)}–{fmtTime(s.end_time)}
+                    {/* Narrow phone lanes: start time only (the block's height shows the finish). */}
+                    {compact ? fmtTime(s.start_time) : `${fmtTime(s.start_time)}–${fmtTime(s.end_time)}`}
                   </span>
-                  {showRole && s.role && <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.role}</span>}
+                  {showRole && !compact && s.role && <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.role}</span>}
                 </button>
               );
             })}

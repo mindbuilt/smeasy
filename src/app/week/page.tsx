@@ -488,7 +488,6 @@ function WeekPage() {
                 {shifts.length === 0 && <button onClick={copyLastWeek} disabled={busy} className="app-press" style={btn()}><Copy size={17} /> Copy last week</button>}
               </>
             )} />
-          <div style={{ ...card, marginTop: 12 }}><AddStaff onAdd={addStaff} limited={atStaffLimit(plan, staff.length)} /></div>
           {!business.state && !hideStateTip && (
             <div style={{ marginTop: 12 }}>
               <Banner onClose={() => { localStorage.setItem("smeasy-hide-state-tip", "1"); setHideStateTip(true); }}>
@@ -560,7 +559,7 @@ function WeekPage() {
           {pay && wages > 0 && (
             <p style={{ fontSize: 13, color: C.muted, margin: "0 0 14px", lineHeight: 1.5 }}>Base wages are paid hours × each person&apos;s hourly rate. No penalty rates, overtime, allowances or super.{missingRate > 0 && ` Excludes ${missingRate} without a rate.`}</p>
           )}
-          <div style={{ display: "grid", gap: 8 }}>
+          <div style={{ display: "grid" }}>
             {staff.length > 0 && !isPast && <SheetAction icon={<Copy size={19} />} label="Copy last week" hint="Adds last week's shifts. Nothing is doubled up." onClick={() => { setMoreOpen(false); copyLastWeek(); }} />}
             {published && <SheetAction icon={linkCopied ? <Check size={19} /> : <Link2 size={19} />} label={linkCopied ? "Team link copied" : "Copy team link"} hint="Paste it in your staff group chat." onClick={copyTeamLink} />}
             {shifts.length > 0 && <SheetAction icon={<FileText size={19} />} label="Download PDF" hint="A4 roster to print or send." onClick={downloadPdf} />}
@@ -613,9 +612,9 @@ function WeekPage() {
 
 function SheetAction({ icon, label, hint, onClick }: { icon: React.ReactNode; label: string; hint: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="app-press" style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", padding: "12px 14px", borderRadius: 14, border: "none", background: "#f3f4f6", cursor: "pointer", fontFamily: "inherit", color: C.dark }}>
-      <span style={{ display: "grid", placeItems: "center", width: 38, height: 38, borderRadius: 12, background: C.white, flex: "none" }}>{icon}</span>
-      <span><span style={{ display: "block", fontSize: 16, fontWeight: 700 }}>{label}</span><span style={{ display: "block", fontSize: 13, color: C.muted }}>{hint}</span></span>
+    <button onClick={onClick} title={hint} className="app-press" style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", textAlign: "left", padding: "13px 4px", border: "none", borderBottom: `1px solid ${C.divider}`, background: "none", cursor: "pointer", fontFamily: "inherit", color: C.dark, fontSize: 16, fontWeight: 650 }}>
+      <span style={{ display: "grid", placeItems: "center", color: C.secondary, flex: "none" }}>{icon}</span>
+      {label}
     </button>
   );
 }
