@@ -216,3 +216,17 @@ export function CalendarButtons({ token }: { token: string }) {
     </section>
   );
 }
+
+/** The only two ways to look at the roster: just your shifts, or everyone's. */
+export function MineSwitch({ mine, onChange }: { mine: boolean; onChange: (mine: boolean) => void }) {
+  return (
+    <div role="radiogroup" aria-label="Show" style={{ display: "inline-flex", padding: 3, borderRadius: 999, background: "#eef0f3", gap: 2 }}>
+      {([[true, "My shifts"], [false, "Everyone"]] as const).map(([v, text]) => (
+        <button key={text} type="button" role="radio" aria-checked={mine === v} onClick={() => onChange(v)} className="app-press" style={{
+          border: "none", borderRadius: 999, padding: "8px 16px", minHeight: 38, fontSize: 15, fontWeight: 650, fontFamily: "inherit", cursor: "pointer",
+          background: mine === v ? C.dark : "transparent", color: mine === v ? C.white : C.secondary, transition: "background-color 180ms ease, color 180ms ease",
+        }}>{text}</button>
+      ))}
+    </div>
+  );
+}

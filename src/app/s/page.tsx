@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { addDays, fmtDay, toISO } from "@/lib/dates";
-import { Mail, Plane, Users } from "lucide-react";
+import { Mail, Plane } from "lucide-react";
 import { C, Loading, btn, card, haptic, input, label } from "@/components/ui";
-import { CalendarButtons, DayList, NextShift, StaffFooter, StaffShell, WeekNav, hoursOf, readToken } from "@/components/StaffBits";
+import { CalendarButtons, DayList, NextShift, StaffFooter, StaffShell, WeekNav, hoursOf, readToken, MineSwitch } from "@/components/StaffBits";
 
 
 type StaffShift = {
@@ -79,9 +79,7 @@ export default function StaffRoster() {
           <NextShift shifts={mine} roles={view.roles ?? []} totalHours={hoursOf(mine)} count={mine.length} />
           {view.shifts.length > 0 && (
             <>
-              <button onClick={() => setShowTeam((v) => !v)} aria-expanded={showTeam} className="app-press" style={{ ...btn(), width: "100%", minHeight: 48, marginBottom: 10 }}>
-                <Users size={18} /> {showTeam ? "Show just my shifts" : "See the whole team's week"}
-              </button>
+              <div style={{ marginBottom: 12 }}><MineSwitch mine={!showTeam} onChange={(m) => setShowTeam(!m)} /></div>
               <DayList weekStart={view.week_start} shifts={showTeam ? view.shifts : mine} roles={view.roles ?? []} state={view.state}
                 dayNotes={view.day_notes ?? []} isMine={(s) => !!s.mine} youLabel />
             </>

@@ -5,8 +5,8 @@ import { FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { addDays, toISO } from "@/lib/dates";
 import { downloadRosterPdf, PdfShift } from "@/lib/rosterPdf";
-import { Avatar, C, Loading, btn, card, haptic } from "@/components/ui";
-import { DayList, NextShift, StaffFooter, StaffShell, WeekNav, hoursOf, readToken } from "@/components/StaffBits";
+import { C, Loading, btn, card, haptic, input } from "@/components/ui";
+import { DayList, NextShift, StaffFooter, StaffShell, WeekNav, hoursOf, readToken, MineSwitch } from "@/components/StaffBits";
 
 type TeamShift = PdfShift & { id: string };
 type View = {
@@ -24,6 +24,7 @@ export default function TeamRoster() {
   const [week, setWeek] = useState(() => toISO(new Date()));
   const [view, setView] = useState<View | null | "invalid">(null);
   const [me, setMe] = useState("");
+  const [mineOnly, setMineOnly] = useState(true);
 
   useEffect(() => {
     const read = () => {
@@ -71,17 +72,27 @@ export default function TeamRoster() {
         </div>
       ) : (
         <>
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 14, fontWeight: 650, color: C.secondary, marginBottom: 8 }}>Show my shifts</div>
-            <div role="radiogroup" aria-label="Show my shifts" className="no-scrollbar" style={{ display: "flex", gap: 8, overflowX: "auto", padding: "2px 2px 6px", margin: "0 -2px" }}>
-              <NameChip on={!me} onClick={() => pickMe("")} label="Everyone" />
-              {view.staff.map((n) => <NameChip key={n} on={me === n} onClick={() => pickMe(n)} label={n} avatar />)}
+          {me && view.staff.includes(me) ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+              <MineSwitch mine={mineOnly} onChange={setMineOnly} />
+              <button type="button" onClick={() => pickMe("")} style={{ background: "none", border: "none", padding: 0, font: "inherit", fontSize: 13, color: C.muted, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>
+                Not {me.split(" ")[0]}? Change
+              </button>
             </div>
-          </div>
+          ) : view.staff.length > 0 && (
+            <label style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 14, fontSize: 15, fontWeight: 650, color: C.dark }}>
+              Which one are you?
+              <select value="" onChange={(e) => { if (e.target.value) { pickMe(e.target.value); setMineOnly(true); } }}
+                style={{ ...input, width: "auto", minWidth: 180, minHeight: 40, padding: "8px 12px", fontSize: 15 }}>
+                <option value="">Pick your name</option>
+                {view.staff.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+          )}
 
-          {me && <NextShift shifts={mine} roles={view.roles ?? []} totalHours={hoursOf(mine)} count={mine.length} name={me} />}
+          {me && mineOnly && <NextShift shifts={mine} roles={view.roles ?? []} totalHours={hoursOf(mine)} count={mine.length} name={me} />}
 
-          <DayList weekStart={view.week_start} shifts={view.shifts} roles={view.roles ?? []} state={view.state}
+          <DayList weekStart={view.week_start} shifts={me && mineOnly ? mine : view.shifts} roles={view.roles ?? []} state={view.state}
             dayNotes={view.day_notes ?? []} isMine={(s) => !!me && s.staff_name === me} />
 
           <button onClick={() => downloadRosterPdf({ business: view.business, weekStart: view.week_start, shifts: view.shifts, roles: view.roles ?? [], state: view.state, dayNotes: view.day_notes ?? [], teamLink: window.location.href })}
@@ -91,18 +102,5 @@ export default function TeamRoster() {
 
       <StaffFooter hint="Add this page to your home screen and it opens like an app, always showing the latest published roster. Want your shifts in your phone's calendar? Ask your manager for your personal link." />
     </StaffShell>
-  );
-}
-
-function NameChip({ on, onClick, label, avatar }: { on: boolean; onClick: () => void; label: string; avatar?: boolean }) {
-  return (
-    <button role="radio" aria-checked={on} onClick={onClick} className="app-press" style={{
-      flex: "none", display: "inline-flex", alignItems: "center", gap: 8, padding: avatar ? "5px 14px 5px 5px" : "8px 16px",
-      borderRadius: 999, border: `1.5px solid ${on ? C.dark : C.border}`, background: on ? C.dark : C.white, color: on ? C.white : C.dark,
-      fontSize: 15, fontWeight: 650, cursor: "pointer", fontFamily: "inherit", transition: "background-color 180ms ease, color 180ms ease",
-    }}>
-      {avatar && <Avatar name={label} size={28} tone={on ? { bg: C.accent, text: C.dark } : undefined} />}
-      {label}
-    </button>
   );
 }
