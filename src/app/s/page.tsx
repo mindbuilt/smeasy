@@ -67,7 +67,7 @@ export default function StaffRoster() {
   return (
     <StaffShell business={view.business}>
       <h1 style={{ fontSize: 26, fontWeight: 800, color: C.dark, margin: "0 0 14px", letterSpacing: "-0.02em" }}>G&apos;day {first}</h1>
-      <WeekNav weekStart={view.week_start} onStep={step} />
+      <WeekNav weekStart={view.week_start} onStep={step} onToday={() => setWeek(toISO(new Date()))} />
 
       {!view.published ? (
         <div style={{ ...card, padding: "28px 20px", textAlign: "center" }}>

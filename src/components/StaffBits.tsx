@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { CalendarDays, ChevronLeft, ChevronRight, StickyNote } from "lucide-react";
 import { C, Avatar, btn, card } from "@/components/ui";
 import { roleSwatch } from "@/lib/roleColors";
@@ -37,6 +39,18 @@ export function DayExtras({ date, state, dayNotes }: { date: string; state: stri
   );
 }
 
+/** A way back into the app when the manager is looking at their own staff pages. Staff see nothing. */
+function ManagerLink() {
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    supabase().auth.getSession().then(({ data }) => { if (!cancelled && data.session) setSignedIn(true); });
+    return () => { cancelled = true; };
+  }, []);
+  if (!signedIn) return null;
+  return <Link href="/week/" className="app-press" style={{ ...btn(), marginLeft: "auto", minHeight: 36, padding: "6px 12px", fontSize: 14, textDecoration: "none" }}>Open SMEasy</Link>;
+}
+
 /** Header + centred column for the staff pages. */
 export function StaffShell({ business, children }: { business?: string; children: React.ReactNode }) {
   return (
@@ -45,7 +59,7 @@ export function StaffShell({ business, children }: { business?: string; children
         <div style={{ maxWidth: 600, margin: "0 auto", height: 58, padding: "0 16px", display: "flex", alignItems: "center", gap: 9 }}>
           <span style={{ width: 24, height: 24, borderRadius: 7, background: C.accent, display: "block", flex: "none" }} />
           <span style={{ fontWeight: 800, fontSize: 17, color: C.dark, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{business ?? "SMEasy"}</span>
-          {business && <span style={{ marginLeft: "auto", fontSize: 13, fontWeight: 600, color: C.muted }}>Roster</span>}
+          <ManagerLink />
         </div>
       </header>
       <main style={{ maxWidth: 600, margin: "0 auto", padding: "18px 16px calc(48px + env(safe-area-inset-bottom))" }}>{children}</main>
@@ -59,13 +73,14 @@ export function StaffFooter({ hint }: { hint: string }) {
       <p style={{ margin: "0 0 8px" }}>{hint}</p>
       <p style={{ margin: 0 }}>
         <Link href="/" style={{ color: C.secondary }}>Made with SMEasy</Link>{" · "}
-        <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>
+        <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>{" · "}
+        <Link href="/auth/login/" style={{ color: C.secondary }}>Manager log in</Link>
       </p>
     </div>
   );
 }
 
-export function WeekNav({ weekStart, onStep }: { weekStart: string; onStep: (n: number) => void }) {
+export function WeekNav({ weekStart, onStep, onToday }: { weekStart: string; onStep: (n: number) => void; onToday?: () => void }) {
   const round = { ...btn(), width: 44, padding: 0, borderRadius: 999 };
   const today = toISO(new Date());
   return (
@@ -73,7 +88,12 @@ export function WeekNav({ weekStart, onStep }: { weekStart: string; onStep: (n: 
       <button onClick={() => onStep(-1)} className="app-press" style={round} aria-label="Previous week"><ChevronLeft size={20} /></button>
       <div style={{ flex: 1, textAlign: "center" }}>
         <div style={{ fontSize: 17, fontWeight: 800, color: C.dark, letterSpacing: "-0.01em" }}>{fmtWeek(weekStart)}</div>
-        <div style={{ fontSize: 13, color: C.muted }}>{today >= weekStart && today <= addDays(weekStart, 6) ? "This week" : weekStart > today ? "Coming up" : "Past week"}</div>
+        <div style={{ fontSize: 13, color: C.muted }}>
+          {today >= weekStart && today <= addDays(weekStart, 6) ? "This week" : <>
+            {weekStart > today ? "Coming up" : "Past week"}
+            {onToday && <> · <button type="button" onClick={onToday} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.dark, fontWeight: 650, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>Back to this week</button></>}
+          </>}
+        </div>
       </div>
       <button onClick={() => onStep(1)} className="app-press" style={round} aria-label="Next week"><ChevronRight size={20} /></button>
     </div>

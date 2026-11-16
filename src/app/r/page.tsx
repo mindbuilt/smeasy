@@ -57,7 +57,7 @@ export default function TeamRoster() {
 
   return (
     <StaffShell business={view.business}>
-      <WeekNav weekStart={view.week_start} onStep={step} />
+      <WeekNav weekStart={view.week_start} onStep={step} onToday={() => setWeek(toISO(new Date()))} />
 
       {!view.published ? (
         <div style={{ ...card, padding: "28px 20px", textAlign: "center" }}>
