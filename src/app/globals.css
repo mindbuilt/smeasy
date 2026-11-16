@@ -254,3 +254,10 @@ html:has(.app), body:has(.app) { background: #f6f7f9; }
   .hrs-end { grid-column: 2; grid-row: 1; }
   .hrs-times, .hrs-times-text { grid-column: 1 / -1; grid-row: 2; }
 }
+
+/* Staff links: the week as a list on phones, as Mon → Sun columns on wide screens. */
+.staff-week-grid { display: none; }
+@media (min-width: 900px) {
+  .staff-week-grid { display: grid; }
+  .staff-week-list { display: none !important; }
+}
