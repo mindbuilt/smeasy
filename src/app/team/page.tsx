@@ -12,6 +12,7 @@ import Link from "next/link";
 import { atStaffLimit, usePlan } from "@/lib/usePlan";
 import { DEFAULT_WEEKLY_HOURS, FREE_STAFF_LIMIT } from "@/lib/site";
 import { Check, Copy, MessageSquare, Pencil } from "lucide-react";
+import AddFromXero from "@/components/AddFromXero";
 
 function staffLink(s: Staff) {
   return `${window.location.origin}/s/#${s.roster_token}`;
@@ -31,12 +32,15 @@ function TeamPage() {
   const [copied, setCopied] = useState<string | null>(null);
   const [showFormer, setShowFormer] = useState(false);
   const [limitHit, setLimitHit] = useState(false);
+  const [xeroConnected, setXeroConnected] = useState(false);
+  const [fromXero, setFromXero] = useState(false);
   const plan = usePlan(business?.id);
 
   useEffect(() => {
     if (!business) return;
     let cancelled = false;
     supabase().from("staff").select("*").order("name").then(({ data }) => { if (!cancelled) setStaff(data ?? []); });
+    supabase().from("xero_connections").select("business_id").maybeSingle().then(({ data }) => { if (!cancelled) setXeroConnected(!!data); });
     return () => { cancelled = true; };
   }, [business]);
 
@@ -85,6 +89,11 @@ function TeamPage() {
                 style={input} aria-label="New team member name" autoFocus={isNew} />
               <button type="submit" disabled={!newName.trim()} className="app-press" style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: newName.trim() ? 1 : 0.5 }}>Add</button>
             </form>
+          )}
+          {xeroConnected && !(limitHit || atStaffLimit(plan, active.length)) && (
+            <button type="button" onClick={() => setFromXero(true)} className="app-press" style={{ ...btn("ghost"), padding: "2px 0", minHeight: 30, marginBottom: 10, color: C.dark, fontWeight: 650 }}>
+              Add from Xero
+            </button>
           )}
 
           <div style={{ background: C.white, borderRadius: C.r2, boxShadow: C.shadow, overflow: "hidden" }}>
@@ -143,6 +152,11 @@ function TeamPage() {
         }} />
       </div>
 
+      {fromXero && (
+        <AddFromXero businessId={business.id} defaultRole={business.roles[0] ?? null} staff={staff}
+          onClose={() => setFromXero(false)}
+          onAdded={(added) => { setStaff((all) => [...(all ?? []), ...added].sort((a, b) => a.name.localeCompare(b.name))); setFromXero(false); }} />
+      )}
       {editing && (
         <StaffEditor staff={editing} roles={business.roles} pay={payDetailsOn(business)} onClose={() => setEditing(null)}
           onSaved={(s) => { setStaff((all) => all!.map((x) => (x.id === s.id ? s : x))); setEditing(null); }} />

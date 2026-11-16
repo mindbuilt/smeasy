@@ -55,11 +55,15 @@ Deno.serve(async (req) => {
     const a = await accessFor(business.id);
 
     if (action === "employees") {
-      const employees: { id: string; name: string }[] = [];
+      // Names for matching; email and mobile so "Add from Xero" can fill them in.
+      const employees: { id: string; name: string; email: string | null; mobile: string | null }[] = [];
       for (let page = 1; page <= 10; page++) {
         const data = await payroll(a, `Employees?page=${page}`);
-        const list = (data.Employees ?? []) as { EmployeeID: string; FirstName: string; LastName: string; Status: string }[];
-        for (const e of list) if (e.Status !== "TERMINATED") employees.push({ id: e.EmployeeID, name: `${e.FirstName ?? ""} ${e.LastName ?? ""}`.trim() });
+        const list = (data.Employees ?? []) as { EmployeeID: string; FirstName: string; LastName: string; Status: string; Email?: string; Mobile?: string; Phone?: string }[];
+        for (const e of list) if (e.Status !== "TERMINATED") employees.push({
+          id: e.EmployeeID, name: `${e.FirstName ?? ""} ${e.LastName ?? ""}`.trim(),
+          email: e.Email?.trim() || null, mobile: (e.Mobile || e.Phone)?.trim() || null,
+        });
         if (list.length < 100) break;
       }
       return json({ employees: employees.sort((x, y) => x.name.localeCompare(y.name)) });
