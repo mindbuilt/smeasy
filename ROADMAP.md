@@ -21,7 +21,16 @@ Build order agreed 2026-11-16 (pricing: Free ≤6 staff, Core $29/$290, Pro $49/
 - [x] **3. Timesheets (Core)** — after the day, the manager confirms or adjusts each shift's actual start/finish and approves the week; approved hours feed the CSV and, later, payroll sync. No clock-in app.
 - [x] **4a. Roster emails (Free)** — on publish, each rostered person with an email gets their shifts and personal link (notify-roster Edge Function, Resend, from hello@smeasy.au, reply-to the manager). "Email the team" on published weeks for updates. Staff add/change their email and stop emails on their personal link; every email has a stop link.
 - [ ] **4b. Web push** — needs a service worker, VAPID keys, a subscriptions table and an "allow notifications" prompt on the staff link (iPhone: only once added to the home screen). No SMS. WhatsApp maybe later.
-- [ ] **5. Xero Payroll sync (Pro)** — via the Xero API (Payroll AU timesheets). Needs a Xero developer app, OAuth, staff ↔ employee and pay item mapping, pay calendar matching the roster week. Check Xero's connection cap for uncertified apps and current developer terms. On Stripe cancellation, disconnect the business's Xero connection.
+- [x] **5. Xero Payroll sync (Pro)**: built and tested against Demo Company (AU) on 2026-11-16.
+  - Settings → Payroll connects Xero (OAuth, signed state, AES-GCM tokens, least scopes) and matches staff to Xero employees.
+  - Hours → Send to Xero creates or updates DRAFT timesheets in each employee's pay period (weekly, fortnightly or 4-weekly). Disconnect revokes at Xero.
+  - **Before selling Pro:**
+    - Use Xero's official "Connect to Xero" button artwork.
+    - Disconnect Xero automatically when a Pro subscription ends (stripe-webhook → disconnect()).
+    - Enforce Pro on the server.
+    - Create the Pro prices in Stripe and set `PRO_AVAILABLE`.
+    - Move to Xero's Core tier ($35/month) past 5 connected businesses; Core may need app certification, so check.
+    - Support monthly pay calendars.
 - [ ] **6. MYOB sync (Pro)** — MYOB API and partner sign-up; confirm whether a timesheet import file is an option for AccountRight.
 - [ ] ★ **Staff availability** — staff mark days/times they can't work; shown on the grid.
 - [x] **Public holidays** — marked by state (Nager.Date calendar, fetched at build).
