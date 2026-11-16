@@ -10,7 +10,7 @@ import { roleSwatch } from "@/lib/roleColors";
 import Link from "next/link";
 import { atStaffLimit, hasPro, usePlan } from "@/lib/usePlan";
 import { DEFAULT_WEEKLY_HOURS, FREE_STAFF_LIMIT, STAFF_LIMIT_ENFORCED } from "@/lib/site";
-import { Check, Copy, MessageSquare, Pencil } from "lucide-react";
+import { Check, Copy, Mail, MessageSquare, Pencil, Send } from "lucide-react";
 import AddFromXero from "@/components/AddFromXero";
 import RolesEditor from "@/components/RolesEditor";
 import { EMPLOYMENT } from "@/lib/worked";
@@ -30,7 +30,7 @@ function TeamPage() {
   const [staff, setStaff] = useState<Staff[] | null>(null);
   const [newName, setNewName] = useState("");
   const [editing, setEditing] = useState<Staff | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [sending, setSending] = useState<Staff | null>(null);
   const [showFormer, setShowFormer] = useState(false);
   const [limitHit, setLimitHit] = useState(false);
   const [xeroConnected, setXeroConnected] = useState(false);
@@ -56,11 +56,7 @@ function TeamPage() {
     if (data) setStaff((s) => [...(s ?? []), data].sort((a, b) => a.name.localeCompare(b.name)));
   }
 
-  async function copyLink(s: Staff) {
-    await navigator.clipboard.writeText(staffLink(s));
-    setCopied(s.id);
-    setTimeout(() => setCopied(null), 1800);
-  }
+
 
   if (!business || !staff) return <AppShell><Loading /></AppShell>;
 
@@ -118,10 +114,7 @@ function TeamPage() {
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setEditing(s)} className="app-press" style={small}><Pencil size={15} /> Edit</button>
-                  <a href={smsHref(s, business.name)} className="app-press" title="Text them their personal link: their shifts, time-off requests and calendar" style={small}><MessageSquare size={15} /> Text link</a>
-                  <button onClick={() => { copyLink(s); haptic(8); }} className="app-press" title="Copy their personal link: their shifts, time-off requests and calendar" style={small}>
-                    {copied === s.id ? <><Check size={15} /> Copied</> : <><Copy size={15} /> Copy link</>}
-                  </button>
+                  <button onClick={() => setSending(s)} className="app-press" title="Their personal link: their shifts, time-off requests and calendar" style={small}><Send size={15} /> Send link</button>
                 </div>
               </div>
             ))}
@@ -160,6 +153,7 @@ function TeamPage() {
         }} />
       </div>
 
+      {sending && <SendLink staff={sending} business={business.name} onClose={() => setSending(null)} />}
       {fromXero && (
         <AddFromXero businessId={business.id} defaultRole={business.roles[0] ?? null} staff={staff}
           slots={STAFF_LIMIT_ENFORCED && plan === "free" ? Math.max(0, FREE_STAFF_LIMIT - active.length) : null}
@@ -276,4 +270,45 @@ function StaffEditor({ staff, roles, onClose, onSaved }: {
 
 export default function Page() {
   return <Suspense fallback={null}><TeamPage /></Suspense>;
+}
+
+/** Resend someone their personal link: by email, by text, or copy it. */
+function SendLink({ staff, business, onClose }: { staff: Staff; business: string; onClose: () => void }) {
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "copied">("idle");
+  const [error, setError] = useState<string | null>(null);
+  async function email() {
+    setState("sending"); setError(null);
+    const { error: err } = await supabase().functions.invoke("notify-roster", { body: { kind: "link", staff_id: staff.id } });
+    if (err) {
+      let msg = "Couldn't send the email. Please try again.";
+      try { const b = await (err as { context?: Response })?.context?.json(); if (b?.error) msg = b.error; } catch { /* keep default */ }
+      setError(msg); setState("idle"); return;
+    }
+    haptic(10); setState("sent");
+  }
+  async function copy() {
+    await navigator.clipboard.writeText(staffLink(staff));
+    haptic(8); setState("copied");
+  }
+  const row = { display: "flex", alignItems: "center", gap: 14, width: "100%", textAlign: "left", padding: "13px 4px", border: "none", borderBottom: `1px solid ${C.divider}`, background: "none", cursor: "pointer", fontFamily: "inherit", color: C.dark, fontSize: 16, fontWeight: 650, textDecoration: "none" } as const;
+  return (
+    <Modal title={`Send ${staff.name.split(" ")[0]} their link`} onClose={onClose}>
+      <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 6px", lineHeight: 1.5 }}>Their personal link opens on their own shifts. It also comes in every roster email.</p>
+      <div style={{ display: "grid" }}>
+        {staff.email && (
+          <button type="button" onClick={email} disabled={state === "sending" || state === "sent"} className="app-press" style={row}>
+            <Mail size={19} color={C.secondary} />
+            {state === "sending" ? "Sending…" : state === "sent" ? `Emailed to ${staff.email}` : <span>Email it <span style={{ fontWeight: 500, color: C.muted, fontSize: 14 }}>to {staff.email}</span></span>}
+            {state === "sent" && <Check size={18} color={C.shiftText} style={{ marginLeft: "auto" }} />}
+          </button>
+        )}
+        <a href={smsHref(staff, business)} className="app-press" style={row}><MessageSquare size={19} color={C.secondary} /> Text it{staff.mobile && " "}{staff.mobile && <span style={{ fontWeight: 500, color: C.muted, fontSize: 14 }}>to {staff.mobile}</span>}</a>
+        <button type="button" onClick={copy} className="app-press" style={row}>
+          <Copy size={19} color={C.secondary} /> {state === "copied" ? "Copied" : "Copy link"}
+          {state === "copied" && <Check size={18} color={C.shiftText} style={{ marginLeft: "auto" }} />}
+        </button>
+      </div>
+      {error && <p role="alert" style={{ fontSize: 14, color: C.danger, margin: "10px 0 0" }}>{error}</p>}
+    </Modal>
+  );
 }

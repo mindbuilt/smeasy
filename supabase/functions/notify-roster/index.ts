@@ -89,7 +89,42 @@ Deno.serve(async (req) => {
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return json({ error: "Please log in again." }, 401);
 
-    const { roster_id, kind = "published" } = await req.json().catch(() => ({}));
+    const { roster_id, kind = "published", staff_id } = await req.json().catch(() => ({}));
+
+    // Resend one person their personal link (Team page → Send link → Email).
+    if (kind === "link") {
+      const [{ data: business }, { data: p }] = await Promise.all([
+        sb.from("businesses").select("id, name").maybeSingle(),
+        sb.from("staff").select("id, name, email, roster_token").eq("id", staff_id).maybeSingle(),
+      ]);
+      if (!business || !p) return json({ error: "Couldn't find that person." }, 404);
+      if (!p.email) return json({ error: "Add their email on the Team page first." }, 400);
+      const link = `${SITE_URL}/s/#${p.roster_token}`;
+      const first = p.name.split(" ")[0];
+      const html = `<!doctype html><html><body style="margin:0;background:#f6f7f9;font-family:Figtree,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <div style="max-width:520px;margin:0 auto;padding:28px 16px">
+    <div style="font-weight:800;font-size:16px;color:#111827;margin:0 0 14px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:#b7e021;vertical-align:-2px;margin-right:7px"></span>${esc(business.name)}</div>
+    <div style="background:#ffffff;border-radius:16px;padding:24px 22px;box-shadow:0 1px 2px rgba(17,24,39,0.04),0 2px 8px rgba(17,24,39,0.06)">
+      <h1 style="font-size:22px;margin:0 0 6px;color:#111827">Hi ${esc(first)}</h1>
+      <p style="font-size:16px;color:#4b5563;margin:0 0 18px;line-height:1.5">Here's your personal roster link. It shows your shifts first, the whole team's roster, and lets you request time off and add shifts to your phone's calendar.</p>
+      <p style="margin:0"><a href="${link}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:12px 20px;border-radius:10px">Open my shifts</a></p>
+      <p style="font-size:14px;color:#6b7280;margin:16px 0 0;line-height:1.5">Bookmark it or add it to your home screen. It's just for you, so please don't share it.</p>
+    </div>
+  </div></body></html>`;
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: `${business.name.replace(/["<>]/g, "")} via SMEasy <${FROM}>`, to: [p.email],
+          reply_to: user.email ? [user.email] : undefined,
+          subject: `Your roster link · ${business.name}`, html,
+          text: `Hi ${first},\n\nHere's your personal roster link: ${link}\n\nIt's just for you, so please don't share it.`,
+        }),
+      });
+      if (!res.ok) { console.error("resend failed", res.status, await res.text()); return json({ error: "Couldn't send the email. Please try again." }, 502); }
+      return json({ sent: [p.name], noEmail: [], off: [] });
+    }
+
     if (!roster_id) return json({ error: "Which week?" }, 400);
 
     // RLS: only the manager's own business, roster, staff and shifts come back.

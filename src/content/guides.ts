@@ -103,7 +103,7 @@ export const guides: Guide[] = [
       ] },
       { p: "Anyone with the team link can view the roster, so if someone leaves on bad terms, tap Reset the link on the Team page and share the new one. The old link stops working immediately." },
       { h2: "Personal links: time off and calendars" },
-      { p: "Each person also has their own personal link (Team → Text personal link). It shows their shifts and lets them request time off, because SMEasy needs to know who's asking." },
+      { p: "Each person also has their own personal link (it comes in every roster email, or use Team → Send link). It shows their shifts and lets them request time off, because SMEasy needs to know who's asking." },
       { p: "From their personal link, staff can also subscribe to their shifts in Apple Calendar, Google Calendar or Outlook. Published shifts then appear in their phone's calendar and update when you change the roster." },
     ],
   },
@@ -118,7 +118,7 @@ export const guides: Guide[] = [
       { p: "Time-off requests in SMEasy replace the \"can I have Saturday off?\" texts. Requests land on your roster screen, and approved days show up right where you're building the week." },
       { h2: "How staff ask for time off" },
       { ol: [
-        "Staff open their personal link. You send it from the Team page with Text personal link.",
+        "Staff open their personal link. It comes in every roster email, or send it from the Team page with Send link.",
         "They tap Request time off, pick the dates and add a reason if they like.",
         "They can see whether it's waiting, approved or declined each time they open the link.",
       ] },
