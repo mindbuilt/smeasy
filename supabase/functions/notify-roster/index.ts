@@ -49,6 +49,7 @@ function emailFor(p: Person, business: string, weekStart: string, shifts: Shift[
   const range = `${fmtShort(weekStart)} – ${fmtShort(addDays(weekStart, 6))}`;
   const link = `${SITE_URL}/s/#${p.roster_token}`;
   const stop = `${SITE_URL}/s/?stop=1#${p.roster_token}`;
+  const oneClick = `${SUPABASE_URL}/functions/v1/unsubscribe?t=${p.roster_token}`;
   const mine = shifts.filter((s) => s.staff_id === p.id).sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time));
   const subject = kind === "update" ? `Roster updated: ${range} · ${business}` : `Your roster for ${range} · ${business}`;
   const intro = kind === "update" ? `Your shifts for ${range} have changed. Here's the latest:` : `Here are your shifts for ${range}:`;
@@ -74,7 +75,7 @@ function emailFor(p: Person, business: string, weekStart: string, shifts: Shift[
   const text = [`Hi ${first},`, "", intro, "", ...mine.map((s) => `${fmtDay(s.date)}: ${line(s)}${s.notes ? ` (${s.notes})` : ""}`), "",
     `Open my shifts: ${link}`, "", `Sent by SMEasy for ${business}. Stop roster emails: ${stop}`].join("\n");
 
-  return { subject, html, text, stop };
+  return { oneClick, subject, html, text, stop };
 }
 
 Deno.serve(async (req) => {
@@ -155,7 +156,7 @@ Deno.serve(async (req) => {
         to: [p.email],
         reply_to: user.email ? [user.email] : undefined,
         subject: m.subject, html: m.html, text: m.text,
-        headers: { "List-Unsubscribe": `<${m.stop}>` },
+        headers: { "List-Unsubscribe": `<${m.oneClick}>, <${m.stop}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
       });
       sent.push(p.name);
     }
