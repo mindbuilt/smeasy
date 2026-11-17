@@ -37,6 +37,16 @@ export default function StaffRoster() {
     return () => window.removeEventListener("hashchange", read);
   }, []);
 
+  const [calToken, setCalToken] = useState<string | null>(null);
+  useEffect(() => {
+    if (!token) return;
+    supabase().rpc("get_calendar_token", { p_token: token }).then(({ data }) => setCalToken(typeof data === "string" ? data : null));
+  }, [token]);
+  async function resetCalendarLink() {
+    const { data } = await supabase().rpc("reset_calendar_token", { p_token: token! });
+    if (typeof data === "string") setCalToken(data);
+  }
+
   const validToken = token !== null && /^[0-9a-f-]{36}$/i.test(token);
   const [reload, setReload] = useState(0);
   const load = useCallback(() => setReload((n) => n + 1), []);
@@ -117,7 +127,7 @@ export default function StaffRoster() {
 
       <RosterEmails token={token!} email={view.email ?? null} on={view.email_roster ?? true} onChanged={load} />
 
-      <CalendarButtons token={token!} />
+      {calToken && <CalendarButtons token={calToken} onReset={resetCalendarLink} />}
 
       <StaffFooter hint="This is your personal link. Add it to your home screen and it opens like an app. It stays the same every week, so please don't share it." />
     </StaffShell>

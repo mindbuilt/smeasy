@@ -425,6 +425,18 @@ export type Database = {
         }
         Returns: string
       }
+      get_calendar_token: {
+        Args: {
+          p_token: string
+        }
+        Returns: string
+      }
+      reset_calendar_token: {
+        Args: {
+          p_token: string
+        }
+        Returns: string
+      }
       cancel_time_off: {
         Args: {
           p_id: string

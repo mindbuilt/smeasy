@@ -1,8 +1,8 @@
 // Calendar subscription feed for one staff member's published shifts.
 //   GET /functions/v1/staff-calendar?t=<roster_token>
 // Calendar apps (Apple, Google, Outlook) poll this URL, so shifts stay up to
-// date without the staff member doing anything. No login: the private
-// personal-link token is the key, exactly like the /s/ page.
+// date without the staff member doing anything. No login: the calendar
+// token is the key. It is separate from the personal link, so a shared calendar URL can't change emails or request time off.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;

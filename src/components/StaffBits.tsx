@@ -218,7 +218,7 @@ export function readToken(key: string): string {
 }
 
 /** Subscribe to a personal shift calendar that updates itself. */
-export function CalendarButtons({ token }: { token: string }) {
+export function CalendarButtons({ token, onReset }: { token: string; onReset: () => Promise<void> }) {
   const host = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/^https:\/\//, "");
   const feed = `${host}/functions/v1/staff-calendar?t=${token}`;
   const webcal = `webcal://${feed}`;
@@ -234,6 +234,9 @@ export function CalendarButtons({ token }: { token: string }) {
         <a href={google} target="_blank" rel="noreferrer" className="app-press" style={{ ...btn(), textDecoration: "none" }}>Google Calendar</a>
       </div>
       <p style={{ fontSize: 13, color: C.muted, margin: "10px 0 0" }}>Your calendar app checks for changes every few hours.</p>
+      <p style={{ fontSize: 13, color: C.muted, margin: "10px 0 0", lineHeight: 1.5 }}>
+        If this link was shared with someone else, <button type="button" onClick={() => { if (window.confirm("Reset the calendar link? Your current calendar subscription will stop updating, so you'll need to add the new link.")) onReset(); }} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.secondary, textDecoration: "underline", cursor: "pointer" }}>reset the calendar link</button>. Your personal link stays the same.
+      </p>
     </section>
   );
 }
