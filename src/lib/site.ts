@@ -43,7 +43,7 @@ export const PRICES: Record<"core" | "pro", Record<Interval, number>> = {
   core: { month: 29, year: 290 },
   pro: { month: 49, year: 490 },
 };
-export const PRO_AVAILABLE = false;
+export const PRO_AVAILABLE = true;
 export const BILLING_ENABLED = true;
 export const STAFF_LIMIT_ENFORCED = true;
 export const FREE_STAFF_LIMIT = 6;
