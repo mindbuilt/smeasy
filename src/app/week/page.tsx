@@ -463,7 +463,6 @@ function WeekPage() {
             empty={locked ? <div>No shifts this day.</div> : (
               <>
                 <div style={{ marginBottom: 12 }}>Tap + to add a shift.</div>
-                {shifts.length === 0 && <button onClick={copyLastWeek} disabled={busy} className="app-press" style={btn()}><Copy size={17} /> Copy last week</button>}
               </>
             )} />
           {!business.state && !hideStateTip && (
@@ -506,7 +505,6 @@ function WeekPage() {
                 <div style={{ marginBottom: 12 }}>No shifts on this day yet.</div>
                 <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
                   <button onClick={() => newShift("", day)} className="app-press" style={btn()}><Plus size={17} /> Add a shift</button>
-                  {shifts.length === 0 && <button onClick={copyLastWeek} disabled={busy} className="app-press" style={btn()}><Copy size={17} /> Copy last week</button>}
                 </div>
               </>
             )} />
@@ -562,7 +560,7 @@ function WeekPage() {
               <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke={C.dark} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
             </span>
             <p style={{ fontSize: 17, fontWeight: 750, color: C.dark, margin: "14px 0 4px" }}>Your team can see {fmtWeek(weekStart)} now.</p>
-            <p style={{ fontSize: 15, color: C.secondary, lineHeight: 1.5, margin: 0 }}>Paste the team link in your group chat, or send the PDF. The link stays the same every week.</p>
+            <p style={{ fontSize: 15, color: C.secondary, lineHeight: 1.5, margin: 0 }}>Share the team link or PDF from More, any time.</p>
           </div>
           {emailResult && (
             <p role="status" style={{ fontSize: 14, color: "error" in emailResult ? C.danger : C.secondary, background: "#f3f4f6", borderRadius: 12, padding: "10px 12px", margin: "0 0 12px", lineHeight: 1.5 }}>
@@ -575,8 +573,6 @@ function WeekPage() {
             </p>
           )}
           <div style={{ display: "grid", gap: 8 }}>
-            <button onClick={copyTeamLink} className="app-press" style={{ ...btn("primary"), minHeight: 48 }}>{linkCopied ? <><Check size={18} /> Copied. Paste it in your group chat</> : <><Link2 size={18} /> Copy team link</>}</button>
-            <button onClick={downloadPdf} className="app-press" style={{ ...btn(), minHeight: 48 }}><FileText size={18} /> Download PDF</button>
             <button onClick={() => setJustPublished(false)} className="app-press" style={btn("ghost")}>Done</button>
           </div>
         </Modal>
