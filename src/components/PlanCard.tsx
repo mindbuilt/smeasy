@@ -98,9 +98,16 @@ export default function PlanCard({ businessId }: { businessId: string }) {
               Your last payment didn&apos;t go through. Update your card in Manage billing to keep your plan.
             </p>
           )}
-          {BILLING_ENABLED && billing?.stripe_customer_id && <button type="button" onClick={() => go("portal")} disabled={busy} className="app-press" style={{ ...btn("secondary"), opacity: busy ? 0.6 : 1 }}>
-            {busy ? "Opening…" : "Manage billing"}
-          </button>}
+          {BILLING_ENABLED && billing?.stripe_customer_id && <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {PRO_AVAILABLE && plan === "core" && (
+              <button type="button" onClick={() => go("portal")} disabled={busy} className="app-press" style={{ ...btn("accent"), opacity: busy ? 0.6 : 1 }}>
+                {busy ? "Opening…" : `Upgrade to Pro · $${PRICES.pro.month} a month`}
+              </button>
+            )}
+            <button type="button" onClick={() => go("portal")} disabled={busy} className="app-press" style={{ ...btn("secondary"), opacity: busy ? 0.6 : 1 }}>
+              {busy ? "Opening…" : "Manage billing"}
+            </button>
+          </div>}
           {BILLING_ENABLED && !billing?.stripe_customer_id && (
             <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.5 }}>
               Your plan is set up for you. To change it, email <a href="mailto:hello@smeasy.au" style={{ color: C.secondary, fontWeight: 600 }}>hello@smeasy.au</a>.

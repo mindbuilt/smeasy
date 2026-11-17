@@ -70,11 +70,19 @@ Deno.serve(async (req) => {
 
     if (action === "portal") {
       if (!billing?.stripe_customer_id) return json({ error: "There's no billing account yet." }, 400);
-      const portal = await getStripe().billingPortal.sessions.create({
-        customer: billing.stripe_customer_id,
-        return_url: `${SITE_URL}/settings/#plan`,
-      });
-      return json({ url: portal.url });
+      try {
+        const portal = await getStripe().billingPortal.sessions.create({
+          customer: billing.stripe_customer_id,
+          return_url: `${SITE_URL}/settings/#plan`,
+        });
+        return json({ url: portal.url });
+      } catch (e) {
+        // A customer from test mode (or deleted in Stripe) doesn't exist in live mode.
+        if ((e as { code?: string })?.code === "resource_missing") {
+          return json({ error: "We can't find your billing account in Stripe. Email hello@smeasy.au and we'll sort it out." }, 409);
+        }
+        throw e;
+      }
     }
 
     if (action === "checkout") {

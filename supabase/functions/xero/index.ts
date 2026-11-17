@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
       const results: { name: string; ok: boolean; note: string }[] = [];
       const people = (staff ?? []).filter((p) => (shifts ?? []).some((s) => s.staff_id === p.id));
       for (const p of people) {
-        if (!p.xero_employee_id) { results.push({ name: p.name, ok: false, note: "Not matched to a Xero employee" }); continue; }
+        if (!p.xero_employee_id) { results.push({ name: p.name, ok: false, note: "Not matched. Settings → Payroll → Match staff" }); continue; }
         try {
           // Hours per day for this person.
           const byDay = new Map<string, number>();
@@ -140,8 +140,8 @@ Deno.serve(async (req) => {
 
           const emp = (await payroll(a, `Employees/${p.xero_employee_id}`)).Employees?.[0];
           const cal = emp?.PayrollCalendarID ? calendars.get(emp.PayrollCalendarID) : undefined;
-          if (!emp?.OrdinaryEarningsRateID) { results.push({ name: p.name, ok: false, note: "No ordinary earnings rate set in Xero" }); continue; }
-          if (!cal) { results.push({ name: p.name, ok: false, note: "No pay calendar set in Xero" }); continue; }
+          if (!emp?.OrdinaryEarningsRateID) { results.push({ name: p.name, ok: false, note: "No ordinary earnings rate. Add one to them in Xero (Employee → Pay)" }); continue; }
+          if (!cal) { results.push({ name: p.name, ok: false, note: "No pay calendar. Set one in Xero (Employee → Pay)" }); continue; }
           if (cal.type !== "MONTHLY" && !PERIOD_DAYS[cal.type]) { results.push({ name: p.name, ok: false, note: `${cal.type.toLowerCase()} pay calendars aren't supported yet` }); continue; }
 
           // Group the week's days into the employee's pay period(s).

@@ -246,7 +246,9 @@ function HoursPage() {
               </p>
               {sent && (
                 <div role="status" style={{ background: "#f3f4f6", borderRadius: 12, padding: "10px 12px", margin: "0 0 14px", fontSize: 14, lineHeight: 1.55 }}>
-                  <strong style={{ color: C.dark }}>Sent to {xero?.tenant_name ?? "Xero"}:</strong>
+                  <strong style={{ color: C.dark }}>
+                    {sent.filter((r) => r.ok).length} sent to {xero?.tenant_name ?? "Xero"}{sent.some((r) => !r.ok) ? `, ${sent.filter((r) => !r.ok).length} need fixing` : ""}:
+                  </strong>
                   {sent.map((r) => (
                     <div key={r.name} style={{ color: r.ok ? C.secondary : C.danger }}>{r.ok ? "✓" : "✗"} {r.name}: {r.note}</div>
                   ))}
@@ -255,6 +257,9 @@ function HoursPage() {
               )}
               {!approved && notYet && (
                 <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 12px" }}>You can approve once {fmtDay(notYet)} is done. Until then, adjust any days that have happened.</p>
+              )}
+              {!approved && !notYet && (
+                <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 12px" }}>Approving locks these hours as your time record. Shifts in the week can&apos;t be deleted after that.</p>
               )}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {!approved && (

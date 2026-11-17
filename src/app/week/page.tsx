@@ -152,7 +152,7 @@ function WeekPage() {
   const published = roster?.status === "published";
   const isPast = weekStart < thisWeekStart(startDay);
   // Past weeks stay editable until their hours are approved; reopening a week (Hours page) unlocks it again.
-  const locked = isPast && !!roster?.hours_approved_at;
+  const locked = !!roster?.hours_approved_at;
   const roles = business?.roles ?? [];
   const dayInfo = (d: string) => ({ holiday: holidayOn(d, business?.state), note: dayNotes.find((n) => n.date === d)?.note ?? null });
 
@@ -161,6 +161,7 @@ function WeekPage() {
 
   // ── Actions ──────────────────────────────────────────────────────────────
   function newShift(staffId: string, date: string, start?: string, end?: string) {
+    if (locked) { setNotice("These hours are approved. Reopen the week on the Hours page to change shifts."); return; }
     const person = staffById.get(staffId);
     const last = [...shifts].reverse().find((s) => (s.staff_id ?? "") === staffId);
     const hours = start && end ? shiftHours(start, end, 0) : null;
@@ -175,10 +176,12 @@ function WeekPage() {
   }
 
   function editShift(s: Shift) {
+    if (locked) { setNotice("These hours are approved. Reopen the week on the Hours page to change shifts."); return; }
     setDraft({ id: s.id, staff_id: s.staff_id ?? "", date: s.date, start_time: hhmm(s.start_time), end_time: hhmm(s.end_time), break_minutes: s.break_minutes, role: s.role ?? "", notes: s.notes ?? "" });
   }
 
   async function saveShift(d: Draft, alsoOn: string[] = []) {
+    if (locked) { setNotice("These hours are approved. Reopen the week on the Hours page to change shifts."); return; }
     if (!business) return;
     const sb = supabase();
     const r = await ensureRoster(business);
@@ -210,6 +213,7 @@ function WeekPage() {
 
   // Desktop drag and drop: move a shift to another person or day, or copy it (Option/Alt held).
   async function dropShift(id: string, staffId: string, date: string, copy: boolean) {
+    if (locked) { setNotice("These hours are approved. Reopen the week on the Hours page to change shifts."); return; }
     const src = shifts.find((x) => x.id === id);
     if (!src || !business) return;
     if (!copy && (src.staff_id ?? "") === staffId && src.date === date) return;
@@ -240,6 +244,7 @@ function WeekPage() {
   }
 
   async function copyLastWeek() {
+    if (locked) { setNotice("These hours are approved. Reopen the week on the Hours page to change shifts."); return; }
     if (!business || !staff) return;
     setBusy(true);
     const sb = supabase();
