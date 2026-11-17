@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CalendarOff, CalendarRange, CalendarSync, Check, ChevronRight, Copy, FileSpreadsheet, Link2 } from "lucide-react";
 import { C, wrap, display, sectionTitle, lead, card, inkCard, onInk, button, pill, link } from "@/lib/mkt";
-import { SITE_URL, SIGNUPS_OPEN, SIGNUP_HREF, SIGNUP_CTA } from "@/lib/site";
+import { HOLDING_PAGE, SITE_URL, SIGNUPS_OPEN, SIGNUP_HREF, SIGNUP_CTA } from "@/lib/site";
 import { guides } from "@/content/guides";
 import { guideImage } from "@/content/guideImages";
 import AuthHashForwarder from "@/components/AuthHashForwarder";
@@ -14,6 +14,8 @@ export const metadata: Metadata = {
   description:
     "Build the week's roster in minutes and share it with your team by link, email or PDF. Free for small teams.",
   alternates: { canonical: "/" },
+  // The home page stays out of search results while its preview password is on.
+  robots: HOLDING_PAGE ? { index: false, follow: false } : undefined,
   openGraph: {
     url: "/",
     title: "SMEasy — simple staff rostering",

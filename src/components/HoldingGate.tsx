@@ -8,7 +8,7 @@ import { HOLDING_PAGE, PREVIEW_PASSWORD_SHA256 } from "@/lib/site";
 import { btn, input } from "@/components/ui";
 
 const KEY = "smeasy-preview";
-const PUBLIC_PATHS = ["/privacy"]; // linked from Xero and Stripe, so always visible
+const GATED_PATHS = ["/"]; // only the home page sits behind the preview password; everything else is public
 
 async function sha256(text: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
@@ -35,7 +35,8 @@ export default function HoldingGate({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  if (!HOLDING_PAGE || stored || unlocked || PUBLIC_PATHS.some((p) => path.startsWith(p))) return <>{children}</>;
+  const gated = HOLDING_PAGE && GATED_PATHS.includes(path === "" ? "/" : path);
+  if (!gated || stored || unlocked) return <>{children}</>;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

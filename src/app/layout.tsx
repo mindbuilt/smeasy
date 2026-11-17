@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { SITE_URL, HOLDING_PAGE } from "@/lib/site";
+import { SITE_URL } from "@/lib/site";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  robots: HOLDING_PAGE ? { index: false, follow: false } : undefined,
+  robots: undefined,
   metadataBase: new URL(SITE_URL),
   title: {
     default: "SMEasy — simple rostering for Australian small businesses",
