@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/privacy/" },
 };
 
-const UPDATED = "15 November 2026";
+const UPDATED = "17 November 2026";
 
 const h2: CSSProperties = { fontSize: 22, fontWeight: 800, letterSpacing: "-0.015em", margin: "40px 0 12px" };
 const h3: CSSProperties = { fontSize: 17, fontWeight: 700, margin: "22px 0 8px" };
@@ -67,7 +67,7 @@ export default function Privacy() {
       <p style={p}>The reason on a time-off request is optional. Please don&apos;t include health or other sensitive details. &ldquo;Personal&rdquo; or &ldquo;Appointment&rdquo; is enough.</p>
       <h3 style={h3}>From staff using roster links</h3>
       <p style={p}>
-        Staff view published rosters through a link, without an account. If a staff member picks their name on the team roster link to highlight their shifts, that choice is saved only in their own browser. It isn&apos;t sent to us.
+        Staff view published rosters through a link, without an account. Your personal link shows your own shifts; the team link shows everyone&apos;s.
         Requesting time off through a personal link sends us the dates and optional reason entered.
         If a staff member subscribes to their shift calendar, their calendar app (such as Apple, Google or Microsoft) regularly fetches their published shifts from us using their personal link.
       </p>
@@ -78,7 +78,7 @@ export default function Privacy() {
         If you agree, these tools may set cookies and collect information such as pages viewed, approximate location, and device and browser type.
       </p>
       <p style={p}>
-        We store a few small items in your browser to make SMEasy work: your sign-in session (account holders), your cookie choice, and, on the team roster link, the name you picked. These stay on your device.
+        We store a few small items in your browser to make SMEasy work: your sign-in session (account holders), your cookie choice, and, on a staff link you&apos;ve added to your home screen, the link itself so the app keeps working. These stay on your device.
         If you use our contact form, we receive your name, email address, optional business name and your message, and use them to reply to you.
         Our hosting provider keeps standard server logs (such as IP address, page requested and time) for security and troubleshooting.
       </p>
@@ -91,13 +91,13 @@ export default function Privacy() {
         <L>To improve our public website, using analytics from public pages only, where you&apos;ve agreed to it.</L>
         <L>To contact account holders about their account or important changes to SMEasy.</L>
       </ul>
-      <p style={p}>We don&apos;t use staff information to contact staff ourselves, and we don&apos;t sell personal information or use it for advertising.</p>
+      <p style={p}>When a manager publishes a roster or emails the team, each rostered person with an email address gets their own shifts by email, from hello@smeasy.au. Replies go to the manager. Every email has a link to stop roster emails. We don&apos;t sell personal information or use it for advertising.</p>
 
       <h2 style={h2}>Who can see what</h2>
       <ul style={ul}>
         <L><strong>Account holders</strong> can see and change everything about their own business, and nothing about any other business.</L>
-        <L><strong>Anyone with a business&apos;s team roster link</strong> can see that business&apos;s published rosters: names, days, shift times and roles only. Not contact details or drafts. Account holders can reset the link at any time, which stops the old link working.</L>
-        <L><strong>Anyone with a staff member&apos;s personal link</strong> can see that business&apos;s published rosters and that staff member&apos;s time-off requests, and can submit time-off requests in their name. Account holders can reset a personal link at any time.</L>
+        <L><strong>Anyone with a business&apos;s team roster link</strong> can see that business&apos;s published rosters: names, days, shift times, roles, and any shift or day notes. Not contact details or drafts. Managers should keep notes free of private details. Account holders can reset the link at any time, which stops the old link working.</L>
+        <L><strong>Anyone with a staff member&apos;s personal link</strong> can see that business&apos;s published rosters and that staff member&apos;s time-off requests, can submit time-off requests in their name, can change the email address roster emails go to, and can turn roster emails off. Treat a personal link like the staff member&apos;s own login. Account holders can reset a personal link at any time.</L>
         <L><strong>Our team</strong> accesses account data only when needed to provide support, fix problems or meet legal obligations.</L>
       </ul>
 
@@ -110,7 +110,7 @@ export default function Privacy() {
           </thead>
           <tbody>
             <tr><td style={td}>Supabase</td><td style={td}>Database and sign-in</td><td style={td}>Data stored in Sydney, Australia. Supabase Inc. is based in the United States and its staff may access data for support and operations.</td></tr>
-            <tr><td style={td}>Resend</td><td style={td}>Sending sign-in emails</td><td style={td}>United States company; emails sent via Amazon Web Services (Tokyo region)</td></tr>
+            <tr><td style={td}>Resend</td><td style={td}>Sending sign-in emails and roster emails</td><td style={td}>United States company; emails sent via Amazon Web Services (Tokyo region)</td></tr>
             <tr><td style={td}>Stripe</td><td style={td}>Payments and invoices for paid plans. Card details go straight to Stripe; we never see or store them</td><td style={td}>Stripe Payments Australia; data processed in the United States and other countries</td></tr>
             <tr><td style={td}>Xero</td><td style={td}>Only if you connect it (Pro): we read your Xero employees&apos; names and pay calendars to match your staff (and, if you use Add from Xero, their email and mobile to set them up in SMEasy), and send approved hours as draft timesheets. Access is encrypted, limited to payroll timesheets, and you can disconnect at any time. We never use Xero data to train AI</td><td style={td}>Xero Limited; data processed in the United States and other countries</td></tr>
             <tr><td style={td}>Formspree</td><td style={td}>Receiving contact form messages</td><td style={td}>United States</td></tr>

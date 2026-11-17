@@ -425,6 +425,13 @@ export type Database = {
         }
         Returns: string
       }
+      cancel_time_off: {
+        Args: {
+          p_id: string
+          p_token: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -103,6 +103,9 @@ export default function StaffRoster() {
             <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderTop: `1px solid ${C.divider}`, fontSize: 15 }}>
               <span style={{ flex: 1 }}>{t.start_date === t.end_date ? fmtDay(t.start_date) : `${fmtDay(t.start_date)} – ${fmtDay(t.end_date)}`}</span>
               <span style={{ fontSize: 13, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: tone.bg, color: tone.text }}>{tone.label}</span>
+              {t.status === "pending" && (
+                <button onClick={async () => { await supabase().rpc("cancel_time_off", { p_token: token!, p_id: t.id }); load(); }} className="app-press" style={{ background: "none", border: "none", padding: "4px 0", font: "inherit", fontSize: 13, color: C.secondary, textDecoration: "underline", cursor: "pointer" }}>Cancel</button>
+              )}
             </div>
           );
         })}
@@ -161,15 +164,14 @@ function RosterEmails({ token, email, on, onChanged }: { token: string; email: s
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [stopped, setStopped] = useState(false);
+  // Arriving from "Stop roster emails" in an email: ask first. Scanners that open links must not switch emails off.
+  const [askStop, setAskStop] = useState(false);
 
-  // Arriving from "Stop roster emails" in an email: turn them off once, then tidy the URL.
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("stop") !== "1") return;
-    supabase().rpc("set_roster_emails", { p_token: token, p_on: false }).then(({ error }) => {
-      if (!error) { setStopped(true); onChanged(); }
-      window.history.replaceState(null, "", window.location.pathname + window.location.hash);
-    });
-  }, [token, onChanged]);
+    setAskStop(true);
+    window.history.replaceState(null, "", window.location.pathname + window.location.hash);
+  }, []);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -194,21 +196,33 @@ function RosterEmails({ token, email, on, onChanged }: { token: string; email: s
         <form onSubmit={save} style={{ display: "grid", gap: 10 }}>
           {!email && <p style={{ fontSize: 14, color: C.secondary, margin: 0 }}>Add your email and you&apos;ll get your shifts when the roster comes out.</p>}
           <div style={{ display: "flex", gap: 8 }}>
-            <input type="email" required value={value} onChange={(e) => setValue(e.target.value)} placeholder="you@example.com" aria-label="Your email" autoComplete="email" style={input} />
-            <button type="submit" disabled={saving || !value.trim()} className="app-press" style={{ ...btn("primary"), whiteSpace: "nowrap", opacity: value.trim() ? 1 : 0.5 }}>{saving ? "Saving…" : "Save"}</button>
+            <input type="email" value={value} onChange={(e) => setValue(e.target.value)} placeholder="you@example.com" aria-label="Your email" autoComplete="email" style={input} />
+            <button type="submit" disabled={saving} className="app-press" style={{ ...btn("primary"), whiteSpace: "nowrap" }}>{saving ? "Saving…" : !value.trim() && email ? "Remove email" : "Save"}</button>
           </div>
           {error && <p style={{ color: C.danger, fontSize: 13, margin: 0 }}>{error}</p>}
           {editing && <button type="button" onClick={() => { setEditing(false); setValue(email ?? ""); }} style={{ ...btn("ghost"), justifySelf: "start", padding: "4px 0" }}>Cancel</button>}
         </form>
       ) : on ? (
+        <>
+          {askStop && (
+            <div role="alertdialog" aria-label="Stop roster emails" style={{ background: "#f3f4f6", borderRadius: 12, padding: "12px 14px", display: "grid", gap: 10 }}>
+              <p style={{ margin: 0, fontSize: 15, color: C.dark, lineHeight: 1.5 }}>Stop roster emails? You won&apos;t get your shifts by email any more. You can turn them back on here.</p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button onClick={() => { setAskStop(false); toggle(false); }} className="app-press" style={btn("primary")}>Yes, stop them</button>
+                <button onClick={() => setAskStop(false)} className="app-press" style={btn("ghost")}>No, keep them</button>
+              </div>
+            </div>
+          )}
         <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.6 }}>
           Your shifts go to <strong style={{ color: C.dark }}>{email}</strong> when the roster comes out.{" "}
           <button onClick={() => setEditing(true)} style={link}>Change</button>{" · "}
           <button onClick={() => toggle(false)} style={link}>Stop roster emails</button>
         </p>
+        </>
       ) : (
         <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.6 }}>
           {stopped ? "Done. You won't get roster emails any more." : "Roster emails are off."}{" "}
+          {email && <><button onClick={() => setEditing(true)} style={link}>Change email</button>{" · "}</>}
           <button onClick={() => toggle(true)} style={link}>Turn them back on</button>
         </p>
       )}

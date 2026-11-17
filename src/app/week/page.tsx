@@ -47,16 +47,19 @@ const limitOf = (p: Staff | undefined) => Number(p?.max_weekly_hours ?? DEFAULT_
 
 async function fetchWeek(weekStart: string, days: string[]) {
   const sb = supabase();
-  const [st, ro, to, dn] = await Promise.all([
+  const [st, ro, to, dn, pendingTo] = await Promise.all([
     sb.from("staff").select("*").eq("active", true).order("name"),
     sb.from("rosters").select("*").eq("week_start", weekStart).maybeSingle(),
     sb.from("time_off").select("*").lte("start_date", days[6]).gte("end_date", days[0]).neq("status", "declined"),
     sb.from("day_notes").select("id, date, note").gte("date", days[0]).lte("date", days[6]),
+    // Every pending request, for any week, so none sit unseen.
+    sb.from("time_off").select("*").eq("status", "pending").gte("end_date", days[0]),
   ]);
+  const timeOff = [...(to.data ?? []), ...(pendingTo.data ?? [])].filter((t, i, all) => all.findIndex((x) => x.id === t.id) === i);
   const shifts = ro.data
     ? (await sb.from("shifts").select("*").eq("roster_id", ro.data.id).order("start_time")).data ?? []
     : [];
-  return { staff: st.data ?? [], roster: ro.data ?? null, timeOff: to.data ?? [], shifts, dayNotes: (dn.data ?? []) as DayNote[] };
+  return { staff: st.data ?? [], roster: ro.data ?? null, timeOff, shifts, dayNotes: (dn.data ?? []) as DayNote[] };
 }
 
 function useIsMobile() {
