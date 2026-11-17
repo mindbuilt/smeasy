@@ -359,7 +359,7 @@ A 50 by 30px fully round track: switch-off grey when off, lime when on. The 24px
 ### Navigation
 - **Top bar:** sticky, 60px, white at 92% with a 12px blur, a hairline bottom border, the logo on the left, and the business-name account menu on the right.
 - **Top nav (720px and wider):** 15px 600 items with 18px icons. The active item is ink text on a divider fill with icon stroke 2.4. Inactive items are slate-muted with stroke 2.
-- **Tab bar (below 720px):** fixed bottom, white at 96% with blur, a hairline top border, three items (Roster, Team, Settings). Each is a 21px icon above a 12px 700 label. The active item sits in a 56 by 30px lime pill with icon stroke 2.4. Tapping gives a haptic tick.
+- **Tab bar (below 720px):** fixed bottom, white at 96% with blur, a hairline top border, three items (Roster, Team, Timesheets). Settings is a gear in the header. Each is a 21px icon above a 12px 700 label. The active item sits in a 56 by 30px lime pill with icon stroke 2.4. Tapping gives a haptic tick.
 
 ### Sheets and dialogs
 On phones, a bottom sheet with 20px top corners rises in 340ms and falls in 220ms. On desktop, a centred 460px dialog fades and scales in over 260ms. Both have a 40 by 4px grab handle, a 19px 750 title, and a 40px round quiet-fill close button. Escape closes them and the body stops scrolling while they are open.
