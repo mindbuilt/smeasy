@@ -31,6 +31,12 @@ export default function StaffRoster() {
   const [asking, setAsking] = useState(false);
 
   useEffect(() => {
+    // Open at the top: don't let the browser restore an old scroll position (e.g. from the mail app's browser).
+    if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     const read = () => setToken(readToken("smeasy_staff_token"));
     read();
     window.addEventListener("hashchange", read);
