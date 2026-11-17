@@ -148,7 +148,7 @@ export const guides: Guide[] = [
     updated: "2026-11-16",
     body: [
       { p: "SMEasy works out the paid hours for every shift (finish time minus start time minus the unpaid break). At the end of the week you confirm what actually happened, approve it, and send it to payroll." },
-      { h2: "1. Confirm the hours on the Hours page" },
+      { h2: "1. Confirm the hours on the Timesheets page" },
       { ol: [
         "Open Hours and pick the week.",
         "Every shift starts as rostered. Only change what was different: a later finish, a longer break.",
@@ -156,7 +156,7 @@ export const guides: Guide[] = [
       ] },
       { p: "The totals show rostered and worked hours for each person. Days that haven't happened yet can't be changed." },
       { h2: "2. Approve the week" },
-      { p: "When the week's done, tap Approve hours. That locks the week so nothing changes by accident. Tap Edit hours if you need to unlock it." },
+      { p: "When the week's done, tap Approve timesheets. That locks the week so nothing changes by accident. Tap Edit timesheets if you need to unlock it." },
       { h2: "3a. Send to Xero Payroll" },
       { ol: [
         "Once: go to Settings → Payroll, tap Connect to Xero and choose your organisation.",
@@ -166,7 +166,7 @@ export const guides: Guide[] = [
       { p: "The hours arrive in Xero Payroll as draft timesheets, in each employee's pay period. Check them in Xero and approve them in your pay run as usual. If a timesheet for that period is already approved in Xero, SMEasy leaves it alone." },
       { tip: "Xero sync is part of Pro. It works with weekly, fortnightly, four-weekly and monthly pay calendars." },
       { h2: "3b. Or download a spreadsheet" },
-      { p: "Tap Download CSV (Hours for payroll on the Roster works too). Each row is one shift: name, date, day, start, finish, unpaid break, rostered hours, worked hours, role and a note if it changed. Underneath is a total for each person. Use it for MYOB or send it to your bookkeeper." },
+      { p: "Tap Download CSV (Timesheets for payroll on the Roster works too). Each row is one shift: name, date, day, start, finish, unpaid break, rostered hours, worked hours, role and a note if it changed. Underneath is a total for each person. Use it for MYOB or send it to your bookkeeper." },
       { tip: "Use the same names in SMEasy as in your payroll software, so matching people is easy." },
       { h2: "What SMEasy doesn't do" },
       { ul: [

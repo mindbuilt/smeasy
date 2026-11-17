@@ -171,7 +171,7 @@ function HoursPage() {
         {!hasCore(plan) ? (
           <div style={{ ...card, padding: "28px 24px", textAlign: "center" }}>
             <p style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: "0 0 6px" }}>Timesheets are part of Plus</p>
-            <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 16px", lineHeight: 1.5 }}>Confirm the hours people actually worked and approve them for payroll.</p>
+            <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 16px", lineHeight: 1.5 }}>Confirm the hours people actually worked, then approve the timesheet for payroll.</p>
             <Link href="/settings/#plan" className="app-press" style={{ ...btn("accent"), textDecoration: "none" }}>See plans</Link>
           </div>
         ) : shifts.length === 0 ? (
@@ -187,16 +187,16 @@ function HoursPage() {
                   Approved {shortDate(roster!.hours_approved_at!)}
                   {roster?.xero_sent_at && <> · Sent to {xero?.tenant_name ?? "Xero"} {shortDate(roster.xero_sent_at)}</>}
                 </span>
-                {!reopening && <button onClick={() => setReopening(true)} disabled={busy} className="app-press" style={{ ...btn("ghost"), minHeight: 34, padding: "6px 10px", color: C.dark }}>Edit hours</button>}
+                {!reopening && <button onClick={() => setReopening(true)} disabled={busy} className="app-press" style={{ ...btn("ghost"), minHeight: 34, padding: "6px 10px", color: C.dark }}>Edit timesheets</button>}
               </p>
             )}
             {approved && reopening && (
               <form onSubmit={(e) => { e.preventDefault(); reopen(); }} style={{ ...card, padding: "14px 16px", margin: "-6px 0 14px", display: "grid", gap: 10 }}>
                 <label style={{ ...label, marginBottom: 0 }} htmlFor="reopen-reason">What needs correcting?</label>
                 <input id="reopen-reason" autoFocus value={reason} maxLength={300} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Sam stayed until 5:30 on Wednesday" style={input} />
-                <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>Approved hours are your time records, so SMEasy keeps a note of every change and why.</p>
+                <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>Approved timesheets are your time records, so SMEasy keeps a note of every change and why.</p>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button type="submit" disabled={busy || !reason.trim()} className="app-press" style={{ ...btn("primary"), opacity: reason.trim() ? 1 : 0.5 }}>Edit hours</button>
+                  <button type="submit" disabled={busy || !reason.trim()} className="app-press" style={{ ...btn("primary"), opacity: reason.trim() ? 1 : 0.5 }}>Edit timesheets</button>
                   <button type="button" onClick={() => { setReopening(false); setReason(""); }} className="app-press" style={btn("ghost")}>Cancel</button>
                 </div>
               </form>
@@ -260,12 +260,12 @@ function HoursPage() {
                 <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 12px" }}>You can approve once {fmtDay(notYet)} is done. Until then, adjust any days that have happened.</p>
               )}
               {!approved && !notYet && (
-                <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 12px" }}>Approving locks these hours as your time record. Shifts in the week can&apos;t be deleted after that.</p>
+                <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 12px" }}>Approving locks these timesheets as your time record. Shifts in the week can&apos;t be deleted after that.</p>
               )}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {!approved && (
                   <button onClick={approve} disabled={busy || !!notYet} className="app-press" style={{ ...btn("accent"), padding: "10px 20px", opacity: notYet ? 0.45 : 1 }}>
-                    <Check size={18} /> {busy ? "Approving…" : "Approve hours"}
+                    <Check size={18} /> {busy ? "Approving…" : "Approve timesheets"}
                   </button>
                 )}
                 {approved && !xero && hasPro(plan) && (
@@ -278,7 +278,7 @@ function HoursPage() {
                 )}
                 {/* With Xero connected the CSV is only a backup, so it steps back. */}
                 <button onClick={() => downloadHoursCsv({ shifts, staff, weekStart })} className="app-press" style={xero && hasPro(plan) ? { ...btn("ghost"), color: C.secondary } : btn()}>
-                  <Download size={17} /> {xero && hasPro(plan) ? "Download CSV" : "Hours for payroll (CSV)"}
+                  <Download size={17} /> {xero && hasPro(plan) ? "Download CSV" : "Timesheets for payroll (CSV)"}
                 </button>
                 <button onClick={() => setExporting(true)} className="app-press" style={{ ...btn("ghost"), color: C.secondary }}>Export dates…</button>
               </div>
@@ -347,7 +347,7 @@ function ExportRange({ staff, onClose }: { staff: Staff[]; onClose: () => void }
   }
 
   return (
-    <Modal title="Export hours" onClose={onClose}>
+    <Modal title="Export timesheets" onClose={onClose}>
       <form onSubmit={run} style={{ display: "grid", gap: 12 }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <div><label style={label} htmlFor="ex-from">From</label><input id="ex-from" type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} style={input} required /></div>

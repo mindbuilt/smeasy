@@ -165,7 +165,7 @@ function WeekPage() {
 
   // ── Actions ──────────────────────────────────────────────────────────────
   function newShift(staffId: string, date: string, start?: string, end?: string) {
-    if (locked) { setNotice("These hours are approved. Reopen the week on the Hours page to change shifts."); return; }
+    if (locked) { setNotice("These timesheets are approved. Reopen the week on the Timesheets page to change shifts."); return; }
     const person = staffById.get(staffId);
     const last = [...shifts].reverse().find((s) => (s.staff_id ?? "") === staffId);
     const hours = start && end ? shiftHours(start, end, 0) : null;
@@ -180,12 +180,12 @@ function WeekPage() {
   }
 
   function editShift(s: Shift) {
-    if (locked) { setNotice("These hours are approved. Reopen the week on the Hours page to change shifts."); return; }
+    if (locked) { setNotice("These timesheets are approved. Reopen the week on the Timesheets page to change shifts."); return; }
     setDraft({ id: s.id, staff_id: s.staff_id ?? "", date: s.date, start_time: hhmm(s.start_time), end_time: hhmm(s.end_time), break_minutes: s.break_minutes, role: s.role ?? "", notes: s.notes ?? "" });
   }
 
   async function saveShift(d: Draft, alsoOn: string[] = []) {
-    if (locked) { setNotice("These hours are approved. Reopen the week on the Hours page to change shifts."); return; }
+    if (locked) { setNotice("These timesheets are approved. Reopen the week on the Timesheets page to change shifts."); return; }
     if (!business) return;
     const sb = supabase();
     const r = await ensureRoster(business);
@@ -217,7 +217,7 @@ function WeekPage() {
 
   // Desktop drag and drop: move a shift to another person or day, or copy it (Option/Alt held).
   async function dropShift(id: string, staffId: string, date: string, copy: boolean) {
-    if (locked) { setNotice("These hours are approved. Reopen the week on the Hours page to change shifts."); return; }
+    if (locked) { setNotice("These timesheets are approved. Reopen the week on the Timesheets page to change shifts."); return; }
     const src = shifts.find((x) => x.id === id);
     if (!src || !business) return;
     if (!copy && (src.staff_id ?? "") === staffId && src.date === date) return;
@@ -248,7 +248,7 @@ function WeekPage() {
   }
 
   async function copyLastWeek() {
-    if (locked) { setNotice("These hours are approved. Reopen the week on the Hours page to change shifts."); return; }
+    if (locked) { setNotice("These timesheets are approved. Reopen the week on the Timesheets page to change shifts."); return; }
     if (!business || !staff) return;
     setBusy(true);
     const sb = supabase();
@@ -419,7 +419,7 @@ function WeekPage() {
         )}
       </div>
       {notice && <Banner onClose={() => setNotice(null)}>{notice}</Banner>}
-      {locked && <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 12px" }}>These hours are approved, so the roster is read-only. <Link href={`/hours?w=${weekStart}`} style={{ color: C.dark, fontWeight: 650 }}>Edit hours</Link></p>}
+      {locked && <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 12px" }}>These timesheets are approved, so the roster is read-only. <Link href={`/hours?w=${weekStart}`} style={{ color: C.dark, fontWeight: 650 }}>Edit timesheets</Link></p>}
 
       {isMobile && overtime.length > 0 && hoursNoteKey !== hiddenHoursNote && (
         <p style={{ fontSize: 13, color: C.secondary, margin: "-4px 0 10px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
@@ -546,7 +546,7 @@ function WeekPage() {
             {staff.length > 0 && !isPast && <SheetAction icon={<Copy size={19} />} label="Copy last week" hint="Adds last week's shifts. Nothing is doubled up." onClick={() => { setMoreOpen(false); copyLastWeek(); }} />}
             {published && <SheetAction icon={linkCopied ? <Check size={19} /> : <Link2 size={19} />} label={linkCopied ? "Team link copied" : "Copy team link"} hint="Paste it in your staff group chat." onClick={copyTeamLink} />}
             {shifts.length > 0 && <SheetAction icon={<FileText size={19} />} label="Download PDF" hint="A4 roster to print or send." onClick={downloadPdf} />}
-            {published && shifts.length > 0 && <SheetAction icon={<Download size={19} />} label="Hours for payroll (CSV)" hint="One row per shift, plus totals by person." onClick={downloadCSV} />}
+            {published && shifts.length > 0 && <SheetAction icon={<Download size={19} />} label="Timesheets for payroll (CSV)" hint="One row per shift, plus totals by person." onClick={downloadCSV} />}
             {published && !isPast && <SheetAction icon={<Mail size={19} />} label="Email the team" hint="Sends everyone their current shifts. Use it after changes." onClick={() => { setMoreOpen(false); emailTeam(roster!.id, "update"); }} />}
             {published && <SheetAction icon={<Undo2 size={19} />} label="Unpublish" hint="Your team stops seeing this week." onClick={() => { setMoreOpen(false); unpublish(); }} />}
           </div>
@@ -1078,7 +1078,7 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, overtimeOn,
             : "Start and finish can't be the same"}
         </button>
         {d.id && deletable && <button type="button" onClick={() => onDelete(d.id!)} className="app-press" style={btn("danger")}>Delete shift</button>}
-        {d.id && !deletable && <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.5 }}>This shift is in approved hours, so it can&apos;t be deleted. To record that it didn&apos;t happen, mark it &ldquo;Didn&apos;t work&rdquo; on the Hours page.</p>}
+        {d.id && !deletable && <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.5 }}>This shift is in approved timesheets, so it can&apos;t be deleted. To record that it didn&apos;t happen, mark it &ldquo;Didn&apos;t work&rdquo; on the Timesheets page.</p>}
       </form>
     </Modal>
   );
