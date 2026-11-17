@@ -4,20 +4,22 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
-import { BILLING_ENABLED, FREE_STAFF_LIMIT, PLAN_NAMES, PRICES, type Interval, type PlanId } from "@/lib/site";
+import { BILLING_ENABLED, FREE_STAFF_LIMIT, PLAN_NAMES, PRICES, PRO_AVAILABLE, type Interval, type PlanId } from "@/lib/site";
 import { C, btn } from "@/components/ui";
 
 type Billing = Database["public"]["Tables"]["billing"]["Row"];
 
 const pill = (bg: string, color: string) => ({ fontSize: 12, fontWeight: 700, borderRadius: 999, padding: "3px 9px", background: bg, color }) as const;
 const fmt = (iso: string) => new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "long", year: "numeric" }).format(new Date(iso));
-const priceText = (i: Interval) => (i === "year" ? `$${PRICES.core.year} a year` : `$${PRICES.core.month} a month`);
+type BuyablePlan = "core" | "pro";
+const priceText = (p: BuyablePlan, i: Interval) => (i === "year" ? `$${PRICES[p].year} a year` : `$${PRICES[p].month} a month`);
 
 /** Settings → Plan: current plan, staff count, and Upgrade / Manage billing (Stripe). */
 export default function PlanCard({ businessId }: { businessId: string }) {
   const [billing, setBilling] = useState<Billing | null | undefined>(undefined);
   const [staffCount, setStaffCount] = useState<number | null>(null);
   const [interval, setBillingInterval] = useState<Interval>("month");
+  const [choice, setChoice] = useState<BuyablePlan>("core");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -57,7 +59,7 @@ export default function PlanCard({ businessId }: { businessId: string }) {
 
   async function go(action: "checkout" | "portal") {
     setBusy(true); setError(null);
-    const { data, error: err } = await supabase().functions.invoke("billing", { body: { action, plan: "core", interval } });
+    const { data, error: err } = await supabase().functions.invoke("billing", { body: { action, plan: choice, interval } });
     if (err || !data?.url) {
       let msg = "Couldn't open billing. Please try again.";
       try { const body = await (err as { context?: Response })?.context?.json(); if (body?.error) msg = body.error; } catch { /* keep default */ }
@@ -106,9 +108,20 @@ export default function PlanCard({ businessId }: { businessId: string }) {
           <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 14px", lineHeight: 1.5 }}>
             Free is for up to {FREE_STAFF_LIMIT} staff. You have <strong style={{ color: overLimit ? "#9b2c25" : C.dark }}>{staffCount ?? "…"}</strong>.
             {" "}Plus gives you unlimited staff for one flat price: ${PRICES.core.month} a month or ${PRICES.core.year} a year (2 months free), plus GST.
+            {PRO_AVAILABLE && <> Pro adds payroll sync with Xero for ${PRICES.pro.month} a month or ${PRICES.pro.year} a year.</>}
           </p>
           {BILLING_ENABLED && (
             <>
+              {PRO_AVAILABLE && (
+                <div role="radiogroup" aria-label="Plan" style={{ display: "inline-flex", padding: 3, borderRadius: 999, background: "#eef0f3", gap: 2, marginBottom: 8 }}>
+                  {(["core", "pro"] as BuyablePlan[]).map((p) => (
+                    <button key={p} type="button" role="radio" aria-checked={choice === p} onClick={() => setChoice(p)} className="app-press" style={{
+                      border: "none", borderRadius: 999, padding: "7px 14px", minHeight: 36, fontSize: 14, fontWeight: 650, fontFamily: "inherit", cursor: "pointer",
+                      background: choice === p ? C.dark : "transparent", color: choice === p ? C.white : C.secondary,
+                    }}>{PLAN_NAMES[p]}</button>
+                  ))}
+                </div>
+              )}
               <div role="radiogroup" aria-label="Billing" style={{ display: "inline-flex", padding: 3, borderRadius: 999, background: "#eef0f3", gap: 2, marginBottom: 12 }}>
                 {(["month", "year"] as Interval[]).map((i) => (
                   <button key={i} type="button" role="radio" aria-checked={interval === i} onClick={() => setBillingInterval(i)} className="app-press" style={{
@@ -119,7 +132,7 @@ export default function PlanCard({ businessId }: { businessId: string }) {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                 <button type="button" onClick={() => go("checkout")} disabled={busy} className="app-press" style={{ ...btn("accent"), opacity: busy ? 0.6 : 1 }}>
-                  {busy ? "Opening checkout…" : `Upgrade to Plus · ${priceText(interval)}`}
+                  {busy ? "Opening checkout…" : `Upgrade to ${PLAN_NAMES[choice]} · ${priceText(choice, interval)}`}
                 </button>
                 {billing?.stripe_customer_id && (
                   <button type="button" onClick={() => go("portal")} disabled={busy} style={btn("ghost")}>Billing history</button>

@@ -6,6 +6,7 @@
 
 import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { disconnect } from "../_shared/xero.ts";
 
 
 // Service-role key: legacy env name, or the newer SUPABASE_SECRET_KEYS JSON map.
@@ -27,7 +28,6 @@ const PAID_STATUSES = new Set(["active", "trialing", "past_due"]);
 const PRO_PRICES = new Set([Deno.env.get("STRIPE_PRICE_PRO_MONTHLY"), Deno.env.get("STRIPE_PRICE_PRO_ANNUAL")].filter(Boolean));
 
 async function save(sub: Stripe.Subscription, fallbackBusinessId?: string | null) {
-  const businessId = sub.metadata?.business_id || fallbackBusinessId;
   const customer = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
   // Newer API versions keep the period on the subscription item.
   const item = sub.items?.data?.[0] as (Stripe.SubscriptionItem & { current_period_end?: number }) | undefined;
@@ -45,6 +45,19 @@ async function save(sub: Stripe.Subscription, fallbackBusinessId?: string | null
     cancel_at_period_end: sub.cancel_at_period_end,
     updated_at: new Date().toISOString(),
   };
+
+  // Find the business and the plan it had before this event.
+  const { data: before } = await admin().from("billing").select("business_id, plan")
+    .or(`stripe_customer_id.eq.${customer}${fallbackBusinessId || sub.metadata?.business_id ? `,business_id.eq.${fallbackBusinessId || sub.metadata?.business_id}` : ""}`)
+    .maybeSingle();
+  const businessId = sub.metadata?.business_id || fallbackBusinessId || before?.business_id;
+
+  // Leaving Pro ends payroll sync: revoke Xero first, so a failure here makes Stripe retry
+  // (the plan is only saved after the disconnect succeeds).
+  if (before?.plan === "pro" && row.plan !== "pro" && businessId) {
+    await disconnect(businessId);
+    console.log("xero disconnected after Pro ended", businessId);
+  }
 
   const { error } = businessId
     ? await admin().from("billing").upsert({ business_id: businessId, ...row })

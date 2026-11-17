@@ -14,7 +14,8 @@
 //   - Webhook endpoint for the stripe-webhook Edge Function
 // Then it stores STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_CORE_MONTHLY,
 // STRIPE_PRICE_CORE_ANNUAL and STRIPE_TAX_RATE_ID as Supabase Edge Function secrets
-// (needs `npx supabase login`). Pro prices are added when Pro goes on sale.
+// (needs `npx supabase login`). Pro (SMEasy Pro) is created here too; it's only sold once PRO_AVAILABLE is on.
+// Safe to re-run: existing prices are found by lookup key and not created twice.
 // Secrets are never printed.
 
 import { execFileSync } from "node:child_process";
@@ -27,6 +28,10 @@ const WEBHOOK_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/stripe-webh
 const CORE = [
   { key: "smeasy_core_monthly", amount: 2900, interval: "month", nickname: "Plus monthly", secret: "STRIPE_PRICE_CORE_MONTHLY" },
   { key: "smeasy_core_annual", amount: 29000, interval: "year", nickname: "Plus annual", secret: "STRIPE_PRICE_CORE_ANNUAL" },
+];
+const PRO = [
+  { key: "smeasy_pro_monthly", amount: 4900, interval: "month", nickname: "Pro monthly", secret: "STRIPE_PRICE_PRO_MONTHLY" },
+  { key: "smeasy_pro_annual", amount: 49000, interval: "year", nickname: "Pro annual", secret: "STRIPE_PRICE_PRO_ANNUAL" },
 ];
 const EVENTS = ["checkout.session.completed", "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"];
 
@@ -64,20 +69,26 @@ async function api(method, path, params) {
   return body;
 }
 
-// 1. Plus product (internal plan id: core) + monthly and annual prices
+// 1. Plus and Pro products (internal plan id: core for Plus) + monthly and annual prices
 const corePrices = {};
-let coreProduct = null;
-for (const p of CORE) {
-  const found = (await api("GET", `prices?lookup_keys[]=${p.key}&active=true`)).data[0];
-  if (found) { corePrices[p.secret] = found.id; coreProduct ??= found.product; console.log(`✓ ${p.nickname} price exists: ${found.id}`); continue; }
-  coreProduct ??= (await api("POST", "products", { name: "SMEasy Plus", description: "Unlimited staff, flat rate per business. Timesheets and usual-hours notes." })).id;
-  const price = await api("POST", "prices", {
-    product: coreProduct, currency: "aud", unit_amount: p.amount, recurring: { interval: p.interval },
-    tax_behavior: "exclusive", lookup_key: p.key, nickname: p.nickname,
-  });
-  corePrices[p.secret] = price.id;
-  console.log(`✓ Created ${p.nickname} price ${price.id} (A$${p.amount / 100}/${p.interval} + GST)`);
+const products = {};
+const PRODUCT_NAMES = { core: ["SMEasy Plus", "Unlimited staff, flat rate per business. Timesheets and usual-hours notes."],
+  pro: ["SMEasy Pro", "Everything in Plus, plus payroll sync with Xero (MYOB coming)."] };
+for (const [plan, list] of [["core", CORE], ["pro", PRO]]) {
+  for (const p of list) {
+    const found = (await api("GET", `prices?lookup_keys[]=${p.key}&active=true`)).data[0];
+    if (found) { corePrices[p.secret] = found.id; products[plan] ??= found.product; console.log(`✓ ${p.nickname} price exists: ${found.id}`); continue; }
+    products[plan] ??= (await api("POST", "products", { name: PRODUCT_NAMES[plan][0], description: PRODUCT_NAMES[plan][1] })).id;
+    const price = await api("POST", "prices", {
+      product: products[plan], currency: "aud", unit_amount: p.amount, recurring: { interval: p.interval },
+      tax_behavior: "exclusive", lookup_key: p.key, nickname: p.nickname,
+    });
+    corePrices[p.secret] = price.id;
+    console.log(`✓ Created ${p.nickname} price ${price.id} (A$${p.amount / 100}/${p.interval} + GST)`);
+  }
 }
+const coreProduct = products.core;
+const proProduct = products.pro;
 
 // 2. GST tax rate
 let tax = (await api("GET", "tax_rates", { active: true, limit: 100 })).data
@@ -90,9 +101,12 @@ else {
 
 // 3. Customer portal
 const portals = (await api("GET", "billing_portal/configurations", { is_default: true, limit: 1 })).data;
-// Lets customers switch between Plus monthly and annual themselves.
+// Lets customers switch between Plus and Pro, and monthly and annual, themselves.
 const switchPlans = { enabled: true, default_allowed_updates: ["price"], proration_behavior: "create_prorations",
-  products: [{ product: coreProduct, prices: Object.values(corePrices) }] };
+  products: [
+    { product: coreProduct, prices: [corePrices.STRIPE_PRICE_CORE_MONTHLY, corePrices.STRIPE_PRICE_CORE_ANNUAL] },
+    ...(proProduct ? [{ product: proProduct, prices: [corePrices.STRIPE_PRICE_PRO_MONTHLY, corePrices.STRIPE_PRICE_PRO_ANNUAL] }] : []),
+  ] };
 if (portals.length) {
   await api("POST", `billing_portal/configurations/${portals[0].id}`, { features: { subscription_update: switchPlans } });
   console.log(`✓ Customer portal is configured (${portals[0].id}), with monthly / annual switching`);

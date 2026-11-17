@@ -1,21 +1,28 @@
 // Billing actions for the signed-in owner.
 //   POST /functions/v1/billing  { "action": "checkout", "interval": "month" | "year" }  ->  { url }
 //   POST /functions/v1/billing  { "action": "portal" }  ->  { url }
-// "checkout" starts a Stripe Checkout for Core (Pro isn't on sale yet); "portal" opens the Stripe customer
-// portal (change card, invoices, cancel). The caller's own JWT decides which
+// "checkout" starts a Stripe Checkout for Plus (plan "core") or Pro (plan "pro"), from a free business;
+// a paid business changes plan through "portal" (Stripe's plan switching). "portal" opens the Stripe
+// customer portal (change card, invoices, cancel). The caller's own JWT decides which
 // business this is (RLS), and only the service role writes public.billing.
 //
 // Secrets: STRIPE_SECRET_KEY, STRIPE_PRICE_CORE_MONTHLY, STRIPE_PRICE_CORE_ANNUAL,
-// STRIPE_TAX_RATE_ID (GST, optional), SITE_URL (optional).
+// STRIPE_PRICE_PRO_MONTHLY, STRIPE_PRICE_PRO_ANNUAL, STRIPE_TAX_RATE_ID (GST, optional), SITE_URL (optional).
 
 import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SITE_URL = Deno.env.get("SITE_URL") ?? "https://www.smeasy.au";
-const PRICES: Record<string, string> = {
-  month: Deno.env.get("STRIPE_PRICE_CORE_MONTHLY") ?? "",
-  year: Deno.env.get("STRIPE_PRICE_CORE_ANNUAL") ?? "",
+const PRICES: Record<"core" | "pro", Record<string, string>> = {
+  core: {
+    month: Deno.env.get("STRIPE_PRICE_CORE_MONTHLY") ?? "",
+    year: Deno.env.get("STRIPE_PRICE_CORE_ANNUAL") ?? "",
+  },
+  pro: {
+    month: Deno.env.get("STRIPE_PRICE_PRO_MONTHLY") ?? "",
+    year: Deno.env.get("STRIPE_PRICE_PRO_ANNUAL") ?? "",
+  },
 };
 const TAX_RATE_ID = Deno.env.get("STRIPE_TAX_RATE_ID") ?? "";
 
@@ -71,10 +78,10 @@ Deno.serve(async (req) => {
     }
 
     if (action === "checkout") {
-      if (plan !== "core") return json({ error: "Pro isn't available yet." }, 400);
+      if (plan !== "core" && plan !== "pro") return json({ error: "Unknown plan." }, 400);
       if (interval !== "month" && interval !== "year") return json({ error: "Pick monthly or annual." }, 400);
-      const price = PRICES[interval];
-      if (!price) return json({ error: "Billing isn't set up yet." }, 500);
+      const price = PRICES[plan][interval];
+      if (!price) return json({ error: `${plan === "pro" ? "Pro" : "Plus"} billing isn't set up yet.` }, 500);
       if (billing?.plan && billing.plan !== "free") return json({ error: "You're already on a paid plan. Use Manage billing to change it." }, 400);
 
       let customer = billing?.stripe_customer_id;

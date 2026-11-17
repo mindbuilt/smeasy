@@ -35,6 +35,32 @@ const workedHours = (s: Shift) => s.no_show ? 0
 
 const PERIOD_DAYS: Record<string, number> = { WEEKLY: 7, FORTNIGHTLY: 14, FOURWEEKLY: 28 };
 
+/**
+ * The pay period containing a date: its start (ms) and length in days.
+ * Weekly, fortnightly and four-weekly periods are fixed from the calendar's start date.
+ * Monthly periods start on the calendar's start day of each month (clamped to shorter months)
+ * and end the day before the next one, so their length is 28 to 31 days.
+ */
+function periodOf(type: string, calStart: string, ms: number): { start: number; len: number } {
+  if (type !== "MONTHLY") {
+    const len = PERIOD_DAYS[type];
+    const startMs = parse(calStart);
+    const n = Math.floor((ms - startMs) / DAY / len);
+    return { start: startMs + n * len * DAY, len };
+  }
+  const dayOfMonth = new Date(parse(calStart)).getUTCDate();
+  const startOf = (y: number, m: number) => {
+    const lastDay = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    return Date.UTC(y, m, Math.min(dayOfMonth, lastDay));
+  };
+  const t = new Date(ms);
+  let start = startOf(t.getUTCFullYear(), t.getUTCMonth());
+  if (ms < start) start = startOf(t.getUTCFullYear(), t.getUTCMonth() - 1);
+  const s = new Date(start);
+  const next = startOf(s.getUTCFullYear(), s.getUTCMonth() + 1);
+  return { start, len: Math.round((next - start) / DAY) };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -116,21 +142,19 @@ Deno.serve(async (req) => {
           const cal = emp?.PayrollCalendarID ? calendars.get(emp.PayrollCalendarID) : undefined;
           if (!emp?.OrdinaryEarningsRateID) { results.push({ name: p.name, ok: false, note: "No ordinary earnings rate set in Xero" }); continue; }
           if (!cal) { results.push({ name: p.name, ok: false, note: "No pay calendar set in Xero" }); continue; }
-          const len = PERIOD_DAYS[cal.type];
-          if (!len) { results.push({ name: p.name, ok: false, note: `${cal.type.toLowerCase()} pay calendars aren't supported yet` }); continue; }
+          if (cal.type !== "MONTHLY" && !PERIOD_DAYS[cal.type]) { results.push({ name: p.name, ok: false, note: `${cal.type.toLowerCase()} pay calendars aren't supported yet` }); continue; }
 
           // Group the week's days into the employee's pay period(s).
-          const periods = new Map<number, Map<number, number>>();
+          const periods = new Map<number, { len: number; days: Map<number, number> }>();
           for (const [date, h] of byDay) {
-            const n = Math.floor((parse(date) - parse(cal.start)) / DAY / len);
-            const pStart = parse(cal.start) + n * len * DAY;
+            const { start: pStart, len } = periodOf(cal.type, cal.start, parse(date));
             const idx = Math.round((parse(date) - pStart) / DAY);
-            if (!periods.has(pStart)) periods.set(pStart, new Map());
-            periods.get(pStart)!.set(idx, Math.round(h * 100) / 100);
+            if (!periods.has(pStart)) periods.set(pStart, { len, days: new Map() });
+            periods.get(pStart)!.days.set(idx, Math.round(h * 100) / 100);
           }
 
           let skipped = "";
-          for (const [pStart, days] of periods) {
+          for (const [pStart, { len, days }] of periods) {
             const start = iso(pStart), end = iso(pStart + (len - 1) * DAY);
             const [y, m, d] = start.split("-").map(Number);
             const where = encodeURIComponent(`EmployeeID==Guid("${p.xero_employee_id}")&&StartDate==DateTime(${y},${m},${d})`);

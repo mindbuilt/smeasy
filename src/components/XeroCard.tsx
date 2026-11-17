@@ -87,7 +87,7 @@ export default function XeroCard({ businessId, pro }: { businessId: string; pro:
 
       {!pro ? (
         <p style={{ fontSize: 13, color: C.muted, margin: 0, lineHeight: 1.5 }}>
-          Send approved hours straight to Xero. Coming to Pro.
+          Send approved hours straight to Xero. Included in Pro.
           {conn && <> · <button type="button" onClick={disconnectXero} disabled={busy} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.secondary, textDecoration: "underline", cursor: "pointer" }}>Disconnect Xero</button></>}
         </p>
       ) : conn ? (
@@ -103,9 +103,12 @@ export default function XeroCard({ businessId, pro }: { businessId: string; pro:
           </div>
         </>
       ) : (
-        <button type="button" onClick={connect} disabled={busy} className="app-press" style={{
-          ...btn(), background: "#13B5EA", color: "#fff", borderColor: "#13B5EA", fontWeight: 700, opacity: busy ? 0.7 : 1,
-        }}>{busy ? "Opening Xero…" : "Connect to Xero"}</button>
+        // Xero's official button artwork (public/xero/connect-blue.svg), unchanged, as Xero's branding rules require.
+        <button type="button" onClick={connect} disabled={busy} aria-label={busy ? "Opening Xero" : "Connect to Xero"} style={{
+          background: "none", border: "none", padding: 0, cursor: busy ? "default" : "pointer", opacity: busy ? 0.7 : 1, display: "inline-block", lineHeight: 0,
+        }}>
+          <img src="/xero/connect-blue.svg" alt="" width={190} height={43} />
+        </button>
       )}
 
       {matching && conn && pro && <MatchStaff onClose={(n) => { setMatching(false); if (n !== undefined) setUnmatched(n); }} />}
