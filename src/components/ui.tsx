@@ -191,6 +191,18 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
   };
   const closeRef = useRef(close);
   useEffect(() => { closeRef.current = close; });
+  // Opening a sheet adds a history step, so the phone's Back button closes the sheet, not the page.
+  // Closing it another way (button, Escape, scrim) removes that step again.
+  useEffect(() => {
+    window.history.pushState(window.history.state, "", window.location.href);
+    let open = true;
+    const onPop = () => { if (!open) return; open = false; closeRef.current(); };
+    window.addEventListener("popstate", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      if (open) { open = false; window.history.back(); }
+    };
+  }, []);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeRef.current(); };
     document.addEventListener("keydown", onKey);

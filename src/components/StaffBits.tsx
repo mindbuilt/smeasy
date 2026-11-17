@@ -223,6 +223,12 @@ export function CalendarButtons({ token, onReset }: { token: string; onReset: ()
   const feed = `${host}/functions/v1/staff-calendar?t=${token}`;
   const webcal = `webcal://${feed}`;
   const google = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}`;
+  const [copied, setCopied] = useState(false);
+  async function copyLink() {
+    await navigator.clipboard.writeText(`https://${feed}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
   return (
     <section id="calendar" style={{ ...card, padding: "16px 16px 14px", marginTop: 14, scrollMarginTop: 72 }}>
       <h2 style={{ fontSize: 17, fontWeight: 800, color: C.dark, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><CalendarDays size={19} /> Shifts in your phone&apos;s calendar</h2>
@@ -230,10 +236,13 @@ export function CalendarButtons({ token, onReset }: { token: string; onReset: ()
         Subscribe once and your published shifts appear in your calendar, and stay up to date when the roster changes.
       </p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <a href={webcal} className="app-press" style={{ ...btn("primary"), textDecoration: "none" }}>iPhone / Mac / Outlook</a>
-        <a href={google} target="_blank" rel="noreferrer" className="app-press" style={{ ...btn(), textDecoration: "none" }}>Google Calendar</a>
+        <a href={webcal} className="app-press" style={{ ...btn("primary"), textDecoration: "none" }}>iPhone / Mac</a>
+        <button type="button" onClick={copyLink} className="app-press" style={btn()}>{copied ? "Link copied" : "Copy calendar link"}</button>
+        <a href={google} target="_blank" rel="noreferrer" className="app-press" style={{ ...btn(), textDecoration: "none" }}>Google Calendar (computer)</a>
       </div>
-      <p style={{ fontSize: 13, color: C.muted, margin: "10px 0 0" }}>Your calendar app checks for changes every few hours.</p>
+      <p style={{ fontSize: 13, color: C.muted, margin: "10px 0 0", lineHeight: 1.5 }}>
+        For Android or Outlook, copy the link and add it as a calendar subscription by URL. Calendar apps update on their own schedule, often about once a day, so if a change isn&apos;t showing yet, check again later.
+      </p>
       <p style={{ fontSize: 13, color: C.muted, margin: "10px 0 0", lineHeight: 1.5 }}>
         If this link was shared with someone else, <button type="button" onClick={() => { if (window.confirm("Reset the calendar link? Your current calendar subscription will stop updating, so you'll need to add the new link.")) onReset(); }} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.secondary, textDecoration: "underline", cursor: "pointer" }}>reset the calendar link</button>. Your personal link stays the same.
       </p>

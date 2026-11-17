@@ -182,8 +182,9 @@ Deno.serve(async (req) => {
 
       const now = new Date().toISOString();
       const db = admin();
+      // Keep every person's result, so the Hours page can show what needs fixing after a reload.
+      await db.from("rosters").update({ xero_results: results, ...(results.some((r) => r.ok) ? { xero_sent_at: now } : {}) }).eq("id", roster.id);
       if (results.some((r) => r.ok)) {
-        await db.from("rosters").update({ xero_sent_at: now }).eq("id", roster.id);
         await db.from("xero_connections").update({ last_sent_at: now }).eq("business_id", business.id);
       }
       return json({ results });

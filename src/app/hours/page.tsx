@@ -42,6 +42,8 @@ function HoursPage() {
   const [xero, setXero] = useState<{ tenant_name: string | null } | null>(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState<{ name: string; ok: boolean; note: string }[] | null>(null);
+  // The last send's results: this session's, else the ones saved on the week (so they survive a reload).
+  const results = sent ?? (roster?.xero_results as { name: string; ok: boolean; note: string }[] | null) ?? null;
   const [reopening, setReopening] = useState(false);
   const [reason, setReason] = useState("");
   const [history, setHistory] = useState<Change[]>([]);
@@ -245,15 +247,15 @@ function HoursPage() {
               <p style={{ fontSize: 13, color: C.muted, margin: "10px 0 14px" }}>
                 {edits === 0 ? "Everything as rostered so far." : `${edits} ${edits === 1 ? "shift" : "shifts"} changed from the roster.`} Paid hours, unpaid breaks taken out.
               </p>
-              {sent && (
+              {results && approved && (
                 <div role="status" style={{ background: "#f3f4f6", borderRadius: 12, padding: "10px 12px", margin: "0 0 14px", fontSize: 14, lineHeight: 1.55 }}>
                   <strong style={{ color: C.dark }}>
-                    {sent.filter((r) => r.ok).length} sent to {xero?.tenant_name ?? "Xero"}{sent.some((r) => !r.ok) ? `, ${sent.filter((r) => !r.ok).length} need fixing` : ""}:
+                    {results.filter((r) => r.ok).length} sent to {xero?.tenant_name ?? "Xero"}{results.some((r) => !r.ok) ? `, ${results.filter((r) => !r.ok).length} need fixing` : ""}:
                   </strong>
-                  {sent.map((r) => (
+                  {results.map((r) => (
                     <div key={r.name} style={{ color: r.ok ? C.secondary : C.danger }}>{r.ok ? "✓" : "✗"} {r.name}: {r.note}</div>
                   ))}
-                  {sent.some((r) => r.ok) && <div style={{ color: C.muted, marginTop: 4 }}>They&apos;re drafts in Xero Payroll: check them there and approve them in your pay run.</div>}
+                  {results.some((r) => r.ok) && <div style={{ color: C.muted, marginTop: 4 }}>They&apos;re drafts in Xero Payroll: check them there and approve them in your pay run.</div>}
                 </div>
               )}
               {!approved && notYet && (

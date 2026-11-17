@@ -159,6 +159,7 @@ export type Database = {
           business_id: string
           created_at: string
           hours_approved_at: string | null
+          xero_results: Json | null
           hours_first_approved_at: string | null
           id: string
           reopen_reason: string | null
@@ -171,6 +172,7 @@ export type Database = {
           business_id: string
           created_at?: string
           hours_approved_at?: string | null
+          xero_results?: Json | null
           hours_first_approved_at?: string | null
           id?: string
           reopen_reason?: string | null
@@ -183,6 +185,7 @@ export type Database = {
           business_id?: string
           created_at?: string
           hours_approved_at?: string | null
+          xero_results?: Json | null
           hours_first_approved_at?: string | null
           id?: string
           reopen_reason?: string | null
