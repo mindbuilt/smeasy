@@ -81,9 +81,10 @@ export default function StaffRoster() {
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
                 <MineSwitch mine={!showTeam} onChange={(m) => setShowTeam(!m)} />
-                <a href="#calendar" className="app-press" style={{ ...btn("ghost"), marginLeft: "auto", minHeight: 38, padding: "6px 10px", color: C.dark, textDecoration: "none" }}>
+                {/* Scrolls rather than changing the URL hash, which holds the access token. */}
+                <button type="button" onClick={() => document.getElementById("calendar")?.scrollIntoView({ behavior: "smooth", block: "start" })} className="app-press" style={{ ...btn("ghost"), marginLeft: "auto", minHeight: 38, padding: "6px 10px", color: C.dark }}>
                   <CalendarPlus size={17} /> Add to calendar
-                </a>
+                </button>
               </div>
               <DayList weekStart={view.week_start} shifts={showTeam ? view.shifts : mine} roles={view.roles ?? []} state={view.state}
                 dayNotes={view.day_notes ?? []} isMine={(s) => !!s.mine} youLabel />
@@ -165,11 +166,10 @@ function RosterEmails({ token, email, on, onChanged }: { token: string; email: s
   const [saving, setSaving] = useState(false);
   const [stopped, setStopped] = useState(false);
   // Arriving from "Stop roster emails" in an email: ask first. Scanners that open links must not switch emails off.
-  const [askStop, setAskStop] = useState(false);
+  const [askStop, setAskStop] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("stop") === "1");
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("stop") !== "1") return;
-    setAskStop(true);
     window.history.replaceState(null, "", window.location.pathname + window.location.hash);
   }, []);
 

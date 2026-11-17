@@ -19,7 +19,11 @@ export function useManager() {
     (async () => {
       const sb = supabase();
       const { data: { session } } = await sb.auth.getSession();
-      if (!session) { router.replace("/auth/login"); return; }
+      if (!session) {
+        const here = window.location.pathname + window.location.search;
+        router.replace(`/auth/login?next=${encodeURIComponent(here)}`);
+        return;
+      }
       const { data } = await sb.from("businesses").select("*").maybeSingle();
       if (cancelled) return;
       if (!data) { router.replace("/welcome"); return; }

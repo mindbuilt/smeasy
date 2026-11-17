@@ -39,17 +39,23 @@ export default function LoginPage() {
 
   useEffect(() => {
     supabase().auth.getSession().then(({ data }) => {
-      if (data.session) { router.replace("/week/"); return; }
+      if (data.session) { router.replace(nextPath()); return; }
       if (SIGNUPS_OPEN && new URLSearchParams(window.location.search).has("signup")) setMode("signup");
       setChecking(false);
     });
   }, [router]);
 
+  // Where to go after signing in: the page they were sent from (?next=), if it's on this site.
+  function nextPath() {
+    const n = new URLSearchParams(window.location.search).get("next");
+    return n && n.startsWith("/") && !n.startsWith("//") ? n : "/week/";
+  }
+
   const callback = () => `${window.location.origin}/auth/callback/`;
 
   async function goIn() {
     const { data } = await supabase().from("businesses").select("id").maybeSingle();
-    router.replace(data ? "/week/" : "/welcome/");
+    router.replace(data ? nextPath() : "/welcome/");
   }
 
   async function submit(e: React.FormEvent) {

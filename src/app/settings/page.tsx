@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
 import { signOut, useManager } from "@/lib/useManager";
@@ -20,6 +20,12 @@ const help = { fontSize: 15, color: C.secondary, margin: "0 0 14px", lineHeight:
 export default function SettingsPage() {
   const { business, setBusiness, email } = useManager();
   const plan = usePlan(business?.id);
+  // Links such as /settings#plan: scroll once the sections exist (they appear after the business loads).
+  useEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (!business || !id) return;
+    requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: "start" }));
+  }, [business]);
   if (!business) return <AppShell><Loading /></AppShell>;
 
   async function update(patch: Database["public"]["Tables"]["businesses"]["Update"]) {

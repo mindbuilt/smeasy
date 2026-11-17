@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { STATES, STATE_TIMEZONE, type State } from "@/lib/holidays";
 import Link from "next/link";
 import { C, btn, input, label } from "@/components/ui";
+import { signOut } from "@/lib/useManager";
 
 const PRESETS: Record<string, string[]> = {
   "Café / restaurant": ["Floor", "Kitchen", "Barista", "Bar", "Manager"],
@@ -76,6 +77,9 @@ export default function Welcome() {
         <button type="submit" disabled={saving || !name.trim()} style={{ ...btn("primary"), width: "100%", marginTop: 20, opacity: saving || !name.trim() ? 0.6 : 1 }}>
           {saving ? "Setting up…" : "Continue"}
         </button>
+        <p style={{ fontSize: 13, color: C.muted, margin: "14px 0 0", textAlign: "center" }}>
+          Signed in with the wrong account? <button type="button" onClick={signOut} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.secondary, textDecoration: "underline", cursor: "pointer" }}>Log out</button>
+        </p>
       </form>
       <footer style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "14px 20px", textAlign: "center", fontSize: 12, color: C.muted }}>
         <Link href="/" style={{ color: C.secondary }}>SMEasy</Link>

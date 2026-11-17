@@ -46,7 +46,6 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <Link href="/pricing/" style={footLink}>Pricing</Link>
             <Link href="/guides/" style={footLink}>Guides</Link>
             <Link href="/faq/" style={footLink}>FAQ</Link>
-            <Link href="/auth/login/" style={footLink}>Log in</Link>
             <Link href="/privacy/" style={footLink}>Privacy</Link>
             <Link href="/terms/" style={footLink}>Terms</Link>
             <Link href="/contact/" style={footLink}>Contact</Link>

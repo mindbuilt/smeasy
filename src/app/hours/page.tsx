@@ -30,6 +30,7 @@ function HoursPage() {
   const plan = usePlan(business?.id);
   const startDay = business?.week_start_day ?? 1;
   const weekStart = weekStartOf(params.get("w") ?? toISO(new Date()), startDay);
+  useEffect(() => { sessionStorage.setItem("smeasy_week", weekStart); }, [weekStart]);
   const days = useMemo(() => weekDates(weekStart), [weekStart]);
 
   const [staff, setStaff] = useState<Staff[] | null>(null);

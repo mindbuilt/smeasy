@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { CalendarDays, Clock, Settings, Users, X } from "lucide-react";
+import { CalendarDays, Clock, LogOut, Settings, Users, X } from "lucide-react";
+import { signOut } from "@/lib/useManager";
 import { APP } from "@/lib/theme";
 
 // App screens use the app palette under the familiar name.
@@ -108,6 +109,12 @@ export function AppShell({ businessName, children }: {
 }) {
   const path = usePathname();
   const isActive = (href: string) => path?.startsWith(href);
+  // Roster and Hours remember the week you were looking at (see week/hours pages), so switching tabs keeps it.
+  const router = useRouter();
+  const tabClick = (h: string) => (e: React.MouseEvent) => {
+    const week = typeof window !== "undefined" ? sessionStorage.getItem("smeasy_week") : null;
+    if (week && (h === "/week" || h === "/hours")) { e.preventDefault(); router.push(`${h}?w=${week}`); }
+  };
   return (
     <div className="app" style={{ minHeight: "100dvh", background: C.bg }}>
       <header style={{
@@ -119,7 +126,7 @@ export function AppShell({ businessName, children }: {
           <Logo />
           <nav className="app-topnav" aria-label="Main" style={{ gap: 4 }}>
             {NAV.map(({ href, label, Icon }) => (
-              <Link key={href} href={href} aria-current={isActive(href) ? "page" : undefined} className="app-press" style={{
+              <Link key={href} href={href} onClick={tabClick(href)} aria-current={isActive(href) ? "page" : undefined} className="app-press" style={{
                 display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 12px", borderRadius: 10, fontSize: 15, fontWeight: 600,
                 textDecoration: "none", color: isActive(href) ? C.dark : C.muted, background: isActive(href) ? "#eef0f3" : "transparent",
               }}><Icon size={18} strokeWidth={isActive(href) ? 2.4 : 2} />{label}</Link>
@@ -131,6 +138,10 @@ export function AppShell({ businessName, children }: {
             display: "grid", placeItems: "center", width: 40, height: 40, borderRadius: 999, flex: "none", textDecoration: "none",
             color: isActive("/settings") ? C.dark : C.secondary, background: isActive("/settings") ? "#eef0f3" : "transparent",
           }}><Settings size={20} strokeWidth={isActive("/settings") ? 2.4 : 2} /></Link>
+          <button type="button" onClick={() => signOut()} aria-label="Log out" title="Log out" className="app-press" style={{
+            display: "grid", placeItems: "center", width: 40, height: 40, borderRadius: 999, flex: "none", border: "none", cursor: "pointer",
+            color: C.secondary, background: "transparent",
+          }}><LogOut size={20} strokeWidth={2} /></button>
         </div>
       </header>
 
@@ -144,7 +155,7 @@ export function AppShell({ businessName, children }: {
         {NAV.map(({ href, label, Icon }) => {
           const on = isActive(href);
           return (
-            <Link key={href} href={href} aria-current={on ? "page" : undefined} onClick={() => haptic(6)} className="app-press" style={{
+            <Link key={href} href={href} aria-current={on ? "page" : undefined} onClick={(e) => { haptic(6); tabClick(href)(e); }} className="app-press" style={{
               flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "6px 0",
               textDecoration: "none", fontSize: 12, fontWeight: 700, color: on ? C.dark : C.muted,
             }}>
