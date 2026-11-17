@@ -47,15 +47,16 @@ export default function PlanPage() {
     if (!business) return;
     let cancelled = false;
     const load = () => supabase().from("billing").select("*").eq("business_id", business.id).maybeSingle()
-      .then(({ data }) => { if (!cancelled) setBilling(data ?? null); return data; });
+      .then(({ data }) => { if (!cancelled) setBilling(data ?? null); });
     load();
+    // Back from Stripe: say what happened. Stripe tells us the new plan through the webhook, which can take a few seconds.
     const r = new URLSearchParams(window.location.search).get("billing");
-    if (r === "cancelled") setNotice("No changes made.");
-    if (r === "success") {
-      setNotice("Thanks. Your plan updates in a moment.");
-      setTimeout(load, 2500); // Stripe tells us through the webhook, which can take a few seconds
-    }
     if (r) window.history.replaceState(null, "", window.location.pathname);
+    supabase().auth.getSession().then(() => {
+      if (cancelled) return;
+      if (r === "cancelled") setNotice("No changes made.");
+      if (r === "success") { setNotice("Thanks. Your plan updates in a moment."); setTimeout(load, 2500); }
+    });
     return () => { cancelled = true; };
   }, [business]);
 
@@ -76,7 +77,7 @@ export default function PlanPage() {
       setError(msg); setBusy(null);
       return;
     }
-    window.location.href = data.url;
+    window.location.assign(data.url);
   }
 
   // Taking a plan: a free business checks out; a paid one changes plan in Stripe's portal, which applies the change.
