@@ -34,6 +34,11 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
+      {/* Phones: the header has no room for the page links, so they sit on a row under it. */}
+      <div className="mkt-nav-row" style={{ borderBottom: `1px solid ${C.border}`, background: C.white, overflowX: "auto" }}>
+        <div style={{ padding: "0 12px" }}><MarketingNav /></div>
+      </div>
+
       <main style={{ flex: 1 }}>{children}</main>
 
       <footer style={{ borderTop: `1px solid ${C.border}`, marginTop: 88, background: C.white }}>

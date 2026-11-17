@@ -126,7 +126,7 @@ function HoursPage() {
 
   const today = toISO(new Date());
   const approved = !!roster?.hours_approved_at;
-  const goWeek = (n: number) => router.push(`/hours?w=${addDays(weekStart, n * 7)}`);
+  const goWeek = (n: number) => router.replace(`/hours?w=${addDays(weekStart, n * 7)}`);
   const roles = business.roles ?? [];
 
   // Totals by person, rostered vs worked.
@@ -267,6 +267,9 @@ function HoursPage() {
                   <button onClick={approve} disabled={busy || !!notYet} className="app-press" style={{ ...btn("accent"), padding: "10px 20px", opacity: notYet ? 0.45 : 1 }}>
                     <Check size={18} /> {busy ? "Approving…" : "Approve hours"}
                   </button>
+                )}
+                {approved && !xero && hasPro(plan) && (
+                  <Link href="/settings/#payroll" className="app-press" style={{ ...btn(), padding: "10px 20px", textDecoration: "none" }}>Connect Xero</Link>
                 )}
                 {approved && xero && hasPro(plan) && (
                   <button onClick={sendToXero} disabled={sending} className="app-press" style={roster?.xero_sent_at ? btn() : { ...btn("accent"), padding: "10px 20px" }}>

@@ -87,7 +87,10 @@ button:active:not(:disabled) { transform: scale(0.98); }
 /* ── Marketing pages (same system as the app, at marketing scale) ─────────── */
 @media (max-width: 640px) {
   .mkt-nav { display: none !important; }
+  .mkt-nav-row { display: block !important; }
+  .mkt-nav-row .mkt-nav { display: flex !important; white-space: nowrap; }
 }
+.mkt-nav-row { display: none; }
 .mkt-navlink { color: #6b7280; text-decoration: none; font-size: 15px; font-weight: 600; padding: 8px 12px; border-radius: 10px; transition: background-color 150ms ease, color 150ms ease; }
 .mkt-navlink[aria-current="page"] { color: #111827; background: #eef0f3; }
 @media (hover: hover) { .mkt-navlink:hover { color: #111827; } }

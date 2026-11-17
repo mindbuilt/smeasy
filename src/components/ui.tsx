@@ -82,7 +82,7 @@ export function Avatar({ name, size = 36, tone }: { name: string; size?: number;
 const NAV = [
   { href: "/week", label: "Roster", Icon: CalendarDays },
   { href: "/team", label: "Team", Icon: Users },
-  { href: "/hours", label: "Hours", Icon: Clock },
+  { href: "/hours", label: "Timesheets", Icon: Clock },
 ];
 
 function Logo() {

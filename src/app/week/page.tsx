@@ -133,7 +133,7 @@ function WeekPage() {
     return data;
   }
 
-  const goWeek = (n: number) => router.push(`/week?w=${addDays(weekStart, n * 7)}`);
+  const goWeek = (n: number) => router.replace(`/week?w=${addDays(weekStart, n * 7)}`);
 
   // ── Derived numbers ──────────────────────────────────────────────────────
   const hoursByStaff = useMemo(() => {
@@ -419,6 +419,7 @@ function WeekPage() {
         )}
       </div>
       {notice && <Banner onClose={() => setNotice(null)}>{notice}</Banner>}
+      {locked && <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 12px" }}>These hours are approved, so the roster is read-only. <Link href={`/hours?w=${weekStart}`} style={{ color: C.dark, fontWeight: 650 }}>Edit hours</Link></p>}
 
       {isMobile && overtime.length > 0 && hoursNoteKey !== hiddenHoursNote && (
         <p style={{ fontSize: 13, color: C.secondary, margin: "-4px 0 10px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
