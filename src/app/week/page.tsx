@@ -552,7 +552,7 @@ function WeekPage() {
 
       {draft && (
         <ShiftEditor draft={draft} staff={staff} roles={business.roles} offOn={offOn} weekDays={days} shifts={shifts} overtimeOn={overtimeOn}
-          onClose={() => setDraft(null)} onSave={saveShift} onDelete={deleteShift} />
+          deletable={!roster?.hours_first_approved_at} onClose={() => setDraft(null)} onSave={saveShift} onDelete={deleteShift} />
       )}
 
       {justPublished && (
@@ -940,8 +940,9 @@ function Pill({ on, onClick, children, tone }: { on: boolean; onClick: () => voi
   );
 }
 
-function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, overtimeOn, onClose, onSave, onDelete }: {
+function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, overtimeOn, deletable, onClose, onSave, onDelete }: {
   draft: Draft; staff: Staff[]; roles: string[]; offOn: OffOn; weekDays: string[]; shifts: Shift[]; overtimeOn: boolean;
+  deletable: boolean; // false once the week's hours have been approved: shifts can't be deleted then
   onClose: () => void; onSave: (d: Draft, alsoOn: string[]) => Promise<void>; onDelete: (id: string) => Promise<void>;
 }) {
   const [d, setD] = useState(draft);
@@ -1070,7 +1071,8 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, overtimeOn,
             ? (() => { const n = 1 + alsoOn.filter((x) => !sameShiftOn(x)).length; return n > 1 ? `Save on ${n} days · ${hours.toFixed(2).replace(/\.?0+$/, "")}h each` : `Save shift · ${hours.toFixed(2).replace(/\.?0+$/, "")}h${overnight ? " (past midnight)" : ""}`; })()
             : "Start and finish can't be the same"}
         </button>
-        {d.id && <button type="button" onClick={() => onDelete(d.id!)} className="app-press" style={btn("danger")}>Delete shift</button>}
+        {d.id && deletable && <button type="button" onClick={() => onDelete(d.id!)} className="app-press" style={btn("danger")}>Delete shift</button>}
+        {d.id && !deletable && <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.5 }}>This shift is in approved hours, so it can&apos;t be deleted. To record that it didn&apos;t happen, mark it &ldquo;Didn&apos;t work&rdquo; on the Hours page.</p>}
       </form>
     </Modal>
   );
