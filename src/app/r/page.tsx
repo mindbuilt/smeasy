@@ -26,7 +26,7 @@ export default function TeamRoster() {
   const [view, setView] = useState<View | null | "invalid">(null);
 
   useEffect(() => {
-    const read = () => setToken(readToken(TOKEN_KEY));
+    const read = () => { setToken(readToken(TOKEN_KEY)); window.scrollTo(0, 0); };
     read();
     window.addEventListener("hashchange", read);
     return () => window.removeEventListener("hashchange", read);

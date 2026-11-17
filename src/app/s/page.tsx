@@ -37,7 +37,7 @@ export default function StaffRoster() {
   }, []);
 
   useEffect(() => {
-    const read = () => setToken(readToken("smeasy_staff_token"));
+    const read = () => { setToken(readToken("smeasy_staff_token")); window.scrollTo(0, 0); };
     read();
     window.addEventListener("hashchange", read);
     return () => window.removeEventListener("hashchange", read);
