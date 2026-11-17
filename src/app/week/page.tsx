@@ -151,6 +151,8 @@ function WeekPage() {
   const hoursNoteKey = `${weekStart}:${overtime.map(({ p, h }) => `${p.id}=${h}`).join(",")}`;
   const published = roster?.status === "published";
   const isPast = weekStart < thisWeekStart(startDay);
+  // Past weeks stay editable until their hours are approved; reopening a week (Hours page) unlocks it again.
+  const locked = isPast && !!roster?.hours_approved_at;
   const roles = business?.roles ?? [];
   const dayInfo = (d: string) => ({ holiday: holidayOn(d, business?.state), note: dayNotes.find((n) => n.date === d)?.note ?? null });
 
@@ -456,9 +458,9 @@ function WeekPage() {
           <WeekStrip days={days} day={day} today={today} shifts={shifts} dayInfo={dayInfo} onPick={pickDay} />
           <DayView key={day} slide={slide} d={day} staff={staff} shifts={shifts} roles={roles} offOn={offOn} info={dayInfo(day)}
             onEdit={editShift} onDay={() => setEditingDay(day)} onSwipe={stepDay} cascadeIds={cascadeIds}
-            mode={phoneMode} onMode={setPhoneMode} compact isToday={day === today} readOnly={isPast} onNew={(id, a, b) => newShift(id, day, a, b)}
+            mode={phoneMode} onMode={setPhoneMode} compact isToday={day === today} readOnly={locked} onNew={(id, a, b) => newShift(id, day, a, b)}
             atStart={day === days[0]} atEnd={day === days[6]}
-            empty={isPast ? <div>No shifts this day.</div> : (
+            empty={locked ? <div>No shifts this day.</div> : (
               <>
                 <div style={{ marginBottom: 12 }}>Tap + to add a shift.</div>
                 {shifts.length === 0 && <button onClick={copyLastWeek} disabled={busy} className="app-press" style={btn()}><Copy size={17} /> Copy last week</button>}
@@ -497,9 +499,9 @@ function WeekPage() {
           <WeekStrip days={days} day={day} today={today} shifts={shifts} dayInfo={dayInfo} onPick={pickDay} />
           <DayView key={day} slide={slide} d={day} staff={staff} shifts={shifts} roles={roles} offOn={offOn} info={dayInfo(day)}
             onEdit={editShift} onDay={() => setEditingDay(day)} onSwipe={stepDay} cascadeIds={cascadeIds}
-            mode="timeline" isToday={day === today} readOnly={isPast} onNew={(id, a, b) => newShift(id, day, a, b)}
+            mode="timeline" isToday={day === today} readOnly={locked} onNew={(id, a, b) => newShift(id, day, a, b)}
             atStart={day === days[0]} atEnd={day === days[6]}
-            empty={isPast ? <div>No shifts this day.</div> : (
+            empty={locked ? <div>No shifts this day.</div> : (
               <>
                 <div style={{ marginBottom: 12 }}>No shifts on this day yet.</div>
                 <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>

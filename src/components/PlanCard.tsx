@@ -98,10 +98,15 @@ export default function PlanCard({ businessId }: { businessId: string }) {
               Your last payment didn&apos;t go through. Update your card in Manage billing to keep your plan.
             </p>
           )}
-          {BILLING_ENABLED && <button type="button" onClick={() => go("portal")} disabled={busy} className="app-press" style={{ ...btn("secondary"), opacity: busy ? 0.6 : 1 }}>
+          {BILLING_ENABLED && billing?.stripe_customer_id && <button type="button" onClick={() => go("portal")} disabled={busy} className="app-press" style={{ ...btn("secondary"), opacity: busy ? 0.6 : 1 }}>
             {busy ? "Opening…" : "Manage billing"}
           </button>}
-          <p style={{ fontSize: 12, color: C.muted, margin: "8px 0 0" }}>Change your card, switch between monthly and annual, download invoices or cancel. Billing is handled securely by Stripe.</p>
+          {BILLING_ENABLED && !billing?.stripe_customer_id && (
+            <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.5 }}>
+              Your plan is set up for you. To change it, email <a href="mailto:hello@smeasy.au" style={{ color: C.secondary, fontWeight: 600 }}>hello@smeasy.au</a>.
+            </p>
+          )}
+          {billing?.stripe_customer_id && <p style={{ fontSize: 12, color: C.muted, margin: "8px 0 0" }}>Change your card, switch between monthly and annual, download invoices or cancel. Billing is handled securely by Stripe.</p>}
         </>
       ) : (
         <>
