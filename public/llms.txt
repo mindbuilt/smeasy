@@ -18,7 +18,7 @@
 - Share with staff via one team roster link (for the staff group chat), a printable A4 PDF, or email: on publish, each rostered person with an email gets their shifts. Staff need no app, account or password, and see only names, days, times and roles.
 - Staff request time off from a personal link; managers approve or decline on the roster.
 - Download hours as a CSV, shift by shift with rostered and worked hours and per-person totals, for MYOB or a bookkeeper.
-- Plans: Free for up to 6 staff; Plus $29/month or $290/year + GST for unlimited staff; Pro $49/month or $490/year + GST adds payroll sync. Timesheets and usual-hours notes are on Plus and Pro; Xero sync is Pro only (coming soon).
+- Plans: Free for up to 6 staff; Plus $29/month or $290/year + GST for unlimited staff; Pro $49/month or $490/year + GST adds payroll sync. Timesheets and usual-hours notes are on Plus and Pro; Xero sync is Pro only.
 - Data is stored in Australia (Sydney).
 
 ## What SMEasy does not do (yet)

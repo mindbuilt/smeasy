@@ -164,7 +164,7 @@ export const guides: Guide[] = [
         "Each week: after approving, tap Send to Xero.",
       ] },
       { p: "The hours arrive in Xero Payroll as draft timesheets, in each employee's pay period. Check them in Xero and approve them in your pay run as usual. If a timesheet for that period is already approved in Xero, SMEasy leaves it alone." },
-      { tip: "Xero sync is part of Pro, which is coming soon. It works with weekly, fortnightly and four-weekly pay calendars." },
+      { tip: "Xero sync is part of Pro. It works with weekly, fortnightly, four-weekly and monthly pay calendars." },
       { h2: "3b. Or download a spreadsheet" },
       { p: "Tap Download CSV (Hours for payroll on the Roster works too). Each row is one shift: name, date, day, start, finish, unpaid break, rostered hours, worked hours, role and a note if it changed. Underneath is a total for each person. Use it for MYOB or send it to your bookkeeper." },
       { tip: "Use the same names in SMEasy as in your payroll software, so matching people is easy." },
