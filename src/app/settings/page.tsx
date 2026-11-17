@@ -6,9 +6,10 @@ import type { Database } from "@/lib/database.types";
 import { signOut, useManager } from "@/lib/useManager";
 import { LogOut } from "lucide-react";
 import SetPassword from "@/components/SetPassword";
-import PlanCard from "@/components/PlanCard";
 import XeroCard from "@/components/XeroCard";
 import { hasPro, usePlan } from "@/lib/usePlan";
+import Link from "next/link";
+import { PLAN_NAMES } from "@/lib/site";
 import { STATES, STATE_TIMEZONE, type State } from "@/lib/holidays";
 import { AppShell, C, Loading, btn, haptic, input, label } from "@/components/ui";
 import { WEEKDAYS, fmtWeek, thisWeekStart } from "@/lib/dates";
@@ -55,7 +56,9 @@ export default function SettingsPage() {
         </section>
 
         <section id="plan" style={card}>
-          <PlanCard businessId={business.id} />
+          <h2 style={h2}>Plan</h2>
+          <p style={help}>You&apos;re on <strong style={{ color: C.dark }}>{PLAN_NAMES[plan ?? "free"]}</strong>.</p>
+          <Link href="/plan/" className="app-press" style={{ ...btn(), textDecoration: "none", display: "inline-flex" }}>See plans</Link>
         </section>
 
         <section id="payroll" style={card}>

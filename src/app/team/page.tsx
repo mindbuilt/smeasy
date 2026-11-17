@@ -78,7 +78,7 @@ function TeamPage() {
           </h2>
           {limitHit || atStaffLimit(plan, active.length) ? (
             <div role="status" style={{ background: C.shiftBg, color: C.shiftText, borderRadius: 12, padding: "12px 14px", fontSize: 15, lineHeight: 1.5, marginBottom: 10 }}>
-              The Free plan is for up to {FREE_STAFF_LIMIT} staff. <Link href="/settings/#plan" style={{ color: C.dark, fontWeight: 700 }}>Upgrade to Plus</Link> for unlimited staff at one flat price.
+              The Free plan is for up to {FREE_STAFF_LIMIT} staff. <Link href="/plan/" style={{ color: C.dark, fontWeight: 700 }}>Upgrade to Plus</Link> for unlimited staff at one flat price.
             </div>
           ) : (
             <form onSubmit={add} style={{ display: "flex", gap: 8, marginBottom: 10 }}>

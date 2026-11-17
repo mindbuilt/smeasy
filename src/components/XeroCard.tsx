@@ -89,7 +89,7 @@ export default function XeroCard({ businessId, pro }: { businessId: string; pro:
       {!pro ? (
         <p style={{ fontSize: 13, color: C.muted, margin: 0, lineHeight: 1.5 }}>
           Send approved hours straight to Xero. {PRO_AVAILABLE
-            ? <>Included in Pro. <a href="#plan" style={{ color: C.secondary, fontWeight: 600 }}>See plans</a></>
+            ? <>Included in Pro. <a href="/plan/" style={{ color: C.secondary, fontWeight: 600 }}>See plans</a></>
             : "Coming soon with Pro."}
           {conn && <> · <button type="button" onClick={disconnectXero} disabled={busy} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.secondary, textDecoration: "underline", cursor: "pointer" }}>Disconnect Xero</button></>}
         </p>

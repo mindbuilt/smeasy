@@ -77,7 +77,7 @@ export default function AddFromXero({ businessId, defaultRole, staff, slots, onC
           <div style={{ display: "grid", gap: 12 }}>
             {capped ? (
               <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.5, background: C.shiftBg, borderRadius: 12, padding: "10px 12px" }}>
-                The Free plan has room for {slots} more {slots === 1 ? "person" : "people"}. <Link href="/settings/#plan" style={{ color: C.dark, fontWeight: 700 }}>Upgrade</Link> to add everyone.
+                The Free plan has room for {slots} more {slots === 1 ? "person" : "people"}. <Link href="/plan/" style={{ color: C.dark, fontWeight: 700 }}>Upgrade</Link> to add everyone.
               </p>
             ) : (
               <button type="button" onClick={() => setPicked(all ? new Set() : new Set(employees.map((e) => e.id)))}

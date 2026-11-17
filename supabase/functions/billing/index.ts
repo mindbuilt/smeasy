@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
       try {
         const portal = await getStripe().billingPortal.sessions.create({
           customer: billing.stripe_customer_id,
-          return_url: `${SITE_URL}/settings/#plan`,
+          return_url: `${SITE_URL}/plan/`,
         });
         return json({ url: portal.url });
       } catch (e) {
@@ -115,8 +115,8 @@ Deno.serve(async (req) => {
         customer_update: { name: "auto", address: "auto" },
         tax_id_collection: { enabled: true }, // lets them add an ABN for their tax invoice
         allow_promotion_codes: true,
-        success_url: `${SITE_URL}/settings/?billing=success#plan`,
-        cancel_url: `${SITE_URL}/settings/?billing=cancelled#plan`,
+        success_url: `${SITE_URL}/plan/?billing=success`,
+        cancel_url: `${SITE_URL}/plan/?billing=cancelled`,
       });
       return json({ url: session.url });
     }
