@@ -109,6 +109,10 @@ export default function StaffRoster() {
         </>
       )}
 
+      <RosterEmails token={token!} email={view.email ?? null} on={view.email_roster ?? true} onChanged={load} />
+
+      {calToken && <CalendarButtons token={calToken} onReset={resetCalendarLink} />}
+
       <section style={{ ...card, padding: "16px 16px 14px", marginTop: 14 }}>
         <h2 style={{ fontSize: 17, fontWeight: 800, color: C.dark, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 8 }}><Plane size={19} /> Time off</h2>
         {view.time_off.length === 0 && !asking && <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 10px" }}>Need a day off? Ask here and your manager sees it on the roster.</p>}
@@ -130,10 +134,6 @@ export default function StaffRoster() {
           ? <TimeOffForm token={token!} onDone={() => { setAsking(false); haptic([10, 40, 16]); load(); }} onCancel={() => setAsking(false)} />
           : <button onClick={() => setAsking(true)} className="app-press" style={{ ...btn("primary"), marginTop: 8 }}>Request time off</button>}
       </section>
-
-      <RosterEmails token={token!} email={view.email ?? null} on={view.email_roster ?? true} onChanged={load} />
-
-      {calToken && <CalendarButtons token={calToken} onReset={resetCalendarLink} />}
 
       <StaffFooter hint="This is your personal link. Add it to your home screen and it opens like an app. It stays the same every week, so please don't share it." />
     </StaffShell>
@@ -229,11 +229,13 @@ function RosterEmails({ token, email, on, onChanged }: { token: string; email: s
               </div>
             </div>
           )}
-        <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.6 }}>
-          Your shifts go to <strong style={{ color: C.dark }}>{email}</strong> when the roster comes out.{" "}
-          <button onClick={() => setEditing(true)} style={link}>Change</button>{" · "}
-          <button onClick={() => toggle(false)} style={link}>Stop roster emails</button>
-        </p>
+        <div style={{ display: "grid", gap: 10, justifyItems: "start" }}>
+          <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.6 }}>
+            Your shifts go to <strong style={{ color: C.dark }}>{email}</strong> when the roster comes out.{" "}
+            <button onClick={() => setEditing(true)} style={link}>Change</button>
+          </p>
+          <button onClick={() => toggle(false)} className="app-press" style={btn("ghost")}>Stop roster emails</button>
+        </div>
         </>
       ) : (
         <p style={{ fontSize: 14, color: C.secondary, margin: 0, lineHeight: 1.6 }}>

@@ -15,7 +15,7 @@ type Props = {
 /** Wide screens: people down the side, days across (the standard roster view). Phones use the list. */
 export default function StaffWeek(props: Props) {
   return (
-    <div className="staff-week-grid" style={{ width: "min(1120px, calc(100vw - 32px))", position: "relative", left: "50%", transform: "translateX(-50%)" }}>
+    <div className="staff-week-grid" style={{ width: "100%" }}>
       <WeekTable {...props} />
     </div>
   );
