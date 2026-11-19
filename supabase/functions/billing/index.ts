@@ -1,8 +1,11 @@
 // Billing actions for the signed-in owner.
 //   POST /functions/v1/billing  { "action": "checkout", "interval": "month" | "year" }  ->  { url }
 //   POST /functions/v1/billing  { "action": "portal" }  ->  { url }
-// "checkout" starts a Stripe Checkout for Plus (plan "core") or Pro (plan "pro"), from a free business;
-// a paid business changes plan through "portal" (Stripe's plan switching). "portal" opens the Stripe
+//   POST /functions/v1/billing  { "action": "free" }  ->  { ok }   (only for a plan with no Stripe subscription)
+// "checkout" starts a Stripe Checkout for Plus (plan "core") or Pro (plan "pro") for any business
+// without a live subscription: free, or a paid plan we set up by hand. A business with a
+// subscription changes plan through "portal" (Stripe's plan switching). "free" moves a hand-set
+// plan back to Free. "portal" opens the Stripe
 // customer portal (change card, invoices, cancel). The caller's own JWT decides which
 // business this is (RLS), and only the service role writes public.billing.
 //
@@ -11,6 +14,7 @@
 
 import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { disconnect } from "../_shared/xero.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SITE_URL = Deno.env.get("SITE_URL") ?? "https://www.smeasy.au";
@@ -67,6 +71,19 @@ Deno.serve(async (req) => {
     const admin = createClient(SUPABASE_URL, serviceKey());
     const { data: billing } = await admin.from("billing").select("*").eq("business_id", business.id).maybeSingle();
     const { action, interval = "month", plan = "core" } = await req.json().catch(() => ({ action: "" }));
+    // A subscription Stripe still bills. Without one, a paid plan was set up by hand.
+    const subscribed = !!billing?.stripe_subscription_id && !!billing.plan && billing.plan !== "free";
+
+    if (action === "free") {
+      if (subscribed) return json({ error: "Your plan is billed through Stripe. Use Manage billing to change it." }, 400);
+      if (!billing || billing.plan === "free") return json({ ok: true });
+      if (billing.plan === "pro") await disconnect(business.id); // leaving Pro ends payroll sync, as in stripe-webhook
+      const { error } = await admin.from("billing")
+        .update({ plan: "free", billing_interval: null, current_period_end: null, cancel_at_period_end: false, updated_at: new Date().toISOString() })
+        .eq("business_id", business.id);
+      if (error) throw error;
+      return json({ ok: true });
+    }
 
     if (action === "portal") {
       if (!billing?.stripe_customer_id) return json({ error: "There's no billing account yet." }, 400);
@@ -90,7 +107,7 @@ Deno.serve(async (req) => {
       if (interval !== "month" && interval !== "year") return json({ error: "Pick monthly or annual." }, 400);
       const price = PRICES[plan][interval];
       if (!price) return json({ error: `${plan === "pro" ? "Pro" : "Plus"} billing isn't set up yet.` }, 500);
-      if (billing?.plan && billing.plan !== "free") return json({ error: "You're already on a paid plan. Use Manage billing to change it." }, 400);
+      if (subscribed) return json({ error: "You're already on a paid plan. Use Manage billing to change it." }, 400);
 
       let customer = billing?.stripe_customer_id;
       if (!customer) {

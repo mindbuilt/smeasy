@@ -134,10 +134,11 @@ export function AppShell({ businessName, children }: {
           </nav>
           <BusinessName businessName={businessName} />
           {/* Settings is occasional, so it's an icon up here rather than a main tab. */}
-          <Link href="/settings" aria-label="Settings" title="Settings" aria-current={isActive("/settings") ? "page" : undefined} className="app-press" style={{
+          {/* Plans lives under Settings, so the gear stays lit there too. */}
+          <Link href="/settings" aria-label="Settings" title="Settings" aria-current={(isActive("/settings") || isActive("/plan")) ? "page" : undefined} className="app-press" style={{
             display: "grid", placeItems: "center", width: 40, height: 40, borderRadius: 999, flex: "none", textDecoration: "none",
-            color: isActive("/settings") ? C.dark : C.secondary, background: isActive("/settings") ? "#eef0f3" : "transparent",
-          }}><Settings size={20} strokeWidth={isActive("/settings") ? 2.4 : 2} /></Link>
+            color: (isActive("/settings") || isActive("/plan")) ? C.dark : C.secondary, background: (isActive("/settings") || isActive("/plan")) ? "#eef0f3" : "transparent",
+          }}><Settings size={20} strokeWidth={(isActive("/settings") || isActive("/plan")) ? 2.4 : 2} /></Link>
           <button type="button" onClick={() => signOut()} aria-label="Log out" title="Log out" className="app-press" style={{
             display: "grid", placeItems: "center", width: 40, height: 40, borderRadius: 999, flex: "none", border: "none", cursor: "pointer",
             color: C.secondary, background: "transparent",

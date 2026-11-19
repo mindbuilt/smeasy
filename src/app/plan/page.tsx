@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
 import { useManager } from "@/lib/useManager";
@@ -65,8 +66,17 @@ export default function PlanPage() {
   const plan = (billing?.plan ?? "free") as PlanId;
   const paid = plan !== "free";
   const hasCustomer = !!billing?.stripe_customer_id;
-  // A paid plan with no Stripe customer was set up by hand: changes go through us.
-  const handSet = paid && !hasCustomer;
+  // Billed through Stripe: plan changes happen in Stripe's portal.
+  const subscribed = paid && !!billing?.stripe_subscription_id;
+  // A paid plan with no subscription was set up by hand (no card, nothing billed). Choosing a plan starts a normal checkout.
+  const handSet = paid && !subscribed;
+
+  async function moveToFree() {
+    setBusy("free"); setError(null);
+    const { data, error: err } = await supabase().functions.invoke("billing", { body: { action: "free" } });
+    if (err || !data?.ok) { setError("Couldn't change your plan. Please try again."); setBusy(null); return; }
+    window.location.reload();
+  }
 
   async function go(action: "checkout" | "portal", target?: PaidPlan) {
     setBusy(`${action}${target ?? ""}`); setError(null);
@@ -80,20 +90,21 @@ export default function PlanPage() {
     window.location.assign(data.url);
   }
 
-  // Taking a plan: a free business checks out; a paid one changes plan in Stripe's portal, which applies the change.
-  const choose = (target: PaidPlan) => (paid ? go("portal", target) : go("checkout", target));
+  // Taking a plan: without a subscription, check out; with one, Stripe's portal applies the change.
+  const choose = (target: PaidPlan) => (subscribed ? go("portal", target) : go("checkout", target));
 
   function action(id: PlanId): React.ReactNode {
-    if (id === plan && (id === "free" || billing?.billing_interval === interval || !paid)) return <span style={{ fontSize: 14, fontWeight: 700, color: C.secondary }}>Your plan</span>;
+    const yours = <span style={{ fontSize: 14, fontWeight: 700, color: C.secondary }}>Your plan</span>;
     if (id === "free") {
-      if (!paid) return null;
-      if (handSet) return null;
+      if (!paid) return yours;
+      if (handSet) return <button type="button" onClick={moveToFree} disabled={!!busy} className="app-press" style={btn()}>{busy === "free" ? "Moving…" : "Move to Free"}</button>;
       return <button type="button" onClick={() => go("portal")} disabled={!!busy} className="app-press" style={btn()}>{busy ? "Opening…" : "Move to Free"}</button>;
     }
+    if (id === plan && subscribed && billing?.billing_interval === interval) return yours;
     if (id === "pro" && !PRO_AVAILABLE) return <span style={{ fontSize: 14, color: C.muted }}>Coming soon</span>;
-    if (handSet) return null;
     const name = PLAN_NAMES[id];
-    const verb = paid ? "Switch to" : "Choose";
+    // On a hand-set plan, choosing the same plan means starting to pay for it.
+    const verb = id === plan ? (handSet ? "Pay for" : "Switch to") : subscribed ? "Switch to" : "Choose";
     return (
       <button type="button" onClick={() => choose(id as PaidPlan)} disabled={!!busy} className="app-press" style={{ ...btn(id === "core" ? "accent" : "secondary"), opacity: busy ? 0.6 : 1 }}>
         {busy ? "Opening Stripe…" : `${verb} ${name}`}
@@ -104,13 +115,16 @@ export default function PlanPage() {
   return (
     <AppShell businessName={business.name} email={email}>
       <div style={{ maxWidth: 920, margin: "0 auto" }}>
+        <Link href="/settings/" className="app-press" style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 15, fontWeight: 600, color: C.secondary, textDecoration: "none", margin: "0 0 10px -4px", padding: "4px 4px" }}>
+          <ChevronLeft size={18} aria-hidden /> Settings
+        </Link>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: C.dark, margin: "0 0 6px", letterSpacing: "-0.02em" }}>Plans</h1>
         <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 18px", lineHeight: 1.5 }}>
           You&apos;re on <strong style={{ color: C.dark }}>{PLAN_NAMES[plan]}</strong>
-          {paid && billing?.current_period_end && (billing.cancel_at_period_end
+          {subscribed && billing?.current_period_end && (billing.cancel_at_period_end
             ? <>. It ends on {fmt(billing.current_period_end)}.</>
             : <>. Renews on {fmt(billing.current_period_end)}.</>)}
-          {!paid && "."}
+          {!subscribed && "."}
         </p>
 
         {notice && <p role="status" style={{ fontSize: 15, background: C.shiftBg, color: C.shiftText, borderRadius: 12, padding: "10px 12px", margin: "0 0 14px" }}>{notice}</p>}
@@ -121,7 +135,7 @@ export default function PlanPage() {
         )}
         {handSet && (
           <p style={{ fontSize: 15, color: C.secondary, background: "#f3f4f6", borderRadius: 12, padding: "10px 12px", margin: "0 0 14px", lineHeight: 1.5 }}>
-            This plan was set up for you. To change it, email <a href="mailto:hello@smeasy.au" style={{ color: C.dark, fontWeight: 700 }}>hello@smeasy.au</a>.
+            There&apos;s nothing to pay for this plan right now. Choose a plan below to pay for it yourself, or move to Free.
           </p>
         )}
 
