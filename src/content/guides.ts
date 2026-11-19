@@ -26,7 +26,7 @@ export const guides: Guide[] = [
     description:
       "A step-by-step guide to building your first weekly staff roster in SMEasy — add your team, add shifts, copy last week and publish.",
     category: "Getting started",
-    updated: "2026-11-16",
+    updated: "2026-11-20",
     body: [
       { p: "This guide walks through your first roster in SMEasy, from signing up to publishing the week to your team. Most small teams are done in about five minutes." },
       { h2: "1. Sign up with your email" },
@@ -34,12 +34,12 @@ export const guides: Guide[] = [
       { p: "The first time, SMEasy asks for your business name and what kind of business you run (café or restaurant, retail, or other). That sets up a starting list of shift roles, like Floor, Kitchen and Barista. You can change the roles any time." },
       { h2: "2. Add your team" },
       { p: "On the Team page, type each person's name and tap Add. That's all you need to start rostering." },
-      { p: "Tap a name to add optional details:" },
+      { p: "Tap Edit next to a name to add optional details:" },
       { ul: [
         "Usual role — new shifts for that person default to it.",
         "Mobile — handy for texting them their link.",
         "Email — they get their shifts by email whenever you publish. Staff can also add their own email on their personal link.",
-        "Usual hours a week — 38 by default. The roster quietly shows when you give someone more.",
+        "Usual hours a week — 38 by default. On Plus and Pro, the roster quietly shows when you give someone more.",
       ] },
       { shot: "team-phone", alt: "The SMEasy Team page on a phone, listing staff with their usual roles and Edit, Text link and Copy link buttons", caption: "The Team page: everyone's usual role, and their link ready to text or copy." },
       { h2: "3. Add shifts" },
@@ -53,14 +53,14 @@ export const guides: Guide[] = [
       { p: "Each role has its own colour, so you can see the mix at a glance. Add a note to a shift if there's something the person needs to know, or tap a day's heading to add a note for the whole day." },
       { p: "Same hours on several days? Under \"Also add on\", tap the other days (or Weekdays or Every day) and SMEasy adds the shift to all of them at once. Editing a shift works the same way, under \"Copy to other days\"." },
       { shot: "add-shift-phone", alt: "The Add shift sheet on a phone: Ben picked, 8am to 12pm, Manager role, and Tuesday to Friday selected under Also add on", caption: "One shift, five days: pick the other days under \"Also add on\" and save once." },
-      { p: "Not sure who'll work a shift yet? Add it in the Unfilled row at the top of the roster (or choose \"No one yet\" in the shift editor) and it shows in red as unfilled. Staff don't see unfilled shifts. The Cover line under each day shows how many people are on, their hours and any unfilled shifts." },
+      { p: "Not sure who'll work a shift yet? Choose \"No one yet\" in the shift editor and it shows in red in an Unfilled row at the top of the roster. Staff don't see unfilled shifts. The Cover line under each day shows how many people are on, their hours and any unfilled shifts." },
       { shot: "roster-week-desktop", alt: "A week's roster in SMEasy on a laptop: seven staff, shifts colour-coded by role, an unfilled Sunday shift in red, a time-off request and the cover count under each day", caption: "The whole week on a laptop: roles in colour, the unfilled shift in red, cover under each day." },
       { p: "To check cover, switch to Day view (top right on a laptop; on a phone, tap the calendar icon on a day). The day reads like a calendar, hours down the page, and any time with nobody on shows as a red band with a Fill this gap button. In the week view, the bar under each day shows red where the gaps are." },
       { tip: "Set your state under Settings and public holidays are marked on the roster." },
       { h2: "4. Copy last week" },
       { p: "Most rosters look a lot like last week's. On an empty week, tap Copy last week and every shift is copied across to the same days. Then just adjust what's different." },
       { h2: "5. Check the hours" },
-      { p: "Above the grid, SMEasy shows the total paid hours for the week (after breaks) and each person's hours. If someone's rostered above their usual hours, you'll see a small note. When the week's done, confirm what was actually worked on the Hours page and send it to payroll." },
+      { p: "Above the grid, SMEasy shows the total paid hours for the week (after breaks) and each person's hours. On Plus and Pro, you'll see a small note if someone's rostered above their usual hours, and when the week's done you confirm what was actually worked on the Timesheets page and send it to payroll." },
       { h2: "6. Publish to your team" },
       { p: "When the week is ready, tap Publish to team. Until then the roster is a draft only you can see. When you publish, everyone rostered who has an email gets their shifts by email, and SMEasy tells you who doesn't have one yet. You can also copy your team roster link into your staff group chat, or download the roster as a PDF to send or print." },
       { p: "You can keep editing after you publish — changes show up on the team link straight away. Tap Email the team to send everyone their updated shifts." },
@@ -72,13 +72,13 @@ export const guides: Guide[] = [
     description:
       "Two easy ways to get the roster to your team: one team link for your staff group chat, or a printable PDF. No staff app or passwords.",
     category: "Running your roster",
-    updated: "2026-11-16",
+    updated: "2026-11-20",
     body: [
       { p: "Staff don't need an app, an account or a password to see the roster. SMEasy gives you three ways to share it, and you can use them all." },
       { h2: "Option 1: the team roster link" },
       { p: "Every business has one team roster link. It always shows the latest published roster, so you only need to share it once." },
       { ol: [
-        "Go to Team and copy the Team roster link (or tap Copy team link after you publish).",
+        "Go to Team and copy the Team roster link (or tap More, then Copy team link, after you publish).",
         "Paste it in your staff group chat — WhatsApp, Messenger or whatever your team uses — and pin it.",
         "Each week, publish the roster and drop a quick \"next week's up\" in the chat.",
       ] },
@@ -90,11 +90,11 @@ export const guides: Guide[] = [
       { ul: [
         "Add emails on the Team page (tap a name, then Edit). Anyone without one shows \"Add email for roster emails\".",
         "Staff can add or change their own email on their personal link, under Roster by email.",
-        "Changed something after publishing? Tap Email the team (on a phone, it's under the … button) to send everyone their latest shifts.",
+        "Changed something after publishing? Tap More (the … button on a phone), then Email the team, to send everyone their latest shifts.",
         "Every email has a link to stop roster emails, and staff can turn them back on from their personal link.",
       ] },
       { h2: "Option 3: the PDF" },
-      { p: "Tap PDF on the Roster (on a phone, it's under the … button) to download the roster as a one-page A4 sheet: your team down the side, the week's days across, with shift times, roles and hours. Print it for the staff room or attach it in the group chat. Staff can download the same PDF from the team link." },
+      { p: "On the Roster, tap More (the … button on a phone), then Download PDF, to download the roster as a one-page A4 sheet: your team down the side, the week's days across, with shift times, roles and hours. Print it for the staff room or attach it in the group chat. Staff can download the same PDF from the team link." },
       { h2: "What staff can and can't see" },
       { ul: [
         "They see published weeks only. Drafts stay private until you publish.",
@@ -145,28 +145,29 @@ export const guides: Guide[] = [
     description:
       "Confirm the hours your team actually worked, approve the week, then send it to Xero Payroll or download a spreadsheet for MYOB or your bookkeeper.",
     category: "Payroll",
-    updated: "2026-11-16",
+    updated: "2026-11-20",
     body: [
       { p: "SMEasy works out the paid hours for every shift (finish time minus start time minus the unpaid break). At the end of the week you confirm what actually happened, approve it, and send it to payroll." },
       { h2: "1. Confirm the hours on the Timesheets page" },
       { ol: [
-        "Open Hours and pick the week.",
+        "Open Timesheets and pick the week.",
         "Every shift starts as rostered. Only change what was different: a later finish, a longer break.",
         "If someone didn't work a shift, tap Didn't work. As rostered undoes a change.",
       ] },
       { p: "The totals show rostered and worked hours for each person. Days that haven't happened yet can't be changed." },
+      { tip: "Timesheets are part of Plus and Pro. On Free, you can still download the rostered hours as a spreadsheet: on the Roster, tap More, then Timesheets for payroll (CSV)." },
       { h2: "2. Approve the week" },
       { p: "When the week's done, tap Approve timesheets. That locks the week so nothing changes by accident. Tap Edit timesheets if you need to unlock it." },
       { h2: "3a. Send to Xero Payroll" },
       { ol: [
-        "Once: go to Settings → Payroll, tap Connect to Xero and choose your organisation.",
+        "Once: go to Settings → Xero Payroll, tap Connect to Xero and choose your organisation.",
         "Once: match each person to their Xero employee. Exact name matches are filled in for you.",
         "Each week: after approving, tap Send to Xero.",
       ] },
       { p: "The hours arrive in Xero Payroll as draft timesheets, in each employee's pay period. Check them in Xero and approve them in your pay run as usual. If a timesheet for that period is already approved in Xero, SMEasy leaves it alone." },
       { tip: "Xero sync is part of Pro. It works with weekly, fortnightly, four-weekly and monthly pay calendars." },
       { h2: "3b. Or download a spreadsheet" },
-      { p: "Tap Download CSV (Timesheets for payroll on the Roster works too). Each row is one shift: name, date, day, start, finish, unpaid break, rostered hours, worked hours, role and a note if it changed. Underneath is a total for each person. Use it for MYOB or send it to your bookkeeper." },
+      { p: "On the Timesheets page, tap Timesheets for payroll (CSV), or Download CSV once Xero is connected. On the Roster, More → Timesheets for payroll (CSV) does the same. Each row is one shift: name, date, day, start, finish, unpaid break, rostered hours, worked hours, role and a note if it changed. Underneath is a total for each person. Use it for MYOB or send it to your bookkeeper." },
       { tip: "Use the same names in SMEasy as in your payroll software, so matching people is easy." },
       { h2: "What SMEasy doesn't do" },
       { ul: [
@@ -206,7 +207,7 @@ export const guides: Guide[] = [
     description:
       "Practical rostering advice for Australian cafés, restaurants and shops: plan ahead, share the load fairly, cover peak times and check your award.",
     category: "Advice",
-    updated: "2026-11-16",
+    updated: "2026-11-20",
     body: [
       { p: "A good roster keeps the business covered and the team happy. These habits work whatever tool you use." },
       { h2: "1. Publish at least a week ahead" },
@@ -214,7 +215,7 @@ export const guides: Guide[] = [
       { h2: "2. Share the good and bad shifts" },
       { ul: [
         "Rotate weekend, early and closing shifts so the same people don't always get them.",
-        "Keep an eye on each person's weekly hours. SMEasy shows them next to every name, and notes when someone's above their usual hours.",
+        "Keep an eye on each person's weekly hours. SMEasy shows them next to every name, and on Plus it notes when someone's above their usual hours.",
         "Give steady patterns to people who want them. Copy last week makes that easy.",
       ] },
       { h2: "3. Put your best people on peak times" },
@@ -267,7 +268,7 @@ export const guides: Guide[] = [
     description:
       "Spreadsheets are free and familiar. Here's an honest look at where a spreadsheet roster struggles and what SMEasy does differently.",
     category: "Advice",
-    updated: "2026-11-16",
+    updated: "2026-11-20",
     body: [
       { p: "Plenty of small businesses run their roster in Excel or Google Sheets, and it works — until the team grows or the roster changes every week. Here's an honest comparison." },
       { h2: "Where spreadsheets struggle" },
@@ -285,7 +286,7 @@ export const guides: Guide[] = [
         "Paid hours worked out for you, including breaks, split shifts and shifts past midnight.",
         "Copy last week in one tap.",
         "Time-off requests from staff, shown right on the roster when approved.",
-        "Timesheets: confirm the hours actually worked and send them to Xero, or export a spreadsheet for MYOB or your bookkeeper.",
+        "Timesheets (Plus): confirm the hours actually worked, then export a spreadsheet for MYOB or your bookkeeper, or send them to Xero on Pro.",
       ] },
       { h2: "When a spreadsheet is fine" },
       { p: "If you have two or three staff on the same hours every week, a spreadsheet may be all you need. SMEasy earns its place when the roster changes often, you have casuals, or you're tired of answering \"what's my shift?\"" },

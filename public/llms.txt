@@ -12,8 +12,8 @@
 - See paid hours per person and for the team. Each person has usual weekly hours (default 38); the roster quietly notes when someone is rostered above them. SMEasy works out hours, not pay: no wage estimates or pay rates.
 - Day view: a calendar-style day (hours down the page) with gaps in cover shown in red; the week grid shows a gap bar under each day.
 - The week can start on any day (Settings).
-- Timesheets (Hours tab): confirm or adjust the hours actually worked, mark no-shows, approve the week.
-- Xero Payroll sync: connect Xero, match staff to Xero employees, and send approved hours as draft timesheets in each employee's pay period.
+- Timesheets tab (Plus and Pro): confirm or adjust the hours actually worked, mark no-shows, approve the week.
+- Xero Payroll sync (Pro): connect Xero, match staff to Xero employees, and send approved hours as draft timesheets in each employee's pay period.
 - Publish when ready; drafts stay private.
 - Share with staff via one team roster link (for the staff group chat), a printable A4 PDF, or email: on publish, each rostered person with an email gets their shifts. Staff need no app, account or password, and see names, days, times, roles and any shift notes.
 - Staff request time off from a personal link; managers approve or decline on the roster.
