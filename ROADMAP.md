@@ -4,12 +4,12 @@ Ordered by priority. Items marked ★ were promised by earlier marketing copy an
 have been removed from the site until built.
 
 ## 1. Before inviting real businesses
-- [ ] **Branded login emails** — Resend as Supabase SMTP, sending from `hello@smeasy.au` (DNS records on smeasy.au); SMEasy-styled "Magic link" and "Confirm signup" templates. Removes Supabase's few-per-hour email limit.
+- [x] **Branded login emails** (done 2026-11-16) — Resend as Supabase SMTP, sending from `hello@smeasy.au` (DNS records on smeasy.au); SMEasy-styled "Magic link" and "Confirm signup" templates. Removes Supabase's few-per-hour email limit.
 - [x] **Privacy policy** — published at /privacy (Open County Pty Ltd). Get a professional review when convenient.
-- [ ] **Terms of service**.
-- [x] **Contact address** — `hello@smeasy.au` in footer, FAQ and privacy policy. **Make sure this mailbox receives mail.**
+- [x] **Terms of service** — published at /terms and linked in the footer. Read it through before launch; get a professional review when convenient.
+- [x] **Contact address** — `hello@smeasy.au` in footer, FAQ and privacy policy. Mailbox receives mail (Google Workspace alias, 2026-11-16).
 - [ ] **GTM container** — add the GA4 tag inside GTM-P4V884NF (the site now loads GTM correctly, public pages only); verify Search Console and submit `sitemap.xml`.
-- [ ] **Decommission Railway + Neon** — old backend, no longer used.
+- [ ] **Decommission Railway + Neon** — old backend, no longer used. `railway.json` removed from the repo 2026-11-20; still shut down the Railway service and Neon database in their dashboards.
 - [ ] **Error monitoring** (e.g. Sentry) on the app screens.
 - [ ] **Open Graph image** for link previews.
 
@@ -25,12 +25,12 @@ Build order agreed 2026-11-16 (pricing: Free ≤6 staff, Plus $29/$290, Pro $49/
   - Settings → Payroll connects Xero (OAuth, signed state, AES-GCM tokens, least scopes) and matches staff to Xero employees.
   - Hours → Send to Xero creates or updates DRAFT timesheets in each employee's pay period (weekly, fortnightly or 4-weekly). Disconnect revokes at Xero.
   - **Before selling Pro:**
-    - Use Xero's official "Connect to Xero" button artwork.
-    - Disconnect Xero automatically when a Pro subscription ends (stripe-webhook → disconnect()).
-    - Enforce Pro on the server.
-    - Create the Pro prices in Stripe and set `PRO_AVAILABLE`.
-    - Move to Xero's Core tier ($35/month) past 5 connected businesses; Core may need app certification, so check.
-    - Support monthly pay calendars.
+    - [x] Use Xero's official "Connect to Xero" button artwork (public/xero/connect-blue.svg; check it against Xero's brand guidelines).
+    - [x] Disconnect Xero automatically when a Pro subscription ends (stripe-webhook → disconnect()).
+    - [x] Enforce Pro on the server.
+    - [x] Create the Pro prices in Stripe and set `PRO_AVAILABLE`.
+    - [ ] Move to Xero's Core tier ($35/month) past 5 connected businesses; Core may need app certification, so check.
+    - [x] Support monthly pay calendars.
 - [ ] **6. MYOB sync (Pro)** — MYOB API and partner sign-up; confirm whether a timesheet import file is an option for AccountRight.
 - [ ] ★ **Staff availability** — staff mark days/times they can't work; shown on the grid.
 - [x] **Public holidays** — marked by state (Nager.Date calendar, fetched at build).
@@ -45,8 +45,7 @@ Build order agreed 2026-11-16 (pricing: Free ≤6 staff, Plus $29/$290, Pro $49/
 - [ ] ★ **Drag-and-drop** shifts on desktop.
 - [ ] **Multiple locations** per business.
 - [ ] **Installable app (PWA)** and offline viewing of the published roster.
-- [ ] **Pay details as a Pro feature?** — Settings → Pay details (hourly rates, payroll IDs, base-rate estimate, pay columns in CSV) is built and free for now. Decide whether it moves to Pro when billing exists.
-- [ ] **Before charging anyone** — turn on the staff limit (`STAFF_LIMIT_ENFORCED` + the database trigger's `v_enforce`), switch Stripe to live keys, email early-access users well in advance (Free drops from 10 to 6 staff), terms of service. Put Pro on sale (`PRO_AVAILABLE`, Pro prices in Stripe) when Xero sync ships.
+- [x] **Before charging anyone** (done by 2026-11-17) — turn on the staff limit (`STAFF_LIMIT_ENFORCED` + the database trigger's `v_enforce`), switch Stripe to live keys, email early-access users well in advance (Free drops from 10 to 6 staff), terms of service. Put Pro on sale (`PRO_AVAILABLE`, Pro prices in Stripe) when Xero sync ships.
 
 ## Record-keeping (Fair Work), 2026-11-16
 - [x] Employment type per person (filled from Xero EmploymentBasis), approved weeks freeze worked times, approved shifts can't be deleted, reopening needs a reason and every change is kept in hours_changes, date-range export, FAQ/privacy wording (7-year rule, the employer is responsible), "Published <date>" on the roster.

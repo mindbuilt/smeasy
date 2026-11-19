@@ -90,7 +90,7 @@ export default function AddFromXero({ businessId, defaultRole, staff, slots, onC
                 <label key={e.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderTop: `1px solid ${C.divider}`, cursor: "pointer" }}>
                   <input type="checkbox" checked={picked.has(e.id)} disabled={full && !picked.has(e.id)} onChange={() => toggle(e.id)} style={{ width: 20, height: 20, accentColor: C.dark, flex: "none" }} />
                   <span style={{ minWidth: 0 }}>
-                    <span style={{ display: "block", fontSize: 16, fontWeight: 650, color: C.dark }}>{e.name}</span>
+                    <span style={{ display: "block", fontSize: 16, fontWeight: 700, color: C.dark }}>{e.name}</span>
                     {(e.email || e.mobile) && <span style={{ display: "block", fontSize: 13, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{[e.email, e.mobile].filter(Boolean).join(" · ")}</span>}
                   </span>
                 </label>

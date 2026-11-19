@@ -61,7 +61,7 @@ export default function TeamRoster() {
 
       {!view.published ? (
         <div style={{ ...card, padding: "28px 20px", textAlign: "center" }}>
-          <p style={{ fontSize: 17, fontWeight: 750, color: C.dark, margin: "0 0 4px" }}>Not out yet</p>
+          <p style={{ fontSize: 17, fontWeight: 800, color: C.dark, margin: "0 0 4px" }}>Not out yet</p>
           <p style={{ margin: 0, color: C.secondary, fontSize: 15 }}>This week&apos;s roster hasn&apos;t been published. Check back soon.</p>
         </div>
       ) : (

@@ -79,7 +79,7 @@ export default function XeroCard({ businessId, pro }: { businessId: string; pro:
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: 0 }}>Xero Payroll</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: C.dark, margin: 0 }}>Xero Payroll</h2>
         <span style={{ fontSize: 12, fontWeight: 700, borderRadius: 999, padding: "3px 9px", background: "#eef0f3", color: C.secondary }}>Pro</span>
       </div>
       {pro && <p style={{ fontSize: 13, color: C.muted, margin: "0 0 12px", lineHeight: 1.5 }}>Approved hours go to Xero as draft timesheets for you to check and approve.</p>}
@@ -178,7 +178,7 @@ function MatchStaff({ onClose }: { onClose: (unmatched?: number) => void }) {
               Pick each person&apos;s Xero employee. Names that match exactly are filled in for you. Anyone left as &ldquo;Not in Xero&rdquo; is skipped when you send hours.
             </p>
             {staff.map((p) => (
-              <label key={p.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1.2fr)", gap: 10, alignItems: "center", fontSize: 15, fontWeight: 650, color: C.dark }}>
+              <label key={p.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1.2fr)", gap: 10, alignItems: "center", fontSize: 15, fontWeight: 700, color: C.dark }}>
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
                 <select value={picks[p.id] ?? ""} onChange={(e) => setPicks({ ...picks, [p.id]: e.target.value })} style={{ ...input, minHeight: 42, padding: "8px 10px", fontSize: 15 }}>
                   <option value="">Not in Xero</option>

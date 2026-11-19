@@ -64,7 +64,7 @@ export default function HoldingGate({ children }: { children: ReactNode }) {
         </form>
         {wrong && <p role="alert" style={{ fontSize: 14, color: C.danger, margin: "0 0 10px" }}>That&apos;s not the preview password.</p>}
         <p style={{ fontSize: 14, color: C.muted, margin: "18px 0 0", lineHeight: 1.6 }}>
-          Already testing SMEasy? <Link href="/auth/login/" style={{ color: C.dark, fontWeight: 650 }}>Log in</Link><br />
+          Already testing SMEasy? <Link href="/auth/login/" style={{ color: C.dark, fontWeight: 700 }}>Log in</Link><br />
           <a href="mailto:hello@smeasy.au" style={{ color: C.secondary }}>hello@smeasy.au</a> · <Link href="/privacy/" style={{ color: C.secondary }}>Privacy</Link>
         </p>
       </div>

@@ -172,13 +172,13 @@ function HoursPage() {
 
         {!hasCore(plan) ? (
           <div style={{ ...card, padding: "28px 24px", textAlign: "center" }}>
-            <p style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: "0 0 6px" }}>Timesheets are part of Plus</p>
+            <p style={{ fontSize: 18, fontWeight: 800, color: C.dark, margin: "0 0 6px" }}>Timesheets are part of Plus</p>
             <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 16px", lineHeight: 1.5 }}>Confirm the hours people actually worked, then approve the timesheet for payroll.</p>
             <Link href="/plan/" className="app-press" style={{ ...btn("accent"), textDecoration: "none" }}>See plans</Link>
           </div>
         ) : shifts.length === 0 ? (
           <div style={{ ...card, padding: "32px 24px", textAlign: "center", color: C.secondary, fontSize: 15, lineHeight: 1.5 }}>
-            No one is rostered this week. <Link href={`/week?w=${weekStart}`} style={{ color: C.dark, fontWeight: 650 }}>Open the roster</Link>
+            No one is rostered this week. <Link href={`/week?w=${weekStart}`} style={{ color: C.dark, fontWeight: 700 }}>Open the roster</Link>
           </div>
         ) : (
           <>
@@ -210,7 +210,7 @@ function HoursPage() {
               const future = d > today;
               return (
                 <section key={d} style={{ marginBottom: 14 }}>
-                  <h2 style={{ fontSize: 15, fontWeight: 750, color: C.dark, margin: "0 0 8px", display: "flex", gap: 8, alignItems: "baseline" }}>
+                  <h2 style={{ fontSize: 15, fontWeight: 800, color: C.dark, margin: "0 0 8px", display: "flex", gap: 8, alignItems: "baseline" }}>
                     {fmtDay(d)}{future && <span style={{ fontSize: 13, fontWeight: 500, color: C.muted }}>Not yet worked</span>}
                   </h2>
                   <div className="hrs-list" style={{ ...card, overflow: "hidden" }}>
@@ -226,9 +226,9 @@ function HoursPage() {
 
             {/* Totals + approve */}
             <section style={{ ...card, padding: "16px 18px", marginTop: 18 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 750, color: C.dark, margin: "0 0 10px" }}>This week</h2>
+              <h2 style={{ fontSize: 16, fontWeight: 800, color: C.dark, margin: "0 0 10px" }}>This week</h2>
               <div role="table" style={{ display: "grid", gap: 0, fontSize: 14 }}>
-                <div role="row" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 80px 80px", color: C.muted, fontWeight: 650, fontSize: 13, paddingBottom: 6 }}>
+                <div role="row" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 80px 80px", color: C.muted, fontWeight: 700, fontSize: 13, paddingBottom: 6 }}>
                   <span role="columnheader">Person</span><span role="columnheader" style={{ textAlign: "right" }}>Rostered</span><span role="columnheader" style={{ textAlign: "right" }}>Worked</span>
                 </div>
                 {people.map((t) => (
@@ -240,7 +240,7 @@ function HoursPage() {
                 ))}
                 <div role="row" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 80px 80px", padding: "9px 0 0", borderTop: `1px solid ${C.border}`, fontWeight: 800, color: C.dark }}>
                   <span role="cell">Total</span>
-                  <span role="cell" style={{ textAlign: "right", color: C.secondary, fontWeight: 650 }}>{fmtH(totalRostered)}h</span>
+                  <span role="cell" style={{ textAlign: "right", color: C.secondary, fontWeight: 700 }}>{fmtH(totalRostered)}h</span>
                   <span role="cell" style={{ textAlign: "right" }}>{fmtH(totalWorked)}h</span>
                 </div>
               </div>
@@ -303,7 +303,7 @@ function HoursPage() {
                       return (
                         <div key={h.id} style={{ fontSize: 14, color: C.secondary, padding: "8px 0", borderTop: `1px solid ${C.divider}`, lineHeight: 1.45 }}>
                           <span style={{ color: C.muted }}>{shortDate(h.changed_at)}</span>
-                          {h.person && <> · <strong style={{ color: C.dark, fontWeight: 650 }}>{h.person}</strong>{h.shift_date && `, ${fmtDay(h.shift_date)}`}</>}
+                          {h.person && <> · <strong style={{ color: C.dark, fontWeight: 700 }}>{h.person}</strong>{h.shift_date && `, ${fmtDay(h.shift_date)}`}</>}
                           {" · "}{what}
                         </div>
                       );

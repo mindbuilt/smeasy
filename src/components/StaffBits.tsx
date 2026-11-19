@@ -92,7 +92,7 @@ export function WeekNav({ weekStart, onStep, onToday }: { weekStart: string; onS
         <div style={{ fontSize: 13, color: C.muted }}>
           {today >= weekStart && today <= addDays(weekStart, 6) ? "This week" : <>
             {weekStart > today ? "Coming up" : "Past week"}
-            {onToday && <> · <button type="button" onClick={onToday} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.dark, fontWeight: 650, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>Back to this week</button></>}
+            {onToday && <> · <button type="button" onClick={onToday} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.dark, fontWeight: 700, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>Back to this week</button></>}
           </>}
         </div>
       </div>
@@ -135,7 +135,7 @@ export function NextShift({ shifts, roles, totalHours, count, name }: {
             {fmtTime(next.start_time)} – {fmtTime(next.end_time)}
           </h2>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, flexWrap: "wrap", fontSize: 15, color: "#e5e7eb" }}>
-            <strong style={{ color: C.accent, fontWeight: 750 }}>{when(next.date, next.start_time)}</strong>
+            <strong style={{ color: C.accent, fontWeight: 800 }}>{when(next.date, next.start_time)}</strong>
             {when(next.date, next.start_time) !== fmtDay(next.date) && <span>{fmtDay(next.date)}</span>}
             {sw && <span style={{ fontSize: 13, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: sw.bg, color: sw.text }}>{next.role}</span>}
             {next.break_minutes ? <span style={{ color: "#9ca3af" }}>{next.break_minutes}m break</span> : null}
@@ -173,7 +173,7 @@ export function DayList({ weekStart, shifts, roles, state, dayNotes, isMine, you
         if (!day.length && !extras) {
           return (
             <div key={d} style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 14px", fontSize: 14, color: C.muted }}>
-              <span style={{ width: 82, fontWeight: 650 }}>{dayName(d)} {Number(d.slice(8))}</span>
+              <span style={{ width: 82, fontWeight: 700 }}>{dayName(d)} {Number(d.slice(8))}</span>
               <span style={{ flex: 1, height: 1, background: C.border }} />
               <span>No shifts</span>
             </div>
@@ -191,7 +191,7 @@ export function DayList({ weekStart, shifts, roles, state, dayNotes, isMine, you
               return (
                 // One compact line per shift, so busy days stay short on a phone.
                 <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", margin: "0 -8px", borderRadius: 10, background: me ? C.shiftBg : "transparent", fontSize: 15 }}>
-                  <span style={{ fontWeight: me ? 800 : 650, color: C.dark, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: "0 1 auto" }}>{me && youLabel ? "You" : s.staff_name}</span>
+                  <span style={{ fontWeight: me ? 800 : 700, color: C.dark, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: "0 1 auto" }}>{me && youLabel ? "You" : s.staff_name}</span>
                   <span style={{ color: C.secondary, whiteSpace: "nowrap", flex: "none" }}>{fmtTime(s.start_time)} – {fmtTime(s.end_time)}</span>
                   {s.notes && <span title={s.notes} style={{ color: C.muted, fontSize: 13, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: "1 1 0" }}>{s.notes}</span>}
                   <span style={{ marginLeft: "auto", flex: "none" }}><RolePill role={s.role} roles={roles} /></span>
@@ -256,7 +256,7 @@ export function MineSwitch({ mine, onChange }: { mine: boolean; onChange: (mine:
     <div role="radiogroup" aria-label="Show" style={{ display: "inline-flex", padding: 3, borderRadius: 999, background: "#eef0f3", gap: 2 }}>
       {([[true, "My shifts"], [false, "Everyone"]] as const).map(([v, text]) => (
         <button key={text} type="button" role="radio" aria-checked={mine === v} onClick={() => onChange(v)} className="app-press" style={{
-          border: "none", borderRadius: 999, padding: "8px 16px", minHeight: 38, fontSize: 15, fontWeight: 650, fontFamily: "inherit", cursor: "pointer",
+          border: "none", borderRadius: 999, padding: "8px 16px", minHeight: 38, fontSize: 15, fontWeight: 700, fontFamily: "inherit", cursor: "pointer",
           background: mine === v ? C.dark : "transparent", color: mine === v ? C.white : C.secondary, transition: "background-color 180ms ease, color 180ms ease",
         }}>{text}</button>
       ))}

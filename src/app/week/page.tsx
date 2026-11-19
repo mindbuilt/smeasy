@@ -419,7 +419,7 @@ function WeekPage() {
         )}
       </div>
       {notice && <Banner onClose={() => setNotice(null)}>{notice}</Banner>}
-      {locked && <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 12px" }}>These timesheets are approved, so the roster is read-only. <Link href={`/hours?w=${weekStart}`} style={{ color: C.dark, fontWeight: 650 }}>Edit timesheets</Link></p>}
+      {locked && <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 12px" }}>These timesheets are approved, so the roster is read-only. <Link href={`/hours?w=${weekStart}`} style={{ color: C.dark, fontWeight: 700 }}>Edit timesheets</Link></p>}
 
       {isMobile && overtime.length > 0 && hoursNoteKey !== hiddenHoursNote && (
         <p style={{ fontSize: 13, color: C.secondary, margin: "-4px 0 10px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
@@ -432,7 +432,7 @@ function WeekPage() {
       {/* Time-off requests */}
       {pending.length > 0 && (
         <section style={{ ...card, padding: "14px 16px", marginBottom: 14, background: C.offBg, boxShadow: "none" }}>
-          <h2 style={{ fontSize: 15, fontWeight: 750, color: C.offText, margin: "0 0 8px" }}>Time-off requests</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 800, color: C.offText, margin: "0 0 8px" }}>Time-off requests</h2>
           {pending.map((t) => {
             const who = staffById.get(t.staff_id)?.name ?? "Someone";
             return (
@@ -459,7 +459,7 @@ function WeekPage() {
       {staff.length === 0 ? (
         <div style={{ ...card, padding: "44px 28px", textAlign: "center" }}>
           <span style={{ display: "inline-grid", placeItems: "center", width: 56, height: 56, borderRadius: 18, background: C.shiftBg, color: C.shiftText, marginBottom: 14 }}><UserPlus size={26} /></span>
-          <p style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: "0 0 6px" }}>Your roster starts with your team</p>
+          <p style={{ fontSize: 18, fontWeight: 800, color: C.dark, margin: "0 0 6px" }}>Your roster starts with your team</p>
           <p style={{ fontSize: 15, color: C.secondary, margin: "0 0 18px", lineHeight: 1.5 }}>Add the people you roster, then come back here to build the week.</p>
           <Link href="/team" className="app-press" style={{ ...btn("primary"), textDecoration: "none" }}>Add your team</Link>
         </div>
@@ -569,7 +569,7 @@ function WeekPage() {
             <span className="publish-badge" style={{ display: "inline-grid", placeItems: "center", width: 76, height: 76, borderRadius: "50%", background: C.accent, boxShadow: "0 8px 22px rgba(101,163,13,0.35)" }}>
               <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke={C.dark} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
             </span>
-            <p style={{ fontSize: 17, fontWeight: 750, color: C.dark, margin: "14px 0 4px" }}>Your team can see {fmtWeek(weekStart)} now.</p>
+            <p style={{ fontSize: 17, fontWeight: 800, color: C.dark, margin: "14px 0 4px" }}>Your team can see {fmtWeek(weekStart)} now.</p>
             <p style={{ fontSize: 15, color: C.secondary, lineHeight: 1.5, margin: 0 }}>Share the team link or PDF from More, any time.</p>
           </div>
           {emailResult && (
@@ -593,7 +593,7 @@ function WeekPage() {
 
 function SheetAction({ icon, label, hint, onClick }: { icon: React.ReactNode; label: string; hint: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} title={hint} className="app-press" style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", textAlign: "left", padding: "13px 4px", border: "none", borderBottom: `1px solid ${C.divider}`, background: "none", cursor: "pointer", fontFamily: "inherit", color: C.dark, fontSize: 16, fontWeight: 650 }}>
+    <button onClick={onClick} title={hint} className="app-press" style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", textAlign: "left", padding: "13px 4px", border: "none", borderBottom: `1px solid ${C.divider}`, background: "none", cursor: "pointer", fontFamily: "inherit", color: C.dark, fontSize: 16, fontWeight: 700 }}>
       <span style={{ display: "grid", placeItems: "center", color: C.secondary, flex: "none" }}>{icon}</span>
       {label}
     </button>
@@ -610,7 +610,7 @@ function ViewToggle<T extends string>({ value, onChange, options, label = "View"
         return (
           <button key={v} type="button" onClick={() => onChange(v)} aria-pressed={on} className="app-press" style={{
             display: "inline-flex", alignItems: "center", gap: 6, border: "none", borderRadius: 999, padding: text ? "7px 14px" : "7px 10px", minHeight: 36,
-            fontSize: 14, fontWeight: 650, fontFamily: "inherit", cursor: "pointer",
+            fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: "pointer",
             background: on ? C.dark : "transparent", color: on ? C.white : C.secondary, transition: "background-color 180ms ease, color 180ms ease",
           }} aria-label={text ? undefined : String(v)} title={text ? undefined : String(v)}>
             {icon}{text}
@@ -763,7 +763,7 @@ function DayView({ d, slide, staff, shifts, roles, offOn, info, onEdit, onDay, o
         {mode === "list" && offs.map(({ p, t }) => (
           <div key={p.id} style={{ ...card, display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: C.offBg, boxShadow: "none" }}>
             <Avatar name={p.name} tone={{ bg: "#ffedd5", text: C.offText }} />
-            <span style={{ flex: 1, fontSize: 15, fontWeight: 650 }}>{p.name}</span>
+            <span style={{ flex: 1, fontSize: 15, fontWeight: 700 }}>{p.name}</span>
             <span style={{ fontSize: 13, fontWeight: 700, color: C.offText }}>Off{t!.reason ? ` · ${t!.reason}` : ""}</span>
           </div>
         ))}
@@ -809,12 +809,12 @@ function Chip({ s, roles, onClick, cascade, cascadeDelay = 0 }: {
     <button draggable onDragStart={onDragStart} onClick={(e) => { e.stopPropagation(); onClick(); }} className={`app-press grid-chip${cascade ? " cascade-in" : ""}`}
       title={`${s.notes ? `${s.notes}\n` : ""}Drag to move. Hold Option (Alt) to copy.`} style={{
       display: "block", width: "100%", textAlign: "left", background: sw.bg, border: open ? `1.5px dashed ${sw.border}` : "1px solid transparent",
-      color: sw.text, borderRadius: 10, padding: "6px 8px", fontSize: 13, fontWeight: 750, cursor: "pointer", lineHeight: 1.3, fontFamily: "inherit",
+      color: sw.text, borderRadius: 10, padding: "6px 8px", fontSize: 13, fontWeight: 800, cursor: "pointer", lineHeight: 1.3, fontFamily: "inherit",
       ...(cascade ? { animationDelay: `${cascadeDelay}ms` } : {}),
     }}>
       {fmtTime(s.start_time)}–{fmtTime(s.end_time)}
-      {(s.role || open) && <span style={{ display: "block", fontWeight: 550, opacity: 0.9 }}>{open ? `Unfilled${s.role ? ` · ${s.role}` : ""}` : s.role}</span>}
-      {s.notes && <span style={{ display: "block", fontWeight: 450, opacity: 0.85, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.notes}</span>}
+      {(s.role || open) && <span style={{ display: "block", fontWeight: 600, opacity: 0.9 }}>{open ? `Unfilled${s.role ? ` · ${s.role}` : ""}` : s.role}</span>}
+      {s.notes && <span style={{ display: "block", fontWeight: 500, opacity: 0.85, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.notes}</span>}
     </button>
   );
 }
@@ -836,7 +836,7 @@ function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascade
   let cascadeIdx = 0;
   const row = (key: string, name: React.ReactNode, staffId: string, total: React.ReactNode, tint?: string) => (
     <div key={key} style={{ display: "grid", gridTemplateColumns: cols, borderTop: `1px solid ${C.divider}`, minWidth: 960, background: tint }}>
-      <div style={{ padding: "10px 14px", fontSize: 15, fontWeight: 650, color: C.dark, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>{name}</div>
+      <div style={{ padding: "10px 14px", fontSize: 15, fontWeight: 700, color: C.dark, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>{name}</div>
       {days.map((d) => {
         const mine = shifts.filter((s) => (s.staff_id ?? "") === staffId && s.date === d);
         const off = staffId ? offOn(staffId, d) : undefined;
@@ -855,28 +855,28 @@ function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascade
           </div>
         );
       })}
-      <div style={{ padding: "10px 6px", fontSize: 15, fontWeight: 750, color: C.dark, textAlign: "center", alignSelf: "center" }}>{total}</div>
+      <div style={{ padding: "10px 6px", fontSize: 15, fontWeight: 800, color: C.dark, textAlign: "center", alignSelf: "center" }}>{total}</div>
     </div>
   );
 
   return (
     <div style={{ ...card, overflowX: "auto" }}>
       <div style={{ display: "grid", gridTemplateColumns: cols, minWidth: 960 }}>
-        <div style={{ padding: "12px 14px", fontSize: 13, fontWeight: 650, color: C.muted, alignSelf: "end" }}>Staff</div>
+        <div style={{ padding: "12px 14px", fontSize: 13, fontWeight: 700, color: C.muted, alignSelf: "end" }}>Staff</div>
         {days.map((d) => {
           const info = dayInfo(d);
           const isToday = d === today;
           return (
             <button key={d} onClick={() => onDay(d)} title={info.note ? "Edit day note" : "Add a note for this day"} className="app-press"
               style={{ padding: "10px 6px 8px", textAlign: "center", border: "none", background: info.holiday ? HOLIDAY.bg : "transparent", cursor: "pointer", fontFamily: "inherit", minWidth: 0, borderRadius: 12, margin: 4 }}>
-              <span style={{ display: "block", fontSize: 12, fontWeight: 650, color: isToday ? C.shiftText : C.muted }}>{dayName(d)}</span>
+              <span style={{ display: "block", fontSize: 12, fontWeight: 700, color: isToday ? C.shiftText : C.muted }}>{dayName(d)}</span>
               <span style={{ display: "inline-grid", placeItems: "center", minWidth: 32, height: 32, borderRadius: 999, fontSize: 17, fontWeight: 800, color: isToday ? C.dark : C.dark, background: isToday ? C.accent : "transparent" }}>{Number(d.slice(8))}</span>
               {info.holiday && <span style={{ display: "block", fontSize: 12, fontWeight: 700, color: HOLIDAY.text, marginTop: 2 }}>{info.holiday}</span>}
               {info.note && <span style={{ display: "block", fontSize: 12, fontWeight: 500, color: C.secondary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 2 }} title={info.note}>{info.note}</span>}
             </button>
           );
         })}
-        <div style={{ padding: "12px 6px", fontSize: 13, fontWeight: 650, color: C.muted, textAlign: "center", alignSelf: "end" }}>Hrs</div>
+        <div style={{ padding: "12px 6px", fontSize: 13, fontWeight: 700, color: C.muted, textAlign: "center", alignSelf: "end" }}>Hrs</div>
       </div>
       {/* Only there when you've added a shift with "No one yet". Drag it onto someone's row to give it to them. */}
       {hasUnfilled && row("unfilled", <span title="Shifts with no one on them yet. Drag one onto someone's row, or click it, to give it to them. Staff don't see these." style={{ color: UNFILLED.text, display: "flex", alignItems: "center", gap: 10 }}><span aria-hidden style={{ width: 32, height: 32, borderRadius: "50%", border: `1.5px dashed ${UNFILLED.border}`, display: "grid", placeItems: "center", fontWeight: 800, flex: "none" }}>?</span>Unfilled</span>, "", "", UNFILLED.bg)}
@@ -889,7 +889,7 @@ function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascade
         return row(p.id, <><Avatar name={p.name} size={32} tone={p.default_role ? (() => { const sw = roleSwatch(p.default_role, roles); return { bg: sw.bg, text: sw.text }; })() : undefined} /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span></>, p.id, total);
       })}
       <div style={{ display: "grid", gridTemplateColumns: cols, minWidth: 960, background: "#fafbfc", borderTop: `1px solid ${C.divider}`, borderRadius: `0 0 ${C.r2}px ${C.r2}px` }}>
-        <div style={{ padding: "10px 14px", fontSize: 13, fontWeight: 650, color: C.muted }}>Cover<span style={{ display: "block", fontSize: 12, fontWeight: 500 }}>Red = nobody on</span></div>
+        <div style={{ padding: "10px 14px", fontSize: 13, fontWeight: 700, color: C.muted }}>Cover<span style={{ display: "block", fontSize: 12, fontWeight: 500 }}>Red = nobody on</span></div>
         {days.map((d, i) => {
           const cv = covers[i];
           const has = shifts.some((s) => s.date === d);
@@ -925,7 +925,7 @@ function DayNoteEditor({ date, holiday, note, onClose, onSave }: {
   return (
     <Modal title={fmtDay(date)} onClose={onClose}>
       <form onSubmit={async (e) => { e.preventDefault(); setSaving(true); await onSave(text); setSaving(false); }} style={{ display: "grid", gap: 12 }}>
-        {holiday && <p style={{ margin: 0, fontSize: 15, color: HOLIDAY.text, fontWeight: 650, background: HOLIDAY.bg, padding: "10px 12px", borderRadius: 12 }}>Public holiday: {holiday}</p>}
+        {holiday && <p style={{ margin: 0, fontSize: 15, color: HOLIDAY.text, fontWeight: 700, background: HOLIDAY.bg, padding: "10px 12px", borderRadius: 12 }}>Public holiday: {holiday}</p>}
         <div>
           <label style={label} htmlFor="daynote">Note for this day (your team sees it once published)</label>
           <input id="daynote" style={input} maxLength={200} value={text} autoFocus onChange={(e) => setText(e.target.value)} placeholder="e.g. Function — 40 people from 6pm" />
@@ -941,7 +941,7 @@ function Pill({ on, onClick, children, tone }: { on: boolean; onClick: () => voi
   return (
     <button type="button" onClick={onClick} aria-pressed={on} className="app-press" style={{
       border: `1.5px solid ${on ? C.dark : C.border}`, background: on ? (tone?.bg ?? C.dark) : C.white, color: on ? (tone ? tone.text : C.white) : C.dark,
-      borderRadius: 999, padding: "8px 14px", fontSize: 14, fontWeight: 650, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6,
+      borderRadius: 999, padding: "8px 14px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 6,
     }}>{children}</button>
   );
 }
@@ -985,7 +985,7 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, overtimeOn,
                   <span style={{ display: "inline-grid", borderRadius: "50%", padding: 3, boxShadow: on ? `0 0 0 2.5px ${C.dark}` : "none", transition: "box-shadow 160ms ease" }}>
                     <Avatar name={p.name} size={46} tone={on ? { bg: C.accent, text: C.dark } : undefined} />
                   </span>
-                  <span style={{ display: "block", fontSize: 13, fontWeight: on ? 750 : 550, color: C.dark, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name.split(" ")[0]}</span>
+                  <span style={{ display: "block", fontSize: 13, fontWeight: on ? 800 : 600, color: C.dark, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name.split(" ")[0]}</span>
                 </button>
               );
             })}
@@ -993,7 +993,7 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, overtimeOn,
               <span style={{ display: "inline-grid", borderRadius: "50%", padding: 3, boxShadow: d.staff_id === "" ? `0 0 0 2.5px ${UNFILLED.border}` : "none" }}>
                 <span style={{ width: 46, height: 46, borderRadius: "50%", border: `1.5px dashed ${UNFILLED.border}`, display: "grid", placeItems: "center", color: UNFILLED.text, fontWeight: 800 }}>?</span>
               </span>
-              <span style={{ display: "block", fontSize: 13, fontWeight: 550, color: UNFILLED.text, marginTop: 4 }}>No one yet</span>
+              <span style={{ display: "block", fontSize: 13, fontWeight: 600, color: UNFILLED.text, marginTop: 4 }}>No one yet</span>
             </button>
           </div>
           {off && <p style={{ margin: "4px 0 0", fontSize: 14, color: C.offText }}>Heads up: they have approved time off this day.</p>}
@@ -1044,9 +1044,9 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, overtimeOn,
         <div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 6 }}>
             <span style={{ ...label, marginBottom: 0 }}>{d.id ? "Copy to other days" : "Also add on"}</span>
-            <button type="button" onClick={() => setAlsoOn(weekdays)} style={{ background: "none", border: "none", padding: 0, fontSize: 13, fontWeight: 650, color: C.shiftText, cursor: "pointer", fontFamily: "inherit" }}>Weekdays</button>
-            <button type="button" onClick={() => setAlsoOn(others)} style={{ background: "none", border: "none", padding: 0, fontSize: 13, fontWeight: 650, color: C.shiftText, cursor: "pointer", fontFamily: "inherit" }}>Every day</button>
-            {alsoOn.length > 0 && <button type="button" onClick={() => setAlsoOn([])} style={{ background: "none", border: "none", padding: 0, fontSize: 13, fontWeight: 650, color: C.muted, cursor: "pointer", fontFamily: "inherit", marginLeft: "auto" }}>Clear</button>}
+            <button type="button" onClick={() => setAlsoOn(weekdays)} style={{ background: "none", border: "none", padding: 0, fontSize: 13, fontWeight: 700, color: C.shiftText, cursor: "pointer", fontFamily: "inherit" }}>Weekdays</button>
+            <button type="button" onClick={() => setAlsoOn(others)} style={{ background: "none", border: "none", padding: 0, fontSize: 13, fontWeight: 700, color: C.shiftText, cursor: "pointer", fontFamily: "inherit" }}>Every day</button>
+            {alsoOn.length > 0 && <button type="button" onClick={() => setAlsoOn([])} style={{ background: "none", border: "none", padding: 0, fontSize: 13, fontWeight: 700, color: C.muted, cursor: "pointer", fontFamily: "inherit", marginLeft: "auto" }}>Clear</button>}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 4 }}>
             {weekDays.map((x) => {

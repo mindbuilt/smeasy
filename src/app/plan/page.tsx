@@ -121,14 +121,14 @@ export default function PlanPage() {
         )}
         {handSet && (
           <p style={{ fontSize: 15, color: C.secondary, background: "#f3f4f6", borderRadius: 12, padding: "10px 12px", margin: "0 0 14px", lineHeight: 1.5 }}>
-            This plan was set up for you. To change it, email <a href="mailto:hello@smeasy.au" style={{ color: C.dark, fontWeight: 650 }}>hello@smeasy.au</a>.
+            This plan was set up for you. To change it, email <a href="mailto:hello@smeasy.au" style={{ color: C.dark, fontWeight: 700 }}>hello@smeasy.au</a>.
           </p>
         )}
 
         <div role="radiogroup" aria-label="Billing" style={{ display: "inline-flex", padding: 3, borderRadius: 999, background: "#eef0f3", gap: 2, marginBottom: 16 }}>
           {(["month", "year"] as Interval[]).map((i) => (
             <button key={i} type="button" role="radio" aria-checked={interval === i} onClick={() => setInterval(i)} className="app-press" style={{
-              border: "none", borderRadius: 999, padding: "7px 14px", minHeight: 36, fontSize: 14, fontWeight: 650, fontFamily: "inherit", cursor: "pointer",
+              border: "none", borderRadius: 999, padding: "7px 14px", minHeight: 36, fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: "pointer",
               background: interval === i ? C.dark : "transparent", color: interval === i ? C.white : C.secondary,
             }}>{i === "month" ? "Monthly" : "Annual · 2 months free"}</button>
           ))}

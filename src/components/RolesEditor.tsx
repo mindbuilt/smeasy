@@ -11,7 +11,7 @@ export default function RolesEditor({ roles, onSave }: { roles: string[]; onSave
   const dirty = list.join("|") !== roles.join("|");
   return (
     <>
-      <h2 style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: "0 0 4px" }}>Shift roles</h2>
+      <h2 style={{ fontSize: 18, fontWeight: 800, color: C.dark, margin: "0 0 4px" }}>Shift roles</h2>
       <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 12px", lineHeight: 1.5 }}>Each role has its own colour on the roster.</p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
         {list.map((r) => {

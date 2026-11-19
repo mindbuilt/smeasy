@@ -73,7 +73,7 @@ function TeamPage() {
         </p>
 
         <section style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: "0 0 10px" }}>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: C.dark, margin: "0 0 10px" }}>
             Staff {active.length > 0 && <span style={{ color: C.muted, fontWeight: 500 }}>({active.length})</span>}
           </h2>
           {limitHit || atStaffLimit(plan, active.length) ? (
@@ -88,7 +88,7 @@ function TeamPage() {
             </form>
           )}
           {xeroConnected && hasPro(plan) && !(limitHit || atStaffLimit(plan, active.length)) && (
-            <button type="button" onClick={() => setFromXero(true)} className="app-press" style={{ ...btn("ghost"), padding: "2px 0", minHeight: 30, marginBottom: 10, color: C.dark, fontWeight: 650 }}>
+            <button type="button" onClick={() => setFromXero(true)} className="app-press" style={{ ...btn("ghost"), padding: "2px 0", minHeight: 30, marginBottom: 10, color: C.dark, fontWeight: 700 }}>
               Add from Xero
             </button>
           )}
@@ -109,7 +109,7 @@ function TeamPage() {
                     {[s.default_role, EMPLOYMENT[s.employment_basis ?? ""], s.mobile].filter(Boolean).join(" · ") || "No role or mobile yet"}
                   </div>
                   <div style={{ fontSize: 13, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {s.email ? <>{s.email}{!s.email_roster && " · roster emails off"}</> : <button onClick={() => setEditing(s)} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.shiftText, fontWeight: 650, cursor: "pointer" }}>Add email for roster emails</button>}
+                    {s.email ? <>{s.email}{!s.email_roster && " · roster emails off"}</> : <button onClick={() => setEditing(s)} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.shiftText, fontWeight: 700, cursor: "pointer" }}>Add email for roster emails</button>}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -174,7 +174,7 @@ function TeamLinkCard({ token, onReset }: { token: string; onReset: () => Promis
   const link = typeof window === "undefined" ? "" : `${window.location.origin}/r/#${token}`;
   return (
     <div style={{ background: C.white, borderRadius: C.r2, boxShadow: C.shadow, padding: 16 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 750, color: C.dark, margin: 0 }}>Team roster link</h2>
+      <h2 style={{ fontSize: 18, fontWeight: 800, color: C.dark, margin: 0 }}>Team roster link</h2>
       <p style={{ fontSize: 13, color: C.secondary, margin: "4px 0 12px" }}>
         Pin this in your staff group chat. It always shows the latest published roster, and staff can download it as a PDF.
       </p>
@@ -290,7 +290,7 @@ function SendLink({ staff, business, onClose }: { staff: Staff; business: string
     await navigator.clipboard.writeText(staffLink(staff));
     haptic(8); setState("copied");
   }
-  const row = { display: "flex", alignItems: "center", gap: 14, width: "100%", textAlign: "left", padding: "13px 4px", border: "none", borderBottom: `1px solid ${C.divider}`, background: "none", cursor: "pointer", fontFamily: "inherit", color: C.dark, fontSize: 16, fontWeight: 650, textDecoration: "none" } as const;
+  const row = { display: "flex", alignItems: "center", gap: 14, width: "100%", textAlign: "left", padding: "13px 4px", border: "none", borderBottom: `1px solid ${C.divider}`, background: "none", cursor: "pointer", fontFamily: "inherit", color: C.dark, fontSize: 16, fontWeight: 700, textDecoration: "none" } as const;
   return (
     <Modal title={`Send ${staff.name.split(" ")[0]} their link`} onClose={onClose}>
       <p style={{ fontSize: 14, color: C.secondary, margin: "0 0 6px", lineHeight: 1.5 }}>Their personal link opens on their own shifts. It also comes in every roster email.</p>

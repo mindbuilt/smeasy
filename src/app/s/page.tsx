@@ -87,7 +87,7 @@ export default function StaffRoster() {
 
       {!view.published ? (
         <div style={{ ...card, padding: "28px 20px", textAlign: "center" }}>
-          <p style={{ fontSize: 17, fontWeight: 750, color: C.dark, margin: "0 0 4px" }}>Not out yet</p>
+          <p style={{ fontSize: 17, fontWeight: 800, color: C.dark, margin: "0 0 4px" }}>Not out yet</p>
           <p style={{ margin: 0, color: C.secondary, fontSize: 15 }}>This week&apos;s roster hasn&apos;t been published. Check back soon.</p>
         </div>
       ) : (
@@ -203,7 +203,7 @@ function RosterEmails({ token, email, on, onChanged }: { token: string; email: s
     if (!error) { setStopped(!next); onChanged(); }
   }
 
-  const link = { background: "none", border: "none", padding: 0, font: "inherit", color: C.dark, fontWeight: 650, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 } as const;
+  const link = { background: "none", border: "none", padding: 0, font: "inherit", color: C.dark, fontWeight: 700, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 } as const;
 
   return (
     <section style={{ ...card, padding: "16px 16px 14px", marginTop: 14 }}>

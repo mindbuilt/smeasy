@@ -347,7 +347,7 @@ The roster's primary actions, floating above the tab bar on phones. "Publish to 
 - **Internal Padding:** 12px 14px for list cards, 14px 16px for banners and sections.
 
 ### Shift card (signature)
-A full-width button card: a 40px avatar (initials in the role swatch), the name in 16px 700, times in 14px slate-secondary ("9:00am – 5:00pm · 7.5h (30m break)"), an optional note line, and a role pill on the right. When unfilled, the card is the unfilled wash with a dashed line and a dashed "?" ring in place of the avatar. On desktop the same information condenses into grid chips (10px corners, 13px 750, the role swatch wash).
+A full-width button card: a 40px avatar (initials in the role swatch), the name in 16px 700, times in 14px slate-secondary ("9:00am – 5:00pm · 7.5h (30m break)"), an optional note line, and a role pill on the right. When unfilled, the card is the unfilled wash with a dashed line and a dashed "?" ring in place of the avatar. On desktop the same information condenses into grid chips (10px corners, 13px 800, the role swatch wash).
 
 ### Inputs / Fields
 - **Style:** white fill, a hairline border, 10px corners, padding 12px 14px, 16px text, at least 46px high. Labels sit above in 13px 600 slate-secondary with 6px spacing.
@@ -362,7 +362,7 @@ A 50 by 30px fully round track: switch-off grey when off, lime when on. The 24px
 - **Tab bar (below 720px):** fixed bottom, white at 96% with blur, a hairline top border, three items (Roster, Team, Timesheets). Settings is a gear in the header. Each is a 21px icon above a 12px 700 label. The active item sits in a 56 by 30px lime pill with icon stroke 2.4. Tapping gives a haptic tick.
 
 ### Sheets and dialogs
-On phones, a bottom sheet with 20px top corners rises in 340ms and falls in 220ms. On desktop, a centred 460px dialog fades and scales in over 260ms. Both have a 40 by 4px grab handle, a 19px 750 title, and a 40px round quiet-fill close button. Escape closes them and the body stops scrolling while they are open.
+On phones, a bottom sheet with 20px top corners rises in 340ms and falls in 220ms. On desktop, a centred 460px dialog fades and scales in over 260ms. Both have a 40 by 4px grab handle, a 19px 800 title, and a 40px round quiet-fill close button. Escape closes them and the body stops scrolling while they are open.
 
 ### Avatar
 A circle with initials (two letters, at 36% of the avatar's size, weight 700). It is filled with the role swatch on shift cards and with lime and ink on the staff next-shift card. In the shift editor's avatar picker, the chosen avatar gets a 2.5px ink ring.

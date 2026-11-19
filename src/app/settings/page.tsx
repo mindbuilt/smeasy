@@ -15,7 +15,7 @@ import { AppShell, C, Loading, btn, haptic, input, label } from "@/components/ui
 import { WEEKDAYS, fmtWeek, thisWeekStart } from "@/lib/dates";
 
 const card = { background: C.white, borderRadius: C.r2, boxShadow: C.shadow, padding: "20px 20px 22px", marginBottom: 14 } as const;
-const h2 = { fontSize: 18, fontWeight: 750, color: C.dark, margin: "0 0 4px" } as const;
+const h2 = { fontSize: 18, fontWeight: 800, color: C.dark, margin: "0 0 4px" } as const;
 const help = { fontSize: 15, color: C.secondary, margin: "0 0 14px", lineHeight: 1.5 } as const;
 
 export default function SettingsPage() {

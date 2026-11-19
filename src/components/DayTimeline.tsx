@@ -121,7 +121,7 @@ export default function DayTimeline({ dayShifts, staff, roles, offs, isToday, co
       {/* Only speak up when there's a gap: the day header already says who's on and what's unfilled. */}
       {cov.gaps.length > 0 && (
         <div style={{ ...card, boxShadow: "none", background: UNFILLED.bg, padding: "10px 14px", display: "grid", gap: 6 }}>
-          <div style={{ fontSize: 14, fontWeight: 750, color: UNFILLED.text }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: UNFILLED.text }}>
             {cov.gaps.length === 1 ? "1 gap" : `${cov.gaps.length} gaps`} with nobody on
           </div>
           {cov.gaps.map((g) => (
@@ -160,7 +160,7 @@ export default function DayTimeline({ dayShifts, staff, roles, offs, isToday, co
                 borderTop: `1.5px dashed ${UNFILLED.border}`, borderBottom: `1.5px dashed ${UNFILLED.border}`, boxSizing: "border-box",
               }}>
                 {!g.unfilled.length && (
-                  <span style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", fontSize: 12, fontWeight: 750, color: UNFILLED.text, background: C.white, borderRadius: 999, padding: "2px 8px", whiteSpace: "nowrap" }}>
+                  <span style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", fontSize: 12, fontWeight: 800, color: UNFILLED.text, background: C.white, borderRadius: 999, padding: "2px 8px", whiteSpace: "nowrap" }}>
                     Nobody on
                   </span>
                 )}
@@ -187,7 +187,7 @@ export default function DayTimeline({ dayShifts, staff, roles, offs, isToday, co
                     padding: compact ? "4px 6px" : "6px 9px", textAlign: "left", fontFamily: "inherit", cursor: "pointer", lineHeight: 1.25,
                     display: "flex", flexDirection: roomy ? "column" : "row", gap: roomy ? 1 : 6, alignItems: roomy ? "stretch" : "center",
                   }}>
-                  <span title={who} style={{ fontSize: compact ? 13 : 14, fontWeight: 750, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: "none", maxWidth: "100%" }}>
+                  <span title={who} style={{ fontSize: compact ? 13 : 14, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: "none", maxWidth: "100%" }}>
                     {open ? "Unfilled" : first(who)}
                   </span>
                   <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.9, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>

@@ -98,7 +98,7 @@ function Logo() {
 function BusinessName({ businessName }: { businessName?: string }) {
   if (!businessName) return null;
   return (
-    <span style={{ marginLeft: "auto", fontSize: 15, fontWeight: 650, color: C.secondary, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+    <span style={{ marginLeft: "auto", fontSize: 15, fontWeight: 700, color: C.secondary, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
       {businessName}
     </span>
   );
@@ -222,7 +222,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
       }}>
         <div aria-hidden style={{ width: 40, height: 4, borderRadius: 4, background: C.border, margin: "4px auto 8px" }} />
         <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
-          <h2 style={{ fontSize: 19, fontWeight: 750, color: C.dark, margin: 0, letterSpacing: "-0.01em" }}>{title}</h2>
+          <h2 style={{ fontSize: 19, fontWeight: 800, color: C.dark, margin: 0, letterSpacing: "-0.01em" }}>{title}</h2>
           <button onClick={close} aria-label="Close" className="app-press" style={{ ...btn("ghost"), marginLeft: "auto", width: 40, minHeight: 40, padding: 0, borderRadius: 999, background: "#f3f4f6" }}>
             <X size={18} strokeWidth={2.2} />
           </button>
