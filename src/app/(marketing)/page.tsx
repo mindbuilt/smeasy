@@ -30,7 +30,7 @@ const steps = [
   { n: "2", t: "Build the week", d: "Tap a day to add a shift, or copy last week and tweak what's different.",
     shot: "add-shift-phone", alt: "Adding a shift on a phone: who, start and finish, role, and the other days to add it to" },
   { n: "3", t: "Publish and share", d: "Hit publish and your team gets their shifts by email. The team link and PDF are there too.",
-    shot: "staff-link-phone", alt: "The team roster link on a staff member's phone, showing their next shift" },
+    shot: "staff-link-phone", alt: "A staff member's personal roster link on their phone, showing their next shift" },
 ] as const;
 
 const features = [

@@ -5,7 +5,7 @@ import { C } from "@/lib/mkt";
 // minimal browser bar. Captured from the demo "Corner Café" account; see DESIGN.md.
 
 export const SHOTS = {
-  "roster-week-desktop": { w: 1600, h: 1734, device: "desktop", url: "smeasy.au/week" },
+  "roster-week-desktop": { w: 1650, h: 1620, device: "desktop", url: "smeasy.au/week" },
   "roster-day-phone": { w: 672, h: 1452, device: "phone" },
   "add-shift-phone": { w: 672, h: 1452, device: "phone" },
   "staff-link-phone": { w: 672, h: 1452, device: "phone" },
