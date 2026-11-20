@@ -65,7 +65,6 @@ export default function PlanPage() {
 
   const plan = (billing?.plan ?? "free") as PlanId;
   const paid = plan !== "free";
-  const hasCustomer = !!billing?.stripe_customer_id;
   // Billed through Stripe: plan changes happen in Stripe's portal.
   const subscribed = paid && !!billing?.stripe_subscription_id;
   // A paid plan with no subscription was set up by hand (no card, nothing billed). Choosing a plan starts a normal checkout.
@@ -173,7 +172,7 @@ export default function PlanPage() {
 
         {error && <p role="alert" style={{ fontSize: 14, color: C.danger, margin: "14px 0 0" }}>{error}</p>}
 
-        {hasCustomer && (
+        {subscribed && (
           <p style={{ fontSize: 13, color: C.muted, margin: "18px 0 0", lineHeight: 1.5 }}>
             <button type="button" onClick={() => go("portal")} disabled={!!busy} style={{ background: "none", border: "none", padding: 0, font: "inherit", color: C.secondary, textDecoration: "underline", cursor: "pointer" }}>
               Payment details and invoices

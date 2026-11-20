@@ -96,6 +96,11 @@ Deno.serve(async (req) => {
       } catch (e) {
         // A customer from test mode (or deleted in Stripe) doesn't exist in live mode.
         if ((e as { code?: string })?.code === "resource_missing") {
+          // Left over from test mode with nothing being billed: forget it, so the next checkout starts fresh.
+          if (!subscribed) {
+            await admin.from("billing").update({ stripe_customer_id: null, stripe_subscription_id: null, updated_at: new Date().toISOString() }).eq("business_id", business.id);
+            return json({ error: "There's no billing account yet. Choose a plan to set one up." }, 400);
+          }
           return json({ error: "We can't find your billing account in Stripe. Email hello@smeasy.au and we'll sort it out." }, 409);
         }
         throw e;
@@ -110,6 +115,16 @@ Deno.serve(async (req) => {
       if (subscribed) return json({ error: "You're already on a paid plan. Use Manage billing to change it." }, 400);
 
       let customer = billing?.stripe_customer_id;
+      // A customer saved in test mode (or deleted in Stripe) doesn't exist in live mode: start a new one.
+      if (customer) {
+        try {
+          const c = await getStripe().customers.retrieve(customer);
+          if ((c as { deleted?: boolean }).deleted) customer = null;
+        } catch (e) {
+          if ((e as { code?: string })?.code !== "resource_missing") throw e;
+          customer = null;
+        }
+      }
       if (!customer) {
         const c = await getStripe().customers.create({
           email: user.email, name: business.name, metadata: { business_id: business.id },
