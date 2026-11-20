@@ -41,6 +41,11 @@ function emailSummary(r: EmailResult) {
   if (r.off.length) parts.push(`${firstNames(r.off)} turned roster emails off.`);
   return parts.join(" ");
 }
+// "Email the team" asks first and then rests for a while, so a double tap (or ten) can't spam everyone.
+// The last send per roster is kept on this device; publishing counts as a send.
+const EMAIL_REST_MIN = 10;
+const emailedKey = (rosterId: string) => `smeasy_emailed_${rosterId}`;
+const lastEmailed = (rosterId: string) => Number(localStorage.getItem(emailedKey(rosterId)) || 0);
 const fmtH = (h: number) => h.toFixed(2).replace(/\.?0+$/, "");
 /** Usual weekly paid hours (the roster notes when someone goes above them). */
 const limitOf = (p: Staff | undefined) => Number(p?.max_weekly_hours ?? DEFAULT_WEEKLY_HOURS);
@@ -99,6 +104,7 @@ function WeekPage() {
   const [selDay, setSelDay] = useState<string | null>(null);
   const [slide, setSlide] = useState<"left" | "right">("right");
   const [moreOpen, setMoreOpen] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState(false);
   const [emailResult, setEmailResult] = useState<EmailResult | { sending: true } | { error: string } | null>(null);
   const plan = usePlan(business?.id);
   const [hiddenHoursNote, setHiddenHoursNote] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("smeasy-hours-note") ?? "" : ""));
@@ -299,6 +305,7 @@ function WeekPage() {
   // Email everyone rostered this week their shifts (notify-roster Edge Function).
   async function emailTeam(rosterId: string, kind: "published" | "update") {
     setEmailResult({ sending: true });
+    localStorage.setItem(emailedKey(rosterId), String(Date.now()));
     const { data, error } = await supabase().functions.invoke("notify-roster", { body: { roster_id: rosterId, kind } });
     if (error || !data) {
       let msg = "Couldn't send the roster emails.";
@@ -547,7 +554,7 @@ function WeekPage() {
             {published && <SheetAction icon={linkCopied ? <Check size={19} /> : <Link2 size={19} />} label={linkCopied ? "Team link copied" : "Copy team link"} hint="Paste it in your staff group chat." onClick={copyTeamLink} />}
             {shifts.length > 0 && <SheetAction icon={<FileText size={19} />} label="Download PDF" hint="A4 roster to print or send." onClick={downloadPdf} />}
             {published && shifts.length > 0 && <SheetAction icon={<Download size={19} />} label="Timesheets for payroll (CSV)" hint="One row per shift, plus totals by person." onClick={downloadCSV} />}
-            {published && !isPast && <SheetAction icon={<Mail size={19} />} label="Email the team" hint="Sends everyone their current shifts. Use it after changes." onClick={() => { setMoreOpen(false); emailTeam(roster!.id, "update"); }} />}
+            {published && !isPast && <SheetAction icon={<Mail size={19} />} label="Email the team" hint="Sends everyone their current shifts. Use it after changes." onClick={() => { setMoreOpen(false); setConfirmEmail(true); }} />}
             {published && <SheetAction icon={<Undo2 size={19} />} label="Unpublish" hint="Your team stops seeing this week." onClick={() => { setMoreOpen(false); unpublish(); }} />}
           </div>
         </Modal>
@@ -562,6 +569,39 @@ function WeekPage() {
         <ShiftEditor draft={draft} staff={staff} roles={business.roles} offOn={offOn} weekDays={days} shifts={shifts} overtimeOn={overtimeOn}
           deletable={!roster?.hours_first_approved_at} onClose={() => setDraft(null)} onSave={saveShift} onDelete={deleteShift} />
       )}
+
+      {confirmEmail && roster && (() => {
+        const rostered = staff.filter((p) => shifts.some((x) => x.staff_id === p.id));
+        const to = rostered.filter((p) => p.email && p.email_roster);
+        const noEmail = rostered.filter((p) => !p.email);
+        const off = rostered.filter((p) => p.email && !p.email_roster);
+        const ago = Math.floor((Date.now() - lastEmailed(roster.id)) / 60000);
+        const resting = ago < EMAIL_REST_MIN;
+        const sending = !!emailResult && "sending" in emailResult;
+        return (
+          <Modal title="Email the team?" onClose={() => setConfirmEmail(false)}>
+            <p style={{ fontSize: 15, color: C.secondary, lineHeight: 1.5, margin: "0 0 12px" }}>
+              {to.length
+                ? <>Sends {to.length === 1 ? "1 person" : `${to.length} people`} their current shifts for {fmtWeek(weekStart)}: {firstNames(to.map((p) => p.name))}.</>
+                : "No one rostered this week can get an email yet."}
+              {noEmail.length > 0 && <> No email for {firstNames(noEmail.map((p) => p.name))}.</>}
+              {off.length > 0 && <> {firstNames(off.map((p) => p.name))} turned roster emails off.</>}
+            </p>
+            {resting && (
+              <p role="status" style={{ fontSize: 14, color: C.secondary, background: "#f3f4f6", borderRadius: 12, padding: "10px 12px", margin: "0 0 12px", lineHeight: 1.5 }}>
+                You emailed them {ago < 1 ? "just now" : `${ago} min ago`}. You can send again in {EMAIL_REST_MIN - ago} min.
+              </p>
+            )}
+            <div style={{ display: "grid", gap: 8 }}>
+              <button disabled={!to.length || resting || sending} onClick={() => { setConfirmEmail(false); emailTeam(roster.id, "update"); }}
+                className="app-press" style={{ ...btn("primary"), opacity: !to.length || resting || sending ? 0.5 : 1 }}>
+                {sending ? "Sending…" : `Email ${to.length === 1 ? "1 person" : `${to.length} people`}`}
+              </button>
+              <button onClick={() => setConfirmEmail(false)} className="app-press" style={btn("ghost")}>Cancel</button>
+            </div>
+          </Modal>
+        );
+      })()}
 
       {justPublished && (
         <Modal title="Roster published" onClose={() => setJustPublished(false)}>
