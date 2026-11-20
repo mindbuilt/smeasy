@@ -878,8 +878,8 @@ function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascade
         })}
         <div style={{ padding: "12px 6px", fontSize: 13, fontWeight: 700, color: C.muted, textAlign: "center", alignSelf: "end" }}>Hrs</div>
       </div>
-      {/* Only there when you've added a shift with "No one yet". Drag it onto someone's row to give it to them. */}
-      {hasUnfilled && row("unfilled", <span title="Shifts with no one on them yet. Drag one onto someone's row, or click it, to give it to them. Staff don't see these." style={{ color: UNFILLED.text, display: "flex", alignItems: "center", gap: 10 }}><span aria-hidden style={{ width: 32, height: 32, borderRadius: "50%", border: `1.5px dashed ${UNFILLED.border}`, display: "grid", placeItems: "center", fontWeight: 800, flex: "none" }}>?</span>Unfilled</span>, "", "", UNFILLED.bg)}
+      {/* Always there, so a shift no one's on yet has an obvious place to go. Click a cell to add one; drag one onto someone's row to give it to them. Tinted only while it holds shifts. */}
+      {row("unfilled", <span title="Shifts with no one on them yet. Click a day to add one. Drag one onto someone's row, or click it, to give it to them. Staff don't see these." style={{ color: hasUnfilled ? UNFILLED.text : C.muted, display: "flex", alignItems: "center", gap: 10 }}><span aria-hidden style={{ width: 32, height: 32, borderRadius: "50%", border: `1.5px dashed ${hasUnfilled ? UNFILLED.border : "#c4c9d1"}`, display: "grid", placeItems: "center", fontWeight: 800, flex: "none" }}>?</span>Unfilled</span>, "", "", hasUnfilled ? UNFILLED.bg : undefined)}
       {staff.map((p) => {
         const h = hours.get(p.id) ?? 0;
         const over = overtimeOn && h > limitOf(p);
@@ -976,6 +976,12 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, overtimeOn,
         <div style={{ minWidth: 0 }}>
           <span style={label}>Who</span>
           <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "2px 2px 6px", margin: "0 -2px" }}>
+            <button type="button" onClick={() => setD({ ...d, staff_id: "" })} aria-pressed={d.staff_id === ""} className="app-press" style={{ flex: "none", width: 72, border: "none", background: "none", cursor: "pointer", fontFamily: "inherit", padding: 0, textAlign: "center" }}>
+              <span style={{ display: "inline-grid", borderRadius: "50%", padding: 3, boxShadow: d.staff_id === "" ? `0 0 0 2.5px ${UNFILLED.border}` : "none" }}>
+                <span style={{ width: 46, height: 46, borderRadius: "50%", border: `1.5px dashed ${UNFILLED.border}`, display: "grid", placeItems: "center", color: UNFILLED.text, fontWeight: 800 }}>?</span>
+              </span>
+              <span style={{ display: "block", fontSize: 13, fontWeight: 600, color: UNFILLED.text, marginTop: 4 }}>No one yet</span>
+            </button>
             {staff.map((p) => {
               const on = d.staff_id === p.id;
               return (
@@ -989,12 +995,6 @@ function ShiftEditor({ draft, staff, roles, offOn, weekDays, shifts, overtimeOn,
                 </button>
               );
             })}
-            <button type="button" onClick={() => setD({ ...d, staff_id: "" })} aria-pressed={d.staff_id === ""} className="app-press" style={{ flex: "none", width: 72, border: "none", background: "none", cursor: "pointer", fontFamily: "inherit", padding: 0, textAlign: "center" }}>
-              <span style={{ display: "inline-grid", borderRadius: "50%", padding: 3, boxShadow: d.staff_id === "" ? `0 0 0 2.5px ${UNFILLED.border}` : "none" }}>
-                <span style={{ width: 46, height: 46, borderRadius: "50%", border: `1.5px dashed ${UNFILLED.border}`, display: "grid", placeItems: "center", color: UNFILLED.text, fontWeight: 800 }}>?</span>
-              </span>
-              <span style={{ display: "block", fontSize: 13, fontWeight: 600, color: UNFILLED.text, marginTop: 4 }}>No one yet</span>
-            </button>
           </div>
           {off && <p style={{ margin: "4px 0 0", fontSize: 14, color: C.offText }}>Heads up: they have approved time off this day.</p>}
           {overBy > 0 && person && (
