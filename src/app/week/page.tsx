@@ -878,8 +878,6 @@ function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascade
         })}
         <div style={{ padding: "12px 6px", fontSize: 13, fontWeight: 700, color: C.muted, textAlign: "center", alignSelf: "end" }}>Hrs</div>
       </div>
-      {/* Always there, so a shift no one's on yet has an obvious place to go. Click a cell to add one; drag one onto someone's row to give it to them. Tinted only while it holds shifts. */}
-      {row("unfilled", <span title="Shifts with no one on them yet. Click a day to add one. Drag one onto someone's row, or click it, to give it to them. Staff don't see these." style={{ color: hasUnfilled ? UNFILLED.text : C.muted, display: "flex", alignItems: "center", gap: 10 }}><span aria-hidden style={{ width: 32, height: 32, borderRadius: "50%", border: `1.5px dashed ${hasUnfilled ? UNFILLED.border : "#c4c9d1"}`, display: "grid", placeItems: "center", fontWeight: 800, flex: "none" }}>?</span>Unfilled</span>, "", "", hasUnfilled ? UNFILLED.bg : undefined)}
       {staff.map((p) => {
         const h = hours.get(p.id) ?? 0;
         const over = overtimeOn && h > limitOf(p);
@@ -888,6 +886,8 @@ function Grid({ days, today, staff, shifts, hours, offOn, onAdd, onEdit, cascade
           : h.toFixed(1);
         return row(p.id, <><Avatar name={p.name} size={32} tone={p.default_role ? (() => { const sw = roleSwatch(p.default_role, roles); return { bg: sw.bg, text: sw.text }; })() : undefined} /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span></>, p.id, total);
       })}
+      {/* Always there, under the team, so a shift no one's on yet has an obvious place to go. Click a cell to add one; drag one onto someone's row to give it to them. Tinted only while it holds shifts. */}
+      {row("unfilled", <span title="Shifts with no one on them yet. Click a day to add one. Drag one onto someone's row, or click it, to give it to them. Staff don't see these." style={{ color: hasUnfilled ? UNFILLED.text : C.muted, display: "flex", alignItems: "center", gap: 10 }}><span aria-hidden style={{ width: 32, height: 32, borderRadius: "50%", border: `1.5px dashed ${hasUnfilled ? UNFILLED.border : "#c4c9d1"}`, display: "grid", placeItems: "center", fontWeight: 800, flex: "none" }}>?</span>Unfilled</span>, "", "", hasUnfilled ? UNFILLED.bg : undefined)}
       <div style={{ display: "grid", gridTemplateColumns: cols, minWidth: 960, background: "#fafbfc", borderTop: `1px solid ${C.divider}`, borderRadius: `0 0 ${C.r2}px ${C.r2}px` }}>
         <div style={{ padding: "10px 14px", fontSize: 13, fontWeight: 700, color: C.muted }}>Cover<span style={{ display: "block", fontSize: 12, fontWeight: 500 }}>Red = nobody on</span></div>
         {days.map((d, i) => {

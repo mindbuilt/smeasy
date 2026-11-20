@@ -67,18 +67,6 @@ export default function RosterPreview() {
           ))}
           <div style={{ padding: "10px 4px", textAlign: "center" }}>Hrs</div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "150px repeat(7, minmax(0, 1fr)) 60px", borderTop: `1px solid ${C.divider}`, alignItems: "center", background: UNFILLED.bg }}>
-          <div style={{ padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 700, color: UNFILLED.text }}>
-            <span aria-hidden style={{ width: 32, height: 32, borderRadius: "50%", border: `1.5px dashed ${UNFILLED.border}`, display: "grid", placeItems: "center", fontSize: 13, fontWeight: 700 }}>?</span>
-            Unfilled
-          </div>
-          {UNFILLED_ROW.map((s, i) => (
-            <div key={i} style={{ padding: 4, minHeight: 50, display: "flex", alignItems: "center" }}>
-              {s && <div className="mkt-pop" style={{ ["--i" as string]: n++, width: "100%", textAlign: "center", fontSize: 12.5, fontWeight: 700, borderRadius: 10, padding: "7px 2px", background: UNFILLED.bg, color: UNFILLED.text, border: `1.5px dashed ${UNFILLED.border}` }}>{s}</div>}
-            </div>
-          ))}
-          <div />
-        </div>
         {ROWS.map((r) => {
           const sw = roleSwatch(r.role, ROLES);
           return (
@@ -100,6 +88,18 @@ export default function RosterPreview() {
             </div>
           );
         })}
+        <div style={{ display: "grid", gridTemplateColumns: "150px repeat(7, minmax(0, 1fr)) 60px", borderTop: `1px solid ${C.divider}`, alignItems: "center", background: UNFILLED.bg }}>
+          <div style={{ padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 700, color: UNFILLED.text }}>
+            <span aria-hidden style={{ width: 32, height: 32, borderRadius: "50%", border: `1.5px dashed ${UNFILLED.border}`, display: "grid", placeItems: "center", fontSize: 13, fontWeight: 700 }}>?</span>
+            Unfilled
+          </div>
+          {UNFILLED_ROW.map((s, i) => (
+            <div key={i} style={{ padding: 4, minHeight: 50, display: "flex", alignItems: "center" }}>
+              {s && <div className="mkt-pop" style={{ ["--i" as string]: n++, width: "100%", textAlign: "center", fontSize: 12.5, fontWeight: 700, borderRadius: 10, padding: "7px 2px", background: UNFILLED.bg, color: UNFILLED.text, border: `1.5px dashed ${UNFILLED.border}` }}>{s}</div>}
+            </div>
+          ))}
+          <div />
+        </div>
       </div>
 
       {/* Phones: week strip + Friday's shift cards, as in the app */}
