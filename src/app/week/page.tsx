@@ -104,6 +104,8 @@ function WeekPage() {
   const [selDay, setSelDay] = useState<string | null>(null);
   const [slide, setSlide] = useState<"left" | "right">("right");
   const [moreOpen, setMoreOpen] = useState(false);
+  // Opened a beat after More closes: closing a sheet steps browser history back (see Modal), and that
+  // step would otherwise land on this sheet and close it straight away.
   const [confirmEmail, setConfirmEmail] = useState(false);
   const [emailResult, setEmailResult] = useState<EmailResult | { sending: true } | { error: string } | null>(null);
   const plan = usePlan(business?.id);
@@ -554,7 +556,7 @@ function WeekPage() {
             {published && <SheetAction icon={linkCopied ? <Check size={19} /> : <Link2 size={19} />} label={linkCopied ? "Team link copied" : "Copy team link"} hint="Paste it in your staff group chat." onClick={copyTeamLink} />}
             {shifts.length > 0 && <SheetAction icon={<FileText size={19} />} label="Download PDF" hint="A4 roster to print or send." onClick={downloadPdf} />}
             {published && shifts.length > 0 && <SheetAction icon={<Download size={19} />} label="Timesheets for payroll (CSV)" hint="One row per shift, plus totals by person." onClick={downloadCSV} />}
-            {published && !isPast && <SheetAction icon={<Mail size={19} />} label="Email the team" hint="Sends everyone their current shifts. Use it after changes." onClick={() => { setMoreOpen(false); setConfirmEmail(true); }} />}
+            {published && !isPast && <SheetAction icon={<Mail size={19} />} label="Email the team" hint="Sends everyone their current shifts. Use it after changes." onClick={() => { setMoreOpen(false); setTimeout(() => setConfirmEmail(true), 300); }} />}
             {published && <SheetAction icon={<Undo2 size={19} />} label="Unpublish" hint="Your team stops seeing this week." onClick={() => { setMoreOpen(false); unpublish(); }} />}
           </div>
         </Modal>
