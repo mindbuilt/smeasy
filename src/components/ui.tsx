@@ -95,11 +95,12 @@ function Logo() {
   );
 }
 
-/** The business you're in, as plain text. Your login and Log out live in Settings → Your login. */
+/** The business you're in, as plain text. Your login and Log out live in Settings → Your login.
+ *  Always rendered (empty while a page loads) so it keeps pushing the header buttons to the right;
+ *  otherwise Feedback, Settings and Log out jump left on every tab switch. */
 function BusinessName({ businessName }: { businessName?: string }) {
-  if (!businessName) return null;
   return (
-    <span style={{ marginLeft: "auto", fontSize: 15, fontWeight: 700, color: C.secondary, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+    <span aria-hidden={!businessName || undefined} style={{ marginLeft: "auto", fontSize: 15, fontWeight: 700, color: C.secondary, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
       {businessName}
     </span>
   );
