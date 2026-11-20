@@ -7,6 +7,7 @@ import { Check, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useManager } from "@/lib/useManager";
 import { hasCore, hasPro, usePlan } from "@/lib/usePlan";
+import { OPEN_BETA } from "@/lib/site";
 import type { Roster, Shift, Staff } from "@/lib/types";
 import { addDays, fmtDay, fmtWeek, thisWeekStart, toISO, weekDates, weekStartOf } from "@/lib/dates";
 import { changed, downloadHoursCsv, rosteredHours, workedHours } from "@/lib/worked";
@@ -284,6 +285,9 @@ function HoursPage() {
                 </button>
                 <button onClick={() => setExporting(true)} className="app-press" style={{ ...btn("ghost"), color: C.secondary }}>Export dates…</button>
               </div>
+              {OPEN_BETA && approved && xero && hasPro(plan) && (
+                <p style={{ fontSize: 13, color: C.muted, margin: "10px 0 0", lineHeight: 1.5 }}>Beta: please double-check your pay run figures in Xero before you post them.</p>
+              )}
             </section>
 
             {history.length > 0 && (

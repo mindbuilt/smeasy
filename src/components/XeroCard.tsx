@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
 import type { Staff } from "@/lib/types";
-import { PRO_AVAILABLE } from "@/lib/site";
+import { OPEN_BETA, PRO_AVAILABLE } from "@/lib/site";
 import { C, Modal, btn, haptic, input } from "@/components/ui";
 
 type Connection = Database["public"]["Tables"]["xero_connections"]["Row"];
@@ -80,9 +80,9 @@ export default function XeroCard({ businessId, pro }: { businessId: string; pro:
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <h2 style={{ fontSize: 18, fontWeight: 800, color: C.dark, margin: 0 }}>Xero Payroll</h2>
-        <span style={{ fontSize: 12, fontWeight: 700, borderRadius: 999, padding: "3px 9px", background: "#eef0f3", color: C.secondary }}>Pro</span>
+        <span style={{ fontSize: 12, fontWeight: 700, borderRadius: 999, padding: "3px 9px", background: "#eef0f3", color: C.secondary }}>{OPEN_BETA ? "Beta" : "Pro"}</span>
       </div>
-      {pro && <p style={{ fontSize: 13, color: C.muted, margin: "0 0 12px", lineHeight: 1.5 }}>Approved hours go to Xero as draft timesheets for you to check and approve.</p>}
+      {pro && <p style={{ fontSize: 13, color: C.muted, margin: "0 0 12px", lineHeight: 1.5 }}>Approved hours go to Xero as draft timesheets for you to check and approve.{OPEN_BETA && " Beta: please double-check your pay run figures in Xero before you post them."}</p>}
 
       {notice && <p role="status" style={{ fontSize: 14, background: notice.ok ? C.shiftBg : "#fff5f3", color: notice.ok ? C.shiftText : C.danger, borderRadius: 12, padding: "10px 12px", margin: "0 0 12px" }}>{notice.text}</p>}
 

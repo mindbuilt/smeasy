@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { FeedbackButton } from "@/components/Feedback";
 import { CalendarDays, Clock, LogOut, Settings, Users, X } from "lucide-react";
 import { signOut } from "@/lib/useManager";
 import { APP } from "@/lib/theme";
@@ -104,7 +105,7 @@ function BusinessName({ businessName }: { businessName?: string }) {
   );
 }
 
-export function AppShell({ businessName, children }: {
+export function AppShell({ businessName, email, children }: {
   businessName?: string; email?: string; children: ReactNode;
 }) {
   const path = usePathname();
@@ -133,6 +134,8 @@ export function AppShell({ businessName, children }: {
             ))}
           </nav>
           <BusinessName businessName={businessName} />
+          {/* Open beta: feedback and bug reports from any screen. */}
+          <FeedbackButton email={email} />
           {/* Settings is occasional, so it's an icon up here rather than a main tab. */}
           {/* Plans lives under Settings, so the gear stays lit there too. */}
           <Link href="/settings" aria-label="Settings" title="Settings" aria-current={(isActive("/settings") || isActive("/plan")) ? "page" : undefined} className="app-press" style={{

@@ -6,7 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
 import { useManager } from "@/lib/useManager";
-import { PLAN_NAMES, PRICES, PRO_AVAILABLE, type Interval, type PlanId } from "@/lib/site";
+import { BETA_PAID_FROM, OPEN_BETA, PLAN_NAMES, PRICES, PRO_AVAILABLE, type Interval, type PlanId } from "@/lib/site";
 import { AppShell, C, Loading, btn, card } from "@/components/ui";
 
 type Billing = Database["public"]["Tables"]["billing"]["Row"];
@@ -62,6 +62,26 @@ export default function PlanPage() {
   }, [business]);
 
   if (!business || billing === undefined) return <AppShell businessName={business?.name} email={email}><Loading /></AppShell>;
+
+  // Open beta: nothing to choose or pay for yet.
+  if (OPEN_BETA) return (
+    <AppShell businessName={business.name} email={email}>
+      <div style={{ maxWidth: 680, margin: "0 auto" }}>
+        <Link href="/settings/" className="app-press" style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 15, fontWeight: 600, color: C.secondary, textDecoration: "none", margin: "0 0 10px -4px", padding: "4px 4px" }}>
+          <ChevronLeft size={18} aria-hidden /> Settings
+        </Link>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: C.dark, margin: "0 0 6px", letterSpacing: "-0.02em" }}>Plans</h1>
+        <section style={{ ...card, padding: "20px 18px" }}>
+          <p style={{ fontSize: 16, fontWeight: 800, color: C.dark, margin: "0 0 6px" }}>Open beta: everything included</p>
+          <p style={{ fontSize: 15, color: C.secondary, margin: 0, lineHeight: 1.55 }}>
+            Unlimited staff, timesheets and Xero sync, all free while SMEasy is in open beta. Paid plans won&apos;t start before {BETA_PAID_FROM}.
+            Before any billing starts you&apos;ll get at least 30 days&apos; notice, and beta businesses get a founder discount.
+          </p>
+        </section>
+        <p style={{ fontSize: 13, color: C.muted, margin: "12px 0 0" }}><Link href="/pricing/" style={{ color: C.secondary }}>Planned pricing</Link></p>
+      </div>
+    </AppShell>
+  );
 
   const plan = (billing?.plan ?? "free") as PlanId;
   const paid = plan !== "free";

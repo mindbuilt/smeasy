@@ -3,6 +3,9 @@
 Ordered by priority. Items marked ★ were promised by earlier marketing copy and
 have been removed from the site until built.
 
+## Open beta (from 2026-11-20)
+Everything is free for every business (unlimited staff, timesheets, usual-hours notes, Xero sync); no checkout. Public promise: paid plans not before 1 April 2027, at least 30 days' notice, founder discount for beta businesses (amount not set). Start billing only once it's working well and about 25 businesses use it regularly. Switches: `OPEN_BETA` in src/lib/site.ts and supabase/functions/xero/index.ts, `v_enforce` in private.check_staff_limit (migration 20261120010000_open_beta). Feedback: header button → `feedback` Edge Function → public.beta_feedback + beta-feedback bucket + email to hello@smeasy.au.
+
 ## 1. Before inviting real businesses
 - [x] **Branded login emails** (done 2026-11-16) — Resend as Supabase SMTP, sending from `hello@smeasy.au` (DNS records on smeasy.au); SMEasy-styled "Magic link" and "Confirm signup" templates. Removes Supabase's few-per-hour email limit.
 - [x] **Privacy policy** — published at /privacy (Open County Pty Ltd). Get a professional review when convenient.

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import { CORE_FEATURES_ENFORCED, FREE_STAFF_LIMIT, STAFF_LIMIT_ENFORCED, type PlanId } from "./site";
+import { CORE_FEATURES_ENFORCED, FREE_STAFF_LIMIT, OPEN_BETA, STAFF_LIMIT_ENFORCED, type PlanId } from "./site";
 
 /** The business's current plan (Free until Stripe says otherwise). null while loading. */
 export function usePlan(businessId: string | undefined) {
@@ -22,9 +22,9 @@ export function hasCore(plan: PlanId | null) {
   return !CORE_FEATURES_ENFORCED || plan === "core" || plan === "pro";
 }
 
-/** Xero/MYOB payroll sync: top tier only. */
+/** Xero/MYOB payroll sync: top tier only (everyone during the open beta). */
 export function hasPro(plan: PlanId | null) {
-  return plan === "pro";
+  return OPEN_BETA || plan === "pro";
 }
 
 /** True when a Free business already has as many active staff as the plan allows. */

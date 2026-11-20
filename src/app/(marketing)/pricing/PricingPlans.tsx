@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { C, card, inkCard, button, pill, onInk } from "@/lib/mkt";
-import { FREE_STAFF_LIMIT, PRICES, PRO_AVAILABLE, SIGNUP_HREF, SIGNUP_CTA_SHORT, type Interval } from "@/lib/site";
+import { FREE_STAFF_LIMIT, OPEN_BETA, PRICES, PRO_AVAILABLE, SIGNUP_HREF, SIGNUP_CTA_SHORT, type Interval } from "@/lib/site";
 
 type Feature = { text: string; soon?: boolean };
 
@@ -32,6 +32,9 @@ const pro: Feature[] = [
   { text: "Xero Payroll sync: send approved hours in one click" },
   { text: "MYOB sync", soon: true },
 ];
+
+// During the open beta every plan is free; the cards show what we plan to charge.
+const betaPill = "Free during the open beta";
 
 const price = { fontSize: 48, fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1 } as const;
 const tierName = { fontSize: 24, fontWeight: 800, letterSpacing: "-0.015em", margin: "0 0 2px" } as const;
@@ -77,7 +80,7 @@ export default function PricingPlans() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, alignItems: "start" }}>
         {/* Free */}
         <div style={{ ...card, padding: "28px 26px" }}>
-          <span style={{ ...pill("lime"), marginBottom: 16 }}>No card needed</span>
+          <span style={{ ...pill("lime"), marginBottom: 16 }}>{OPEN_BETA ? betaPill : "No card needed"}</span>
           <h2 style={tierName}>Free</h2>
           <div style={{ fontSize: 15, color: C.secondary, marginBottom: 20 }}>For small teams</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
@@ -90,7 +93,7 @@ export default function PricingPlans() {
 
         {/* Plus: the page's one dark surface */}
         <div style={{ ...inkCard, padding: "28px 26px" }}>
-          <span style={{ ...pill("lime"), marginBottom: 16 }}>Most popular</span>
+          <span style={{ ...pill("lime"), marginBottom: 16 }}>{OPEN_BETA ? betaPill : "Most popular"}</span>
           <h2 style={tierName}>Plus</h2>
           <div style={{ fontSize: 15, color: onInk, marginBottom: 20 }}>For growing teams</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
@@ -98,7 +101,7 @@ export default function PricingPlans() {
             <span style={{ fontSize: 15, color: onInk }}>{per}</span>
           </div>
           <div style={{ fontSize: 14, color: onInk, marginBottom: 22, lineHeight: 1.45 }}>
-            Plus GST. One flat price for unlimited staff.{interval === "year" && ` That's $${PRICES.core.month * 12 - PRICES.core.year} less than paying monthly.`}
+            {OPEN_BETA ? "Planned price, plus GST. Free during the beta." : "Plus GST. One flat price for unlimited staff."}{interval === "year" && ` That's $${PRICES.core.month * 12 - PRICES.core.year} less than paying monthly.`}
           </div>
           <Link href={SIGNUP_HREF} className="app-press" style={{ ...button("onInk"), display: "flex", marginBottom: 22 }}>{SIGNUP_CTA_SHORT}</Link>
           <List items={core} lead="Everything in Free, plus:" ink />
@@ -106,14 +109,14 @@ export default function PricingPlans() {
 
         {/* Pro */}
         <div style={{ ...card, padding: "28px 26px" }}>
-          <span style={{ ...pill(PRO_AVAILABLE ? "lime" : "quiet"), marginBottom: 16 }}>{PRO_AVAILABLE ? "Payroll in one click" : "Coming soon"}</span>
+          <span style={{ ...pill(PRO_AVAILABLE ? "lime" : "quiet"), marginBottom: 16 }}>{OPEN_BETA ? betaPill : PRO_AVAILABLE ? "Payroll in one click" : "Coming soon"}</span>
           <h2 style={tierName}>Pro</h2>
           <div style={{ fontSize: 15, color: C.secondary, marginBottom: 20 }}>For payroll without the paperwork</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
             <span style={price}>{amount("pro")}</span>
             <span style={{ fontSize: 15, color: C.muted }}>{per}</span>
           </div>
-          <div style={{ fontSize: 14, color: C.muted, marginBottom: 22, lineHeight: 1.45 }}>Plus GST. Unlimited staff.</div>
+          <div style={{ fontSize: 14, color: C.muted, marginBottom: 22, lineHeight: 1.45 }}>{OPEN_BETA ? "Planned price, plus GST. Free during the beta." : "Plus GST. Unlimited staff."}</div>
           <Link href={PRO_AVAILABLE ? SIGNUP_HREF : "/contact/?topic=pro"} className="app-press" style={{ ...button("secondary"), display: "flex", marginBottom: 22 }}>
             {PRO_AVAILABLE ? SIGNUP_CTA_SHORT : "Join the waitlist"}
           </Link>

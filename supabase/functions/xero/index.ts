@@ -10,6 +10,9 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { NotConnected, accessFor, admin, authorizeUrl, disconnect, makeState, payroll, publicKey, xeroDate } from "../_shared/xero.ts";
 
+// Open beta: every business can sync, whatever its plan. Set false when billing starts (and OPEN_BETA in src/lib/site.ts).
+const OPEN_BETA = true;
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -79,7 +82,7 @@ Deno.serve(async (req) => {
 
     // Payroll sync is a top-tier feature.
     const { data: bill } = await admin().from("billing").select("plan").eq("business_id", business.id).maybeSingle();
-    if (bill?.plan !== "pro") return json({ error: "Payroll sync is part of Pro." }, 403);
+    if (!OPEN_BETA && bill?.plan !== "pro") return json({ error: "Payroll sync is part of Pro." }, 403);
 
     if (action === "start") return json({ url: authorizeUrl(await makeState(business.id)) });
 

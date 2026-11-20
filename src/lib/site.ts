@@ -36,6 +36,17 @@ export const SIGNUP_CTA_SHORT = SIGNUPS_OPEN ? "Get started" : "Join the waitlis
  * On since 2026-11-16, while Stripe is still in test mode.
  * The database has a matching check: flip both together (see migration 20261116020000_plans).
  */
+/**
+ * Open beta (from 2026-11-20): every business gets everything (unlimited staff, timesheets,
+ * usual-hours notes, Xero sync) and there's no checkout. Billing starts only once the product is
+ * working well and about 25 businesses use it regularly, and not before 1 April 2027 (public promise),
+ * with at least 30 days' notice and a founder discount for beta businesses. To start billing: set OPEN_BETA false, set OPEN_BETA false
+ * in supabase/functions/xero/index.ts and redeploy it, and set v_enforce back to true in
+ * private.check_staff_limit (see migration 20261120010000_open_beta).
+ */
+export const OPEN_BETA = true;
+/** The public promise: paid plans won't start before this. */
+export const BETA_PAID_FROM = "1 April 2027";
 export type PlanId = "free" | "core" | "pro";
 export type Interval = "month" | "year";
 export const PLAN_NAMES: Record<PlanId, string> = { free: "Free", core: "Plus", pro: "Pro" };
@@ -44,10 +55,10 @@ export const PRICES: Record<"core" | "pro", Record<Interval, number>> = {
   pro: { month: 49, year: 490 },
 };
 export const PRO_AVAILABLE = true;
-export const BILLING_ENABLED = true;
-export const STAFF_LIMIT_ENFORCED = true;
+export const BILLING_ENABLED = !OPEN_BETA;
+export const STAFF_LIMIT_ENFORCED = !OPEN_BETA;
 export const FREE_STAFF_LIMIT = 6;
 /** Paid-plan features (usual-hours notes, timesheets) need Plus. On, as at launch; the holding page hides the public site until we're ready. */
-export const CORE_FEATURES_ENFORCED = true;
+export const CORE_FEATURES_ENFORCED = !OPEN_BETA;
 /** Usual weekly hours, unless set per person on the Team page. */
 export const DEFAULT_WEEKLY_HOURS = 38;

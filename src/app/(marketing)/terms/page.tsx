@@ -57,10 +57,14 @@ export default function Terms() {
       </p>
 
       <h2 style={h2}>4. Plans and fees</h2>
+      <p style={p}>
+        <strong>Open beta.</strong> SMEasy is currently in open beta. During the beta every feature is free, whatever plan is shown, and we don&apos;t take payment details. Paid plans won&apos;t start before 1 April 2027. Before any billing starts we&apos;ll give you at least 30 days&apos; notice by email, and nothing will be charged unless you choose a paid plan. Features in beta, including payroll sync, may change, and you should check anything sent to your payroll software before you rely on it.
+      </p>
+      <p style={p}>The plans we plan to offer after the beta are:</p>
       <ul style={ul}>
         <L><strong>Free</strong>: up to 6 active staff, with all rostering features.</L>
         <L><strong>Plus</strong>: unlimited staff, plus timesheets and usual-hours notes. $29 a month or $290 a year.</L>
-        <L><strong>Pro</strong>: Plus, plus payroll sync with Xero or MYOB. $49 a month or $490 a year. Pro is not yet available for purchase; we&apos;ll tell you before it is.</L>
+        <L><strong>Pro</strong>: Plus, plus payroll sync with Xero or MYOB. $49 a month or $490 a year.</L>
       </ul>
       <p style={p}>
         Prices are in Australian dollars, exclude GST, and are charged per business, not per user. Where GST applies, we&apos;ll add it and show it at checkout. Paid plans are billed in advance through Stripe, monthly or annually, and renew automatically until cancelled. You can change or cancel your plan in Settings at any time. Cancelling takes effect at the end of the period you&apos;ve paid for, and you keep access until then.
