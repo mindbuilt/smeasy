@@ -11,7 +11,7 @@ export const ABN = "19 679 154 557";
  * on new accounts is SIGNUPS_OPEN plus "Allow new users to sign up" off in Supabase.
  * Preview password: SHA-256 below (currently "flatwhite").
  */
-export const HOLDING_PAGE = true;
+export const HOLDING_PAGE = false; // off 2026-11-20: open beta launch
 export const PREVIEW_PASSWORD_SHA256 = "c9a6dd3f5be65518575c261fc6f96b719622a09547968ac850c34cfa290450a8";
 
 /**
