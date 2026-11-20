@@ -70,7 +70,7 @@ export const guides: Guide[] = [
     slug: "share-roster-with-staff",
     title: "How to share your roster with staff (link or PDF)",
     description:
-      "Two easy ways to get the roster to your team: one team link for your staff group chat, or a printable PDF. No staff app or passwords.",
+      "Three easy ways to get the roster to your team: one team link for your staff group chat, roster emails when you publish, or a printable PDF. No staff app or passwords.",
     category: "Running your roster",
     updated: "2026-11-20",
     body: [
@@ -82,7 +82,7 @@ export const guides: Guide[] = [
         "Paste it in your staff group chat — WhatsApp, Messenger or whatever your team uses — and pin it.",
         "Each week, publish the roster and drop a quick \"next week's up\" in the chat.",
       ] },
-      { p: "Staff open the link, pick their name to highlight their shifts and hours, and can flip between published weeks. The page remembers their name on that phone." },
+      { p: "Staff open the link to see the whole team's published roster, day by day. They can flip between published weeks and download the week as a PDF. It's one link for everyone, so it doesn't highlight anyone's shifts. For just their own shifts and hours, they use their personal link (see Option 2)." },
       { tip: "Tell staff to add the link to their phone's home screen. It then opens like an app." },
       { h2: "Option 2: email" },
       { p: "When you publish, everyone rostered who has an email address gets an email with their own shifts for the week, any notes, and a button to their personal link. Replies come to you." },
